@@ -21,6 +21,7 @@ jobs:
           python3 << 'PY'
           import re
           import json
+          import os
           import urllib.request
           from datetime import datetime
           from zoneinfo import ZoneInfo
@@ -38,6 +39,14 @@ jobs:
               m = re.search(pattern, xml)
               return m.group(1) if m else default
 
+          old = {}
+          if os.path.exists("status.json"):
+              try:
+                  with open("status.json", "r", encoding="utf-8") as f:
+                      old = json.load(f)
+              except:
+                  old = {}
+
           season = int(find(r'season="([0-9]+)"', "10"))
 
           monate = [
@@ -52,10 +61,21 @@ jobs:
           hour = day_time // 3600000
           minute = (day_time % 3600000) // 60000
 
-          now = datetime.now(ZoneInfo("Europe/Vienna"))
-          tag = (now.hour // 8) + 1
+          old_day_time = int(old.get("dayTimeRaw", day_time))
+          old_tag = int(old.get("tag", 1))
+          old_monat = old.get("monat", monat)
+
+          tag = old_tag
+
+          if monat != old_monat:
+              tag = 1
+          elif day_time < old_day_time:
+              tag = old_tag + 1
+              if tag > 3:
+                  tag = 1
 
           spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
+          now = datetime.now(ZoneInfo("Europe/Vienna"))
 
           data = {
               "serverOnline": online,
@@ -66,7 +86,8 @@ jobs:
               "tag": tag,
               "zeit": f"{hour}:{minute:02d}",
               "spielerOnline": spieler,
-              "letztesUpdate": now.strftime("%d.%m.%Y %H:%M")
+              "letztesUpdate": now.strftime("%d.%m.%Y %H:%M"),
+              "dayTimeRaw": day_time
           }
 
           with open("status.json", "w", encoding="utf-8") as f:
