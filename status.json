@@ -1,8 +1,18 @@
-{
-  "serverOnline": true,
-  "monat": "Januar",
-  "zeit": "16:32",
-  "servername": "RP_Fix1701",
-  "map": "Schellenberg",
-  "spielerOnline": 0
+spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
+
+data = {
+    "serverOnline": online,
+    "status": "🟢 Online" if online else "🔴 Offline",
+
+    "servername": find(r'<Server[^>]* name="([^"]+)"'),
+    "map": find(r'mapName="([^"]+)"'),
+
+    "monat": monat,
+    "zeit": f"{hour}:{minute:02d}",
+
+    "spielerOnline": spieler,
+
+    "letztesUpdate": __import__("datetime")
+        .datetime.now()
+        .strftime("%d.%m.%Y %H:%M")
 }
