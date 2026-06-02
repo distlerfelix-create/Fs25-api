@@ -23,18 +23,43 @@ jobs:
 
           url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
 
-          xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
+          try:
+              xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
+              online = True
+          except Exception:
+              xml = ""
+              online = False
 
           def find(pattern, default=""):
               m = re.search(pattern, xml)
               return m.group(1) if m else default
+
+          season = int(find(r'season="([0-9]+)"', "10"))
+
+          monate = [
+              "März",
+              "April",
+              "Mai",
+              "Juni",
+              "Juli",
+              "August",
+              "September",
+              "Oktober",
+              "November",
+              "Dezember",
+              "Januar",
+              "Februar"
+          ]
+
+          monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
 
           day_time = int(find(r'dayTime="([0-9]+)"', "0"))
           hour = day_time // 3600000
           minute = (day_time % 3600000) // 60000
 
           data = {
-              "monat": "Dezember",
+              "serverOnline": online,
+              "monat": monat,
               "zeit": f"{hour}:{minute:02d}",
               "servername": find(r'<Server[^>]* name="([^"]+)"'),
               "map": find(r'mapName="([^"]+)"'),
