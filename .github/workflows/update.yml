@@ -23,6 +23,7 @@ jobs:
           import json
           import urllib.request
           from datetime import datetime
+          from zoneinfo import ZoneInfo
 
           url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
 
@@ -37,14 +38,9 @@ jobs:
               m = re.search(pattern, xml)
               return m.group(1) if m else default
 
-          day_time = int(find(r'dayTime="([0-9]+)"', "0"))
-
-          hour = day_time // 3600000
-          minute = (day_time % 3600000) // 60000
+          season = int(find(r'season="([0-9]+)"', "10"))
 
           monate = [
-              "Januar",
-              "Februar",
               "März",
               "April",
               "Mai",
@@ -54,15 +50,16 @@ jobs:
               "September",
               "Oktober",
               "November",
-              "Dezember"
+              "Dezember",
+              "Januar",
+              "Februar"
           ]
 
-          month_index = int(find(r'currentMonotonicMonth="([0-9]+)"', "0"))
+          monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
 
-          if 0 <= month_index < len(monate):
-              monat = monate[month_index]
-          else:
-              monat = "Unbekannt"
+          day_time = int(find(r'dayTime="([0-9]+)"', "0"))
+          hour = day_time // 3600000
+          minute = (day_time % 3600000) // 60000
 
           spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
 
@@ -78,7 +75,9 @@ jobs:
 
               "spielerOnline": spieler,
 
-              "letztesUpdate": datetime.now().strftime("%d.%m.%Y %H:%M")
+              "letztesUpdate": datetime.now(
+                  ZoneInfo("Europe/Vienna")
+              ).strftime("%d.%m.%Y %H:%M")
           }
 
           with open("status.json", "w", encoding="utf-8") as f:
