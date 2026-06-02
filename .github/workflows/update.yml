@@ -1,94 +1,73 @@
-name: Update FS25 Status
+import re
+import json
+import urllib.request
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
-on:
-  schedule:
-    - cron: "*/15 * * * *"
-  workflow_dispatch:
+url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
 
-permissions:
-  contents: write
+try:
+    xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
+    online = True
+except:
+    xml = ""
+    online = False
 
-jobs:
-  update:
-    runs-on: ubuntu-latest
+def find(pattern, default=""):
+    m = re.search(pattern, xml)
+    return m.group(1) if m else default
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+season = int(find(r'season="([0-9]+)"', "10"))
 
-      - name: Fetch FS25 XML and update status.json
-        run: |
-          python3 << 'PY'
-          import re
-          import json
-          import urllib.request
-          from datetime import datetime
-          from zoneinfo import ZoneInfo
+monate = [
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+    "Januar",
+    "Februar"
+]
 
-          url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
+monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
 
-          try:
-              xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
-              online = True
-          except:
-              xml = ""
-              online = False
+day_time = int(find(r'dayTime="([0-9]+)"', "0"))
+hour = day_time // 3600000
+minute = (day_time % 3600000) // 60000
 
-          def find(pattern, default=""):
-              m = re.search(pattern, xml)
-              return m.group(1) if m else default
+spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
 
-          season = int(find(r'season="([0-9]+)"', "10"))
+# Echte Uhrzeit (Österreich)
+now = datetime.now(ZoneInfo("Europe/Vienna"))
 
-          monate = [
-              "März",
-              "April",
-              "Mai",
-              "Juni",
-              "Juli",
-              "August",
-              "September",
-              "Oktober",
-              "November",
-              "Dezember",
-              "Januar",
-              "Februar"
-          ]
+# Tag 1 / Tag 2 / Tag 3
+if now.hour < 8:
+    tag = 1
+elif now.hour < 16:
+    tag = 2
+else:
+    tag = 3
 
-          monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
+data = {
+    "serverOnline": online,
+    "status": "🟢 Online" if online else "🔴 Offline",
 
-          day_time = int(find(r'dayTime="([0-9]+)"', "0"))
-          hour = day_time // 3600000
-          minute = (day_time % 3600000) // 60000
+    "servername": find(r'<Server[^>]* name="([^"]+)"'),
+    "map": find(r'mapName="([^"]+)"'),
 
-          spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
+    "monat": monat,
+    "tag": tag,
 
-          data = {
-              "serverOnline": online,
-              "status": "🟢 Online" if online else "🔴 Offline",
+    "zeit": f"{hour}:{minute:02d}",
+    "spielerOnline": spieler,
 
-              "servername": find(r'<Server[^>]* name="([^"]+)"'),
-              "map": find(r'mapName="([^"]+)"'),
+    "letztesUpdate": now.strftime("%d.%m.%Y %H:%M")
+}
 
-              "monat": monat,
-              "zeit": f"{hour}:{minute:02d}",
-
-              "spielerOnline": spieler,
-
-              "letztesUpdate": datetime.now(
-                  ZoneInfo("Europe/Vienna")
-              ).strftime("%d.%m.%Y %H:%M")
-          }
-
-          with open("status.json", "w", encoding="utf-8") as f:
-              json.dump(data, f, ensure_ascii=False, indent=2)
-
-          PY
-
-      - name: Commit updated status
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add status.json
-          git commit -m "Update FS25 status" || exit 0
-          git push
+with open("status.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
