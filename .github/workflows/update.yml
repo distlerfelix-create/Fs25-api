@@ -19,14 +19,19 @@ jobs:
       - name: Fetch FS25 XML and update status.json
         run: |
           python3 << 'PY'
-          import re
-          import json
-          import os
-          import urllib.request
+          import re, json, os, urllib.request
           from datetime import datetime
           from zoneinfo import ZoneInfo
 
           url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
+
+          old = {}
+          if os.path.exists("status.json"):
+              try:
+                  with open("status.json", "r", encoding="utf-8") as f:
+                      old = json.load(f)
+              except:
+                  old = {}
 
           try:
               xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
@@ -38,14 +43,6 @@ jobs:
           def find(pattern, default=""):
               m = re.search(pattern, xml)
               return m.group(1) if m else default
-
-          old = {}
-          if os.path.exists("status.json"):
-              try:
-                  with open("status.json", "r", encoding="utf-8") as f:
-                      old = json.load(f)
-              except:
-                  old = {}
 
           season = int(find(r'season="([0-9]+)"', "10"))
 
@@ -70,7 +67,7 @@ jobs:
           if monat != old_monat:
               tag = 1
           elif day_time < old_day_time:
-              tag = old_tag + 1
+              tag += 1
               if tag > 3:
                   tag = 1
 
