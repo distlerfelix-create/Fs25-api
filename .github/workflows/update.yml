@@ -52,7 +52,7 @@ jobs:
               "Januar", "Februar"
           ]
 
-          monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
+          xml_monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
 
           day_time = int(find(r'dayTime="([0-9]+)"', "0"))
           hour = day_time // 3600000
@@ -60,16 +60,20 @@ jobs:
 
           old_day_time = int(old.get("dayTimeRaw", day_time))
           old_tag = int(old.get("tag", 1))
-          old_monat = old.get("monat", monat)
+          old_monat = old.get("monat", xml_monat)
 
+          monat = old_monat
           tag = old_tag
 
-          if monat != old_monat:
-              tag = 1
-          elif day_time < old_day_time:
+          if day_time < old_day_time:
               tag += 1
+
               if tag > 3:
                   tag = 1
+                  if monat in monate:
+                      monat = monate[(monate.index(monat) + 1) % len(monate)]
+                  else:
+                      monat = xml_monat
 
           spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
           now = datetime.now(ZoneInfo("Europe/Vienna"))
