@@ -19,13 +19,17 @@ jobs:
       - name: Fetch FS25 XML and update status.json
         run: |
           python3 << 'PY'
-          import re, json, os, urllib.request
+          import re
+          import json
+          import os
+          import urllib.request
           from datetime import datetime
           from zoneinfo import ZoneInfo
 
           url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
 
           old = {}
+
           if os.path.exists("status.json"):
               try:
                   with open("status.json", "r", encoding="utf-8") as f:
@@ -44,45 +48,75 @@ jobs:
               m = re.search(pattern, xml)
               return m.group(1) if m else default
 
-          season = int(find(r'season="([0-9]+)"', "10"))
+          season = int(find(r'season="([0-9]+)"', "-1"))
 
           monate = [
-              "März", "April", "Mai", "Juni", "Juli", "August",
-              "September", "Oktober", "November", "Dezember",
-              "Januar", "Februar"
+              "März",
+              "April",
+              "Mai",
+              "Juni",
+              "Juli",
+              "August",
+              "September",
+              "Oktober",
+              "November",
+              "Dezember",
+              "Januar",
+              "Februar"
           ]
 
-          xml_monat = monate[season] if 0 <= season < len(monate) else "Unbekannt"
+          if 0 <= season < len(monate):
+              monat = monate[season]
+          else:
+              monat = old.get("monat", "Unbekannt")
 
-          day_time = int(find(r'dayTime="([0-9]+)"', "0"))
+          day_time = int(
+              find(
+                  r'dayTime="([0-9]+)"',
+                  str(old.get("dayTimeRaw", 0))
+              )
+          )
+
           hour = day_time // 3600000
           minute = (day_time % 3600000) // 60000
 
           old_day_time = int(old.get("dayTimeRaw", day_time))
           old_tag = int(old.get("tag", 1))
-          old_monat = old.get("monat", xml_monat)
+          old_monat = old.get("monat", monat)
 
-          monat = old_monat
           tag = old_tag
 
-          if day_time < old_day_time:
+          if monat != old_monat:
+              tag = 1
+          elif day_time < old_day_time:
               tag += 1
-
               if tag > 3:
                   tag = 1
-                  if monat in monate:
-                      monat = monate[(monate.index(monat) + 1) % len(monate)]
-                  else:
-                      monat = xml_monat
 
-          spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
+          servername = find(
+              r'<Server[^>]* name="([^"]+)"',
+              old.get("servername", "")
+          )
+
+          mapname = find(
+              r'mapName="([^"]+)"',
+              old.get("map", "")
+          )
+
+          spieler = 0
+          slots = re.findall(r'<Player[^>]*isUsed="true"', xml)
+          if slots:
+              spieler = len(slots)
+          else:
+              spieler = int(old.get("spielerOnline", 0))
+
           now = datetime.now(ZoneInfo("Europe/Vienna"))
 
           data = {
               "serverOnline": online,
               "status": "🟢 Online" if online else "🔴 Offline",
-              "servername": find(r'<Server[^>]* name="([^"]+)"'),
-              "map": find(r'mapName="([^"]+)"'),
+              "servername": servername,
+              "map": mapname,
               "monat": monat,
               "tag": tag,
               "zeit": f"{hour}:{minute:02d}",
@@ -93,12 +127,16 @@ jobs:
 
           with open("status.json", "w", encoding="utf-8") as f:
               json.dump(data, f, ensure_ascii=False, indent=2)
+
           PY
 
       - name: Commit updated status
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
           git add status.json
-          git commit -m "Update FS25 status" || exit 0
+
+          git diff --cached --quiet || git commit -m "Update FS25 status"
+
           git push
