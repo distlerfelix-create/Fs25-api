@@ -1,12 +1,12 @@
 {
-  "serverOnline": true,
-  "status": "🟢 Online",
+  "serverOnline": false,
+  "status": "🔴 Offline",
   "servername": "RP_Fix1701",
   "map": "Schellenberg",
   "monat": "März",
   "tag": 1,
   "zeit": "20:00",
   "spielerOnline": 0,
-  "letztesUpdate": "04.06.2026 07:21",
+  "letztesUpdate": "04.06.2026 07:24",
   "dayTimeRaw": 72002353
 }
