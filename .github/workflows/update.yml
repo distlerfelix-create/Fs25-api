@@ -42,6 +42,7 @@ jobs:
           except:
               xml = ""
 
+          # Server gilt nur als online wenn echte Spieldaten vorhanden sind
           online = (
               'dayTime="' in xml and
               'mapName="' in xml and
@@ -90,12 +91,75 @@ jobs:
 
           tag = old_tag
 
+          # Monat gewechselt
           if monat != old_monat:
               tag = 1
+
+          # Neuer Tag im Spiel
           elif online and day_time < old_day_time:
               tag += 1
+
               if tag > 3:
                   tag = 1
 
           servername = find(
-              r'<Server[^>]* name="([^"]
+              r'<Server[^>]*name="([^"]+)"',
+              old.get("servername", "")
+          )
+
+          mapname = find(
+              r'mapName="([^"]+)"',
+              old.get("map", "")
+          )
+
+          if online:
+              spieler = len(
+                  re.findall(
+                      r'<Player[^>]*isUsed="true"',
+                      xml
+                  )
+              )
+          else:
+              spieler = old.get("spielerOnline", 0)
+
+          now = datetime.now(
+              ZoneInfo("Europe/Vienna")
+          )
+
+          data = {
+              "serverOnline": online,
+              "status": "🟢 Online" if online else "🔴 Offline",
+              "servername": servername,
+              "map": mapname,
+              "monat": monat,
+              "tag": tag,
+              "zeit": f"{hour}:{minute:02d}",
+              "spielerOnline": spieler,
+              "letztesUpdate": now.strftime("%d.%m.%Y %H:%M"),
+              "dayTimeRaw": day_time
+          }
+
+          with open(
+              "status.json",
+              "w",
+              encoding="utf-8"
+          ) as f:
+              json.dump(
+                  data,
+                  f,
+                  ensure_ascii=False,
+                  indent=2
+              )
+
+          PY
+
+      - name: Commit updated status
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add status.json
+
+          git diff --cached --quiet || git commit -m "Update FS25 status"
+
+          git push
