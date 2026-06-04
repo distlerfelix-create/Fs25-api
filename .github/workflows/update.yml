@@ -39,10 +39,14 @@ jobs:
 
           try:
               xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
-              online = True
           except:
               xml = ""
-              online = False
+
+          online = (
+              'dayTime="' in xml and
+              'mapName="' in xml and
+              'name="' in xml
+          )
 
           def find(pattern, default=""):
               m = re.search(pattern, xml)
@@ -88,55 +92,10 @@ jobs:
 
           if monat != old_monat:
               tag = 1
-          elif day_time < old_day_time:
+          elif online and day_time < old_day_time:
               tag += 1
               if tag > 3:
                   tag = 1
 
           servername = find(
-              r'<Server[^>]* name="([^"]+)"',
-              old.get("servername", "")
-          )
-
-          mapname = find(
-              r'mapName="([^"]+)"',
-              old.get("map", "")
-          )
-
-          spieler = 0
-          slots = re.findall(r'<Player[^>]*isUsed="true"', xml)
-          if slots:
-              spieler = len(slots)
-          else:
-              spieler = int(old.get("spielerOnline", 0))
-
-          now = datetime.now(ZoneInfo("Europe/Vienna"))
-
-          data = {
-              "serverOnline": online,
-              "status": "🟢 Online" if online else "🔴 Offline",
-              "servername": servername,
-              "map": mapname,
-              "monat": monat,
-              "tag": tag,
-              "zeit": f"{hour}:{minute:02d}",
-              "spielerOnline": spieler,
-              "letztesUpdate": now.strftime("%d.%m.%Y %H:%M"),
-              "dayTimeRaw": day_time
-          }
-
-          with open("status.json", "w", encoding="utf-8") as f:
-              json.dump(data, f, ensure_ascii=False, indent=2)
-
-          PY
-
-      - name: Commit updated status
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git add status.json
-
-          git diff --cached --quiet || git commit -m "Update FS25 status"
-
-          git push
+              r'<Server[^>]* name="([^"]
