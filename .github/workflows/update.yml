@@ -29,31 +29,23 @@ jobs:
           url = "http://195.179.227.75:8940/feed/dedicated-server-stats.xml?code=Gmo9y3myyiXWqmKP"
 
           old = {}
-
           if os.path.exists("status.json"):
               try:
                   with open("status.json", "r", encoding="utf-8") as f:
                       old = json.load(f)
               except:
-                  old = {}
+                  pass
 
           try:
               xml = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", errors="ignore")
+              online = True
           except:
               xml = ""
-
-          # Server gilt nur als online wenn echte Spieldaten vorhanden sind
-          online = (
-              'dayTime="' in xml and
-              'mapName="' in xml and
-              'name="' in xml
-          )
+              online = False
 
           def find(pattern, default=""):
               m = re.search(pattern, xml)
               return m.group(1) if m else default
-
-          season = int(find(r'season="([0-9]+)"', "-1"))
 
           monate = [
               "März",
@@ -70,67 +62,37 @@ jobs:
               "Februar"
           ]
 
-          if 0 <= season < len(monate):
-              monat = monate[season]
-          else:
-              monat = old.get("monat", "Unbekannt")
+          old_monat = old.get("monat", "März")
+          old_tag = int(old.get("tag", 1))
+          old_day_time = int(old.get("dayTimeRaw", 0))
 
-          day_time = int(
-              find(
-                  r'dayTime="([0-9]+)"',
-                  str(old.get("dayTimeRaw", 0))
-              )
-          )
-
+          day_time = int(find(r'dayTime="([0-9]+)"', "0"))
           hour = day_time // 3600000
           minute = (day_time % 3600000) // 60000
 
-          old_day_time = int(old.get("dayTimeRaw", day_time))
-          old_tag = int(old.get("tag", 1))
-          old_monat = old.get("monat", monat)
-
+          monat = old_monat
           tag = old_tag
 
-          # Monat gewechselt
-          if monat != old_monat:
-              tag = 1
-
-          # Neuer Tag im Spiel
-          elif online and day_time < old_day_time:
+          # Neuer Spieltag erkannt
+          if online and old_day_time > 0 and day_time < old_day_time:
               tag += 1
 
+              # Nach Tag 3 beginnt neuer Monat
               if tag > 3:
                   tag = 1
 
-          servername = find(
-              r'<Server[^>]*name="([^"]+)"',
-              old.get("servername", "")
-          )
+                  if monat in monate:
+                      monat = monate[(monate.index(monat) + 1) % len(monate)]
 
-          mapname = find(
-              r'mapName="([^"]+)"',
-              old.get("map", "")
-          )
+          spieler = int(find(r'<Slots[^>]*numUsed="([0-9]+)"', "0"))
 
-          if online:
-              spieler = len(
-                  re.findall(
-                      r'<Player[^>]*isUsed="true"',
-                      xml
-                  )
-              )
-          else:
-              spieler = old.get("spielerOnline", 0)
-
-          now = datetime.now(
-              ZoneInfo("Europe/Vienna")
-          )
+          now = datetime.now(ZoneInfo("Europe/Vienna"))
 
           data = {
               "serverOnline": online,
               "status": "🟢 Online" if online else "🔴 Offline",
-              "servername": servername,
-              "map": mapname,
+              "servername": find(r'<Server[^>]*name="([^"]+)"'),
+              "map": find(r'mapName="([^"]+)"'),
               "monat": monat,
               "tag": tag,
               "zeit": f"{hour}:{minute:02d}",
@@ -139,18 +101,8 @@ jobs:
               "dayTimeRaw": day_time
           }
 
-          with open(
-              "status.json",
-              "w",
-              encoding="utf-8"
-          ) as f:
-              json.dump(
-                  data,
-                  f,
-                  ensure_ascii=False,
-                  indent=2
-              )
-
+          with open("status.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
           PY
 
       - name: Commit updated status
@@ -160,6 +112,7 @@ jobs:
 
           git add status.json
 
-          git diff --cached --quiet || git commit -m "Update FS25 status"
+          git diff --cached --quiet && exit 0
 
+          git commit -m "Update FS25 status"
           git push
