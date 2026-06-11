@@ -3,31 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>FS25 Farm Manager</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <style>
 body{
-    font-family:Arial,sans-serif;
-    background:#1e1e1e;
-    color:white;
-    text-align:center;
-    padding:30px;
+background:#1f1f1f;
+color:white;
+font-family:Arial;
+text-align:center;
+padding:20px;
 }
 
 .card{
-    background:#2d2d2d;
-    padding:20px;
-    border-radius:15px;
-    margin:10px;
+background:#2d2d2d;
+padding:20px;
+margin:20px;
+border-radius:20px;
 }
 
 button{
-    background:#4CAF50;
-    color:white;
-    border:none;
-    padding:12px 20px;
-    border-radius:10px;
-    font-size:16px;
+background:#4CAF50;
+color:white;
+border:none;
+padding:15px 25px;
+border-radius:15px;
+font-size:18px;
 }
 </style>
 </head>
@@ -37,18 +40,51 @@ button{
 <h1>🚜 FS25 Farm Manager</h1>
 
 <div class="card">
-<h2>Willkommen</h2>
-<p>Deine Farmverwaltung ist erfolgreich eingerichtet.</p>
-</div>
-
-<div class="card">
 <h2>Hof</h2>
-<p>BGA F&M</p>
+<p id="hofname">Lade...</p>
 </div>
 
-<button onclick="alert('App funktioniert!')">
-Test
+<button onclick="ladeHof()">
+Neu laden
 </button>
+
+<script>
+
+const supabaseUrl =
+"https://iddfyhsxsdjgestwxcei.supabase.co";
+
+const supabaseKey =
+"sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const supabase =
+window.supabase.createClient(
+supabaseUrl,
+supabaseKey
+);
+
+async function ladeHof(){
+
+const { data, error } =
+await supabase
+.from('hoefe')
+.select('*')
+.limit(1);
+
+if(error){
+document.getElementById("hofname")
+.innerText = error.message;
+return;
+}
+
+if(data.length > 0){
+document.getElementById("hofname")
+.innerText = data[0].Name;
+}
+}
+
+ladeHof();
+
+</script>
 
 </body>
 </html>
