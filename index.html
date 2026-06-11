@@ -1,36 +1,37 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>FS25 Farm Manager</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{
-background:#1f1f1f;
-color:white;
-font-family:Arial;
-text-align:center;
-padding:20px;
+  background:#1e1e1e;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+  padding:20px;
 }
 
 .card{
-background:#2d2d2d;
-padding:20px;
-margin:20px;
-border-radius:20px;
+  background:#2b2b2b;
+  padding:20px;
+  border-radius:20px;
+  margin:20px auto;
+  max-width:400px;
 }
 
 button{
-background:#4CAF50;
-color:white;
-border:none;
-padding:15px 25px;
-border-radius:15px;
-font-size:18px;
+  background:#4CAF50;
+  color:white;
+  border:none;
+  padding:15px 30px;
+  border-radius:15px;
+  font-size:20px;
 }
 </style>
 </head>
@@ -44,9 +45,7 @@ font-size:18px;
 <p id="hofname">Lade...</p>
 </div>
 
-<button onclick="ladeHof()">
-Neu laden
-</button>
+<button onclick="ladeHof()">Neu laden</button>
 
 <script>
 
@@ -64,22 +63,28 @@ supabaseKey
 
 async function ladeHof(){
 
+document.getElementById("hofname").innerText =
+"Verbinde...";
+
 const { data, error } =
 await supabase
-.from('hoefe')
-.select('*')
-.limit(1);
+.from("hoefe")
+.select("*");
 
 if(error){
-document.getElementById("hofname")
-.innerText = error.message;
+document.getElementById("hofname").innerText =
+"FEHLER: " + error.message;
 return;
 }
 
-if(data.length > 0){
-document.getElementById("hofname")
-.innerText = data[0].Name;
+if(!data || data.length===0){
+document.getElementById("hofname").innerText =
+"Keine Daten gefunden";
+return;
 }
+
+document.getElementById("hofname").innerText =
+data[0].Name;
 }
 
 ladeHof();
