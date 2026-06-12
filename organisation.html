@@ -228,7 +228,7 @@ async function ladeOrganisation(){
     const users = await api("Users");
     const organisationen = await api("Organisationen");
     const userOrgs = await api("User_organisationen");
-    const nachrichten = await api("Organisation_Nachrichten");
+    const nachrichten = await api("Organisation_nachrichten");
     const auftraege = await api("Auftraege");
 
     aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
@@ -385,7 +385,7 @@ async function nachrichtErstellen(wichtig){
   }
 
   try{
-    await post("Organisation_Nachrichten", {
+    await post("Organisation_nachrichten", {
       Organisation_id: Number(ORG_ID),
       Titel: titel,
       Nachricht: nachricht,
