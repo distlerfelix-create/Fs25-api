@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  overflow-x:hidden;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:35px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:40px;
+  margin:25px 0 35px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+.label{
+  color:#ffaa33;
+  font-size:15px;
+  margin-top:12px;
+}
+
+.value{
+  color:white;
+  font-size:22px;
+  margin-top:4px;
+}
+
+.org{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:10px;
+  padding:12px;
+  margin-top:10px;
+  color:white;
+}
+
+.org span{
+  color:#ffaa33;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:18px;
+}
+
+button{
+  width:100%;
+  margin-top:14px;
+  padding:16px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.green{
+  background:#008800;
+  color:white;
+}
+
+.red{
+  background:#aa0000;
+  color:white;
+}
+
+.msg{
+  margin-top:15px;
+  color:#ffaa33;
+  font-weight:bold;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
+
+<h1>PROFIL</h1>
+
+<div class="card">
+  <div class="label">PSN-Username</div>
+  <div class="value" id="username">...</div>
+
+  <div class="label">Vorname</div>
+  <div class="value" id="vorname">...</div>
+
+  <div class="label">Hof</div>
+  <div class="value" id="hof">...</div>
+
+  <div class="label">Admin</div>
+  <div class="value" id="admin">...</div>
+</div>
+
+<div class="card">
+  <h2>Organisationen</h2>
+  <div id="organisationen">Lade...</div>
+</div>
+
+<div class="card">
+  <h2>Passwort ändern</h2>
+
+  <input id="altesPasswort" type="password" placeholder="Altes Passwort">
+  <input id="neuesPasswort" type="password" placeholder="Neues Passwort">
+  <input id="neuesPasswort2" type="password" placeholder="Neues Passwort wiederholen">
+
+  <button class="green" onclick="passwortAendern()">Passwort speichern</button>
+
+  <div id="meldung" class="msg"></div>
+</div>
+
+<div class="card">
+  <button class="red" onclick="logout()">Logout</button>
+</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+
+if(!USER_ID){
+  location.href = "login.html";
+}
+
+let aktuellerUser = null;
+
+async function api(tabelle){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    {
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  return await res.json();
+}
+
+async function ladeProfil(){
+  const users = await api("Users");
+  const hoefe = await api("Hoefe");
+  const userOrgs = await api("User_Organisationen");
+  const organisationen = await api("Organisationen");
+
+  aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
+
+  if(!aktuellerUser){
+    localStorage.clear();
+    location.href = "login.html";
+    return;
+  }
+
+  const hof = hoefe.find(h => String(h.id) === String(aktuellerUser.Hof_id));
+
+  document.getElementById("username").innerText =
+    aktuellerUser["PSN-Username"] || "-";
+
+  document.getElementById("vorname").innerText =
+    aktuellerUser.Vorname || "-";
+
+  document.getElementById("hof").innerText =
+    aktuellerUser.Hof || (hof ? hof.Name : "-");
+
+  document.getElementById("admin").innerText =
+    aktuellerUser.Admin === true ? "Ja" : "Nein";
+
+  const meineOrgs = userOrgs.filter(o =>
+    String(o.User_id) === String(USER_ID) &&
+    o.Aktiv === true
+  );
+
+  const box = document.getElementById("organisationen");
+  box.innerHTML = "";
+
+  if(meineOrgs.length === 0){
+    box.innerHTML = "<div style='color:white'>Keine Organisationen.</div>";
+  }
+
+  meineOrgs.forEach(eintrag => {
+    const org = organisationen.find(o =>
+      String(o.id) === String(eintrag.Organisation_id)
+    );
+
+    const div = document.createElement("div");
+    div.className = "org";
+    div.innerHTML =
+      (org ? org.Name : "Organisation") +
+      "<br><span>Rolle: " + (eintrag.Rolle || "-") + "</span>";
+
+    box.appendChild(div);
+  });
+}
+
+async function passwortAendern(){
+  const alt = document.getElementById("altesPasswort").value.trim();
+  const neu = document.getElementById("neuesPasswort").value.trim();
+  const neu2 = document.getElementById("neuesPasswort2").value.trim();
+  const meldung = document.getElementById("meldung");
+
+  meldung.innerText = "";
+
+  if(!alt || !neu || !neu2){
+    meldung.innerText = "Bitte alle Felder ausfüllen.";
+    return;
+  }
+
+  if(alt !== aktuellerUser.Passwort){
+    meldung.innerText = "Altes Passwort ist falsch.";
+    return;
+  }
+
+  if(neu !== neu2){
+    meldung.innerText = "Neue Passwörter stimmen nicht überein.";
+    return;
+  }
+
+  if(neu.length < 4){
+    meldung.innerText = "Neues Passwort ist zu kurz.";
+    return;
+  }
+
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Users?id=eq." + USER_ID,
+    {
+      method:"PATCH",
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Passwort: neu
+      })
+    }
+  );
+
+  if(!res.ok){
+    meldung.innerText = "Passwort konnte nicht gespeichert werden.";
+    return;
+  }
+
+  aktuellerUser.Passwort = neu;
+
+  document.getElementById("altesPasswort").value = "";
+  document.getElementById("neuesPasswort").value = "";
+  document.getElementById("neuesPasswort2").value = "";
+
+  meldung.innerText = "Passwort wurde geändert.";
+}
+
+function logout(){
+  localStorage.clear();
+  location.href = "login.html";
+}
+
+ladeProfil();
+</script>
+
+</body>
+</html>
