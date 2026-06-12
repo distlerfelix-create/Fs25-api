@@ -210,9 +210,11 @@ const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
 const AKTUELLER_USER_ID = 1;
+const AKTUELLER_HOF_ID = 1;
 const AKTUELLER_USERNAME = "Disti1701";
 
 let aktuelleNachrichtId = null;
+let aktuelleNachrichtTitel = "";
 
 async function ladeNachrichten(){
   const box = document.getElementById("liste");
@@ -268,8 +270,9 @@ function formatDatum(datum){
 
 async function oeffneNachricht(n){
   aktuelleNachrichtId = n.id;
+  aktuelleNachrichtTitel = n.Titel || "Nachricht";
 
-  document.getElementById("popupTitel").innerText = n.Titel || "Nachricht";
+  document.getElementById("popupTitel").innerText = aktuelleNachrichtTitel;
   document.getElementById("popupInhalt").innerText = n.Inhalt || "";
   document.getElementById("popupMeta").innerText =
     "Von: " + (n.Erstellt_von || "-") + " | " + formatDatum(n.Erstellt_am);
@@ -324,6 +327,30 @@ async function ladeAntworten(){
   });
 }
 
+async function erstelleBenachrichtigung(text){
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
+    {
+      method:"POST",
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Titel:"Neue Antwort",
+        Nachricht: AKTUELLER_USERNAME + " hat auf \"" + aktuelleNachrichtTitel + "\" geantwortet: " + text,
+        Typ:"Antwort",
+        User_id:AKTUELLER_USER_ID,
+        Hof_id:AKTUELLER_HOF_ID,
+        Gelesen:false,
+        Erstellt_am:new Date().toISOString()
+      })
+    }
+  );
+}
+
 async function sendeAntwort(){
   const text = document.getElementById("antwortText").value.trim();
 
@@ -357,6 +384,8 @@ async function sendeAntwort(){
     alert(fehler);
     return;
   }
+
+  await erstelleBenachrichtigung(text);
 
   document.getElementById("antwortText").value = "";
   await ladeAntworten();
