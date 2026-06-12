@@ -95,9 +95,9 @@ async function ladeBenachrichtigungen(){
     const div = document.createElement("div");
     div.className = "card";
     div.innerHTML = `
-      <div class="titel">${b.titel || "Benachrichtigung"}</div>
-      <div class="text">${b.nachricht || ""}</div>
-      <div class="typ">${b.typ || ""}</div>
+      <div class="titel">${b.Titel || "Benachrichtigung"}</div>
+<div class="text">${b.Nachricht || ""}</div>
+<div class="typ">${b.Typ || ""}</div>
     `;
     box.appendChild(div);
   });
