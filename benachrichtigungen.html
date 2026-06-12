@@ -21,35 +21,93 @@ h1{
   color:white;
   text-align:center;
   font-family:Georgia,serif;
+  font-size:34px;
 }
 .back{
   background:#222;
   color:white;
   border:1px solid #555;
-  padding:12px 18px;
-  border-radius:8px;
-  margin-bottom:20px;
+  padding:14px 22px;
+  border-radius:10px;
+  margin-bottom:35px;
+  font-size:18px;
 }
 .card{
   background:#111;
   border:1px solid #008000;
-  border-radius:10px;
-  padding:15px;
-  margin-bottom:12px;
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:14px;
+}
+.card:active{
+  background:#003300;
 }
 .titel{
   color:#00ff22;
-  font-size:20px;
+  font-size:22px;
   font-weight:bold;
 }
 .text{
   color:white;
-  margin-top:8px;
+  margin-top:10px;
+  font-size:16px;
 }
 .typ{
   color:#ffaa33;
-  font-size:13px;
-  margin-top:8px;
+  font-size:14px;
+  margin-top:10px;
+}
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+  font-size:18px;
+}
+
+/* eigenes Popup */
+.popup-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:10;
+}
+.popup{
+  background:#111;
+  border:2px solid #00aa22;
+  border-radius:18px;
+  padding:24px;
+  max-width:380px;
+  width:100%;
+  color:white;
+  box-shadow:0 0 25px #003300;
+}
+.popup h2{
+  color:#00ff22;
+  margin-top:0;
+  font-size:26px;
+}
+.popup p{
+  font-size:18px;
+  line-height:1.4;
+}
+.popup .popup-typ{
+  color:#ffaa33;
+  margin-top:15px;
+}
+.popup button{
+  width:100%;
+  margin-top:25px;
+  padding:15px;
+  background:#007a00;
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -65,9 +123,29 @@ h1{
 
 </div>
 
+<div id="popupBg" class="popup-bg">
+  <div class="popup">
+    <h2 id="popupTitel"></h2>
+    <p id="popupNachricht"></p>
+    <div class="popup-typ" id="popupTyp"></div>
+    <button onclick="schliessePopup()">Schließen</button>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+function zeigePopup(titel,nachricht,typ){
+  document.getElementById("popupTitel").innerText = titel;
+  document.getElementById("popupNachricht").innerText = nachricht;
+  document.getElementById("popupTyp").innerText = "Typ: " + typ;
+  document.getElementById("popupBg").style.display = "flex";
+}
+
+function schliessePopup(){
+  document.getElementById("popupBg").style.display = "none";
+}
 
 async function ladeBenachrichtigungen(){
   const box = document.getElementById("liste");
@@ -85,30 +163,30 @@ async function ladeBenachrichtigungen(){
   const data = await res.json();
 
   if(!data || data.length === 0){
-    box.innerHTML = "<p style='color:white;text-align:center'>Keine Benachrichtigungen vorhanden.</p>";
+    box.innerHTML = "<div class='leer'>Keine Benachrichtigungen vorhanden.</div>";
     return;
   }
 
   box.innerHTML = "";
 
   data.forEach(b => {
+    const titel = b.Titel || "Benachrichtigung";
+    const nachricht = b.Nachricht || "";
+    const typ = b.Typ || "-";
+
     const div = document.createElement("div");
     div.className = "card";
-    div.onclick = function(){
-  alert(
-    (b.Titel || "Benachrichtigung") +
-    "\n\n" +
-    (b.Nachricht || "") +
-    "\n\nTyp: " +
-    (b.Typ || "-")
-  );
-};
 
-div.innerHTML = `
-  <div class="titel">${b.Titel || "Benachrichtigung"}</div>
-  <div class="text">${b.Nachricht || ""}</div>
-  <div class="typ">${b.Typ || ""}</div>
-`;
+    div.onclick = function(){
+      zeigePopup(titel,nachricht,typ);
+    };
+
+    div.innerHTML = `
+      <div class="titel">${titel}</div>
+      <div class="text">${nachricht}</div>
+      <div class="typ">${typ}</div>
+    `;
+
     box.appendChild(div);
   });
 }
