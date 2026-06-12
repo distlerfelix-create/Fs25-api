@@ -226,7 +226,7 @@ async function ladeNachrichten(){
   const box = document.getElementById("liste");
 
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Nachrichten?select=*&order=id.desc",
+    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&order=id.asc",
     {
       headers:{
         "apikey": SUPABASE_KEY,
