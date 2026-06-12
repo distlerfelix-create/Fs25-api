@@ -178,7 +178,7 @@ function wert(obj, namen, fallback=""){
 async function ladeHome(){
   try{
     const users = await api("Users");
-    const hoefe = await api("hoefe");
+    const hoefe = await api("Hoefe");
     const serverstatus = await api("Serverstatus");
     const organisationen = await api("Organisationen");
     const benachrichtigungen = await api("Benachrichtigungen");
