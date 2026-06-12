@@ -6,26 +6,26 @@
 <title>FS25 RP Fix1701</title>
 
 <style>
-  *{
+*{
   box-sizing:border-box;
 }
 
 body{
-  overflow-x:hidden;
-}
-body{
   margin:0;
+  overflow-x:hidden;
   background:#000;
   color:#00ff22;
   font-family:Arial,sans-serif;
   text-align:center;
 }
+
 .app{
   width:100%;
-  max-width:600px;
+  max-width:700px;
   margin:auto;
-  padding:22px 16px 60px;
+  padding:20px;
 }
+
 h1{
   color:white;
   font-family:Georgia,serif;
@@ -33,79 +33,117 @@ h1{
   margin:20px 0 25px;
 }
 
-@media (max-width:500px){
-  h1{
-    font-size:34px;
-  }
-}
 .welcome{
-  font-size:clamp(28px,7vw,42px);
+  font-size:clamp(28px,5vw,48px);
   font-weight:bold;
-  line-height:1.25;
-  margin-top:25px;
+  line-height:1.15;
+  margin-top:15px;
 }
+
 .status{
   color:white;
-  margin-top:55px;
-  font-size:18px;
+  margin-top:35px;
+  font-size:clamp(18px,2vw,24px);
+  line-height:1.35;
 }
+
 .status span{
   color:#00ff22;
 }
+
 .admin{
   display:none;
   width:100%;
-  background:red;
+  background:#ff1111;
   color:white;
   border:none;
-  border-radius:6px;
-  padding:16px;
-  font-size:18px;
+  border-radius:14px;
+  padding:18px;
+  font-size:24px;
   font-weight:bold;
-  margin:35px 0 25px;
+  margin:30px 0;
+  box-shadow:0 0 12px rgba(255,0,0,0.45);
 }
+
 .menu button{
   width:100%;
-  background:#007a00;
+  background:#008800;
   color:white;
   border:none;
-  padding:18px 10px;
-  font-size:clamp(20px,6vw,30px);
+  padding:18px;
+  font-size:clamp(20px,2.5vw,28px);
   font-weight:bold;
-  margin:4px 0;
-  border-radius:8px;
+  margin:6px 0;
+  border-radius:14px;
   letter-spacing:2px;
+  box-shadow:0 0 10px rgba(0,255,0,0.25);
 }
+
+.menu button:active{
+  background:#00aa00;
+}
+
 .section-title{
   color:red;
   text-align:left;
-  margin-top:55px;
+  margin-top:50px;
   font-family:Georgia,serif;
   font-size:18px;
   font-weight:bold;
 }
+
 .org{
   display:flex;
   align-items:center;
   gap:15px;
-  border-bottom:1px solid #aaa;
+  border-bottom:1px solid #555;
   padding:14px 0;
   color:#00ff22;
   font-size:18px;
+  text-align:left;
 }
+
 .dot{
   width:38px;
   height:38px;
+  min-width:38px;
   background:#ddd;
   border-radius:50%;
+  box-shadow:0 0 8px rgba(255,255,255,0.4);
 }
+
 .notice{
   margin-top:25px;
   color:#ffaa33;
   font-size:14px;
 }
+
 .loading{
   color:white;
+}
+
+.badge{
+  background:red;
+  color:white;
+  border-radius:20px;
+  padding:2px 9px;
+  font-size:18px;
+  margin-left:8px;
+}
+
+@media (max-width:500px){
+  .app{
+    max-width:430px;
+    padding:20px 16px 60px;
+  }
+
+  h1{
+    font-size:38px;
+  }
+
+  .admin{
+    font-size:20px;
+  }
 }
 </style>
 </head>
@@ -136,7 +174,9 @@ h1{
 <button id="adminButton" class="admin">🛡️ ADMIN</button>
 
 <div class="menu">
-  <button onclick="location.href='benachrichtigungen.html'">BENACHRICHTIGUNGEN</button>
+  <button onclick="location.href='benachrichtigungen.html'">
+    BENACHRICHTIGUNGEN <span id="badge" class="badge" style="display:none">0</span>
+  </button>
   <button>NACHRICHTEN</button>
   <button>MARKTPLATZ</button>
   <button>BESTELLUNGEN</button>
@@ -160,7 +200,6 @@ h1{
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
-/* aktuell fester Test-User */
 const AKTUELLER_USERNAME = "Disti1701";
 
 async function api(tabelle){
@@ -203,6 +242,7 @@ async function ladeHome(){
       || users[0];
 
     let hofId = wert(user,["hof_id","Hof_id","Hof_ID"],1);
+
     let hof =
       hoefe.find(h => String(wert(h,["id"])) === String(hofId))
       || hoefe[0];
@@ -240,6 +280,11 @@ async function ladeHome(){
     ).length;
 
     document.getElementById("benachrichtigungen").innerText = ungelesen;
+
+    if(ungelesen > 0){
+      document.getElementById("badge").style.display = "inline-block";
+      document.getElementById("badge").innerText = ungelesen;
+    }
 
     let istAdmin = wert(user,["admin","Admin"],false);
     if(istAdmin === true){
