@@ -6,9 +6,7 @@
 <title>Nachrichten</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{ box-sizing:border-box; }
 
 body{
   margin:0;
@@ -52,9 +50,7 @@ h1{
   box-shadow:0 0 10px rgba(0,255,0,0.18);
 }
 
-.card:active{
-  background:#003300;
-}
+.card:active{ background:#003300; }
 
 .titel{
   color:#00ff22;
@@ -82,7 +78,6 @@ h1{
   font-size:18px;
 }
 
-/* Popup */
 .popup-bg{
   display:none;
   position:fixed;
@@ -147,9 +142,7 @@ h1{
   margin-bottom:5px;
 }
 
-.antwort-text{
-  color:white;
-}
+.antwort-text{ color:white; }
 
 textarea{
   width:100%;
@@ -216,7 +209,6 @@ textarea{
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
-/* aktuell fester Test-User */
 const AKTUELLER_USER_ID = 1;
 const AKTUELLER_USERNAME = "Disti1701";
 
@@ -226,7 +218,7 @@ async function ladeNachrichten(){
   const box = document.getElementById("liste");
 
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&order=id.asc",
+    SUPABASE_URL + "/rest/v1/Nachrichten?select=*&order=id.desc",
     {
       headers:{
         "apikey": SUPABASE_KEY,
@@ -234,6 +226,11 @@ async function ladeNachrichten(){
       }
     }
   );
+
+  if(!res.ok){
+    box.innerHTML = "<div class='leer'>Nachrichten konnten nicht geladen werden.</div>";
+    return;
+  }
 
   const data = await res.json();
 
@@ -291,7 +288,7 @@ async function ladeAntworten(){
   const box = document.getElementById("antwortListe");
 
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&order=id.asc",
+    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&Nachricht_id=eq." + aktuelleNachrichtId + "&order=Id.asc",
     {
       headers:{
         "apikey": SUPABASE_KEY,
@@ -299,6 +296,11 @@ async function ladeAntworten(){
       }
     }
   );
+
+  if(!res.ok){
+    box.innerHTML = "<div style='color:white'>Antworten konnten nicht geladen werden.</div>";
+    return;
+  }
 
   const data = await res.json();
 
@@ -341,19 +343,19 @@ async function sendeAntwort(){
         "Prefer":"return=minimal"
       },
       body:JSON.stringify({
-  Nachricht_id: aktuelleNachrichtId,
-  Antwort: text,
-  Erstellt_von: AKTUELLER_USERNAME,
-  Erstellt_am: new Date().toISOString(),
-  User_id: AKTUELLER_USER_ID
+        Nachricht_id: aktuelleNachrichtId,
+        Antwort: text,
+        Erstellt_von: AKTUELLER_USERNAME,
+        Erstellt_am: new Date().toISOString(),
+        User_id: AKTUELLER_USER_ID
       })
     }
   );
 
   if(!res.ok){
-  const fehler = await res.text();
-  alert(fehler);
-  return;
+    const fehler = await res.text();
+    alert(fehler);
+    return;
   }
 
   document.getElementById("antwortText").value = "";
