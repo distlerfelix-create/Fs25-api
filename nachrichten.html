@@ -291,7 +291,7 @@ async function ladeAntworten(){
   const box = document.getElementById("antwortListe");
 
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&Nachricht_id=eq." + aktuelleNachrichtId + "&order=id.asc",
+    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&order=id.asc",
     {
       headers:{
         "apikey": SUPABASE_KEY,
