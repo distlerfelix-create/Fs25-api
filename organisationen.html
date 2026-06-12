@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organisationen</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  overflow-x:hidden;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:35px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:38px;
+  margin:25px 0 35px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+.card:active{
+  background:#003300;
+}
+
+.name{
+  color:#00ff22;
+  font-size:28px;
+  font-weight:bold;
+}
+
+.info{
+  color:white;
+  margin-top:10px;
+  font-size:18px;
+  line-height:1.4;
+}
+
+.rolle{
+  color:#ffaa33;
+  margin-top:10px;
+  font-size:17px;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
+
+<h1>ORGANISATIONEN</h1>
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+
+if(!USER_ID){
+  location.href = "login.html";
+}
+
+async function api(tabelle){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    {
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+function orgIdAusEintrag(eintrag){
+  return (
+    eintrag.Organisation_id ||
+    eintrag.Organistion_id ||
+    eintrag.organisation_id ||
+    eintrag.organistion_id
+  );
+}
+
+function iconFuerOrganisation(name){
+  const n = (name || "").toLowerCase();
+
+  if(n.includes("polizei")) return "🚓";
+  if(n.includes("feuerwehr")) return "🚒";
+  if(n.includes("rettung")) return "🚑";
+  if(n.includes("bauhof")) return "🚜";
+  if(n.includes("gemeinde")) return "🏛️";
+
+  return "🏢";
+}
+
+async function ladeOrganisationen(){
+  const box = document.getElementById("liste");
+
+  try{
+    const users = await api("Users");
+    const organisationen = await api("Organisationen");
+    const userOrgs = await api("User_organisationen");
+
+    const user = users.find(u => String(u.id) === String(USER_ID));
+    const istAdmin = user && user.Admin === true;
+
+    let sichtbareOrganisationen = [];
+
+    if(istAdmin){
+      sichtbareOrganisationen = organisationen.map(org => ({
+        org: org,
+        rolle: "Admin"
+      }));
+    }else{
+      const meineEintraege = userOrgs.filter(e =>
+        String(e.User_id) === String(USER_ID) &&
+        e.Aktiv === true
+      );
+
+      sichtbareOrganisationen = meineEintraege.map(e => {
+        const orgId = orgIdAusEintrag(e);
+        const org = organisationen.find(o => String(o.id) === String(orgId));
+
+        return {
+          org: org,
+          rolle: e.Rolle || "-"
+        };
+      }).filter(e => e.org);
+    }
+
+    if(!sichtbareOrganisationen || sichtbareOrganisationen.length === 0){
+      box.innerHTML = "<div class='leer'>Du bist in keiner Organisation.</div>";
+      return;
+    }
+
+    box.innerHTML = "";
+
+    sichtbareOrganisationen.forEach(e => {
+      const div = document.createElement("div");
+      div.className = "card";
+
+      div.onclick = function(){
+        location.href = "organisation.html?id=" + e.org.id;
+      };
+
+      div.innerHTML = `
+        <div class="name">${iconFuerOrganisation(e.org.Name)} ${e.org.Name}</div>
+        <div class="info">Farbe: ${e.org.Farbe || "-"}</div>
+        <div class="rolle">Rolle: ${e.rolle}</div>
+      `;
+
+      box.appendChild(div);
+    });
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Organisationen konnten nicht geladen werden.</div>";
+  }
+}
+
+ladeOrganisationen();
+</script>
+
+</body>
+</html>
