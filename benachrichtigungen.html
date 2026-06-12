@@ -94,11 +94,21 @@ async function ladeBenachrichtigungen(){
   data.forEach(b => {
     const div = document.createElement("div");
     div.className = "card";
-    div.innerHTML = `
-      <div class="titel">${b.Titel || "Benachrichtigung"}</div>
-<div class="text">${b.Nachricht || ""}</div>
-<div class="typ">${b.Typ || ""}</div>
-    `;
+    div.onclick = function(){
+  alert(
+    (b.Titel || "Benachrichtigung") +
+    "\n\n" +
+    (b.Nachricht || "") +
+    "\n\nTyp: " +
+    (b.Typ || "-")
+  );
+};
+
+div.innerHTML = `
+  <div class="titel">${b.Titel || "Benachrichtigung"}</div>
+  <div class="text">${b.Nachricht || ""}</div>
+  <div class="typ">${b.Typ || ""}</div>
+`;
     box.appendChild(div);
   });
 }
