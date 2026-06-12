@@ -20,9 +20,9 @@ body{
 
 .app{
   width:100%;
-  max-width:720px;
+  max-width:600px;
   margin:auto;
-  padding:20px 16px 60px;
+  padding:20px 15px 60px;
 }
 
 .back{
@@ -56,6 +56,12 @@ h1{
   padding:18px;
   margin-bottom:14px;
   width:100%;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+.card.neu{
+  border:2px solid red;
+  box-shadow:0 0 14px rgba(255,0,0,0.45);
 }
 
 .card:active{
@@ -79,6 +85,16 @@ h1{
   color:#ffaa33;
   font-size:clamp(14px,3.5vw,18px);
   margin-top:10px;
+}
+
+.badge-neu{
+  display:inline-block;
+  background:red;
+  color:white;
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:14px;
+  margin-left:8px;
 }
 
 .leer{
@@ -140,13 +156,6 @@ h1{
 }
 
 @media (min-width:800px){
-  .app{
-  width:100%;
-  max-width:600px;
-  margin:auto;
-  padding:20px 15px 60px;
-  }
-
   .card{
     padding:24px;
   }
@@ -189,6 +198,24 @@ function schliessePopup(){
   document.getElementById("popupBg").style.display = "none";
 }
 
+async function markiereAlsGelesen(id){
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen?id=eq." + id,
+    {
+      method:"PATCH",
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Gelesen:true
+      })
+    }
+  );
+}
+
 async function ladeBenachrichtigungen(){
   const box = document.getElementById("liste");
 
@@ -215,16 +242,26 @@ async function ladeBenachrichtigungen(){
     const titel = b.Titel || "Benachrichtigung";
     const nachricht = b.Nachricht || "";
     const typ = b.Typ || "-";
+    const istNeu = b.Gelesen !== true;
 
     const div = document.createElement("div");
-    div.className = "card";
+    div.className = istNeu ? "card neu" : "card";
 
-    div.onclick = function(){
+    div.onclick = async function(){
       zeigePopup(titel,nachricht,typ);
+
+      if(istNeu){
+        await markiereAlsGelesen(b.id);
+        div.className = "card";
+        ladeBenachrichtigungen();
+      }
     };
 
     div.innerHTML = `
-      <div class="titel">${titel}</div>
+      <div class="titel">
+        ${titel}
+        ${istNeu ? "<span class='badge-neu'>NEU</span>" : ""}
+      </div>
       <div class="text">${nachricht}</div>
       <div class="typ">${typ}</div>
     `;
