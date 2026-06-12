@@ -168,7 +168,6 @@ h1{
   Zeit: <span id="zeit">...</span><br>
   Serverstatus: <span id="server">...</span><br>
   GitHubupdate: <span id="githubupdate">...</span><br>
-  Benachrichtigungen: <span id="benachrichtigungen">...</span>
 </div>
 
 <button id="adminButton" class="admin">🛡️ ADMIN</button>
@@ -279,7 +278,6 @@ async function ladeHome(){
       wert(b,["gelesen","Gelesen"],false) === false
     ).length;
 
-    document.getElementById("benachrichtigungen").innerText = ungelesen;
 
     if(ungelesen > 0){
       document.getElementById("badge").style.display = "inline-block";
