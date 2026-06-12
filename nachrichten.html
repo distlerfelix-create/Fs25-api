@@ -52,6 +52,10 @@ h1{
   box-shadow:0 0 10px rgba(0,255,0,0.18);
 }
 
+.card:active{
+  background:#003300;
+}
+
 .titel{
   color:#00ff22;
   font-size:28px;
@@ -77,6 +81,107 @@ h1{
   margin-top:40px;
   font-size:18px;
 }
+
+/* Popup */
+.popup-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:10;
+}
+
+.popup{
+  background:#111;
+  border:2px solid #00aa22;
+  border-radius:18px;
+  padding:22px;
+  width:100%;
+  max-width:620px;
+  max-height:90vh;
+  overflow-y:auto;
+  color:white;
+  box-shadow:0 0 25px #003300;
+}
+
+.popup h2{
+  color:#00ff22;
+  margin-top:0;
+  font-size:30px;
+}
+
+.popup-text{
+  font-size:20px;
+  line-height:1.4;
+  margin-bottom:15px;
+}
+
+.popup-meta{
+  color:#ffaa33;
+  font-size:15px;
+  margin-bottom:20px;
+}
+
+.antwort-title{
+  color:#00ff22;
+  font-size:22px;
+  font-weight:bold;
+  margin-top:20px;
+  margin-bottom:10px;
+}
+
+.antwort{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:10px;
+}
+
+.antwort-von{
+  color:#ffaa33;
+  font-weight:bold;
+  margin-bottom:5px;
+}
+
+.antwort-text{
+  color:white;
+}
+
+textarea{
+  width:100%;
+  min-height:90px;
+  background:#000;
+  color:white;
+  border:1px solid #008000;
+  border-radius:10px;
+  padding:12px;
+  font-size:17px;
+  margin-top:10px;
+}
+
+.popup button{
+  width:100%;
+  margin-top:12px;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.send-btn{
+  background:#008800;
+  color:white;
+}
+
+.close-btn{
+  background:#333;
+  color:white;
+}
 </style>
 </head>
 
@@ -91,9 +196,31 @@ h1{
 
 </div>
 
+<div id="popupBg" class="popup-bg">
+  <div class="popup">
+    <h2 id="popupTitel"></h2>
+    <div class="popup-text" id="popupInhalt"></div>
+    <div class="popup-meta" id="popupMeta"></div>
+
+    <div class="antwort-title">Antworten</div>
+    <div id="antwortListe">Lade Antworten...</div>
+
+    <textarea id="antwortText" placeholder="Antwort schreiben..."></textarea>
+
+    <button class="send-btn" onclick="sendeAntwort()">Antwort senden</button>
+    <button class="close-btn" onclick="schliessePopup()">Schließen</button>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+/* aktuell fester Test-User */
+const AKTUELLER_USER_ID = 1;
+const AKTUELLER_USERNAME = "Disti1701";
+
+let aktuelleNachrichtId = null;
 
 async function ladeNachrichten(){
   const box = document.getElementById("liste");
@@ -121,14 +248,114 @@ async function ladeNachrichten(){
     const div = document.createElement("div");
     div.className = "card";
 
+    div.onclick = function(){
+      oeffneNachricht(n);
+    };
+
     div.innerHTML = `
       <div class="titel">${n.Titel || "Nachricht"}</div>
       <div class="inhalt">${n.Inhalt || ""}</div>
-      <div class="meta">Von: ${n.Erstellt_von || "-"}<br>${n.Erstellt_am || ""}</div>
+      <div class="meta">Von: ${n.Erstellt_von || "-"}<br>${formatDatum(n.Erstellt_am)}</div>
     `;
 
     box.appendChild(div);
   });
+}
+
+function formatDatum(datum){
+  if(!datum) return "";
+  const d = new Date(datum);
+  return d.toLocaleDateString("de-DE") + " • " +
+         d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr";
+}
+
+async function oeffneNachricht(n){
+  aktuelleNachrichtId = n.id;
+
+  document.getElementById("popupTitel").innerText = n.Titel || "Nachricht";
+  document.getElementById("popupInhalt").innerText = n.Inhalt || "";
+  document.getElementById("popupMeta").innerText =
+    "Von: " + (n.Erstellt_von || "-") + " | " + formatDatum(n.Erstellt_am);
+
+  document.getElementById("antwortText").value = "";
+  document.getElementById("popupBg").style.display = "flex";
+
+  await ladeAntworten();
+}
+
+function schliessePopup(){
+  document.getElementById("popupBg").style.display = "none";
+}
+
+async function ladeAntworten(){
+  const box = document.getElementById("antwortListe");
+
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&Nachricht_id=eq." + aktuelleNachrichtId + "&order=id.asc",
+    {
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  const data = await res.json();
+
+  if(!data || data.length === 0){
+    box.innerHTML = "<div style='color:white'>Noch keine Antworten.</div>";
+    return;
+  }
+
+  box.innerHTML = "";
+
+  data.forEach(a => {
+    const div = document.createElement("div");
+    div.className = "antwort";
+
+    div.innerHTML = `
+      <div class="antwort-von">${a.Erstellt_von || "-"}</div>
+      <div class="antwort-text">${a.Antwort || ""}</div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+async function sendeAntwort(){
+  const text = document.getElementById("antwortText").value.trim();
+
+  if(text === ""){
+    alert("Bitte zuerst eine Antwort eingeben.");
+    return;
+  }
+
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Nachrichten_antworten",
+    {
+      method:"POST",
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Nachricht_id: aktuelleNachrichtId,
+        Antwort: text,
+        Erstellt_von: AKTUELLER_USERNAME,
+        User_id: AKTUELLER_USER_ID
+      })
+    }
+  );
+
+  if(!res.ok){
+    alert("Antwort konnte nicht gespeichert werden.");
+    return;
+  }
+
+  document.getElementById("antwortText").value = "";
+  await ladeAntworten();
 }
 
 ladeNachrichten();
