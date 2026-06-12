@@ -341,10 +341,11 @@ async function sendeAntwort(){
         "Prefer":"return=minimal"
       },
       body:JSON.stringify({
-        Nachricht_id: aktuelleNachrichtId,
-        Antwort: text,
-        Erstellt_von: AKTUELLER_USERNAME,
-        User_id: AKTUELLER_USER_ID
+  Nachricht_id: aktuelleNachrichtId,
+  Antwort: text,
+  Erstellt_von: AKTUELLER_USERNAME,
+  Erstellt_am: new Date().toISOString(),
+  User_id: AKTUELLER_USER_ID
       })
     }
   );
