@@ -188,7 +188,7 @@ async function api(tabelle){
 async function ladeProfil(){
   const users = await api("Users");
   const hoefe = await api("Hoefe");
-  const userOrgs = await api("User_Organisationen");
+  const userOrgs = await api("User_organisationen");
   const organisationen = await api("Organisationen");
 
   aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
