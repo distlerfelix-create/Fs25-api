@@ -350,8 +350,9 @@ async function sendeAntwort(){
   );
 
   if(!res.ok){
-    alert("Antwort konnte nicht gespeichert werden.");
-    return;
+  const fehler = await res.text();
+  alert(fehler);
+  return;
   }
 
   document.getElementById("antwortText").value = "";
