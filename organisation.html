@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organisation</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  overflow-x:hidden;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:35px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:38px;
+  margin:25px 0 35px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+h2{
+  color:#00ff22;
+  margin-top:0;
+}
+
+.label{
+  color:#ffaa33;
+  font-size:15px;
+  margin-top:10px;
+}
+
+.value{
+  color:white;
+  font-size:20px;
+  margin-top:4px;
+}
+
+.item{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:10px;
+  padding:12px;
+  margin-top:10px;
+  color:white;
+}
+
+.item span{
+  color:#ffaa33;
+}
+
+.wichtig{
+  border-color:red;
+  box-shadow:0 0 12px rgba(255,0,0,0.6);
+}
+
+input, textarea{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:17px;
+}
+
+textarea{
+  min-height:100px;
+}
+
+button{
+  width:100%;
+  margin-top:12px;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.green{
+  background:#008800;
+  color:white;
+}
+
+.red{
+  background:#aa0000;
+  color:white;
+}
+
+.msg{
+  color:#ffaa33;
+  text-align:center;
+  margin-top:12px;
+  font-weight:bold;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='organisationen.html'">← Zurück</button>
+
+<h1 id="titel">ORGANISATION</h1>
+
+<div id="inhalt">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+
+if(!USER_ID){
+  location.href = "login.html";
+}
+
+const params = new URLSearchParams(location.search);
+const ORG_ID = params.get("id");
+
+let aktuellerUser = null;
+let aktuelleOrganisation = null;
+let darfVerwalten = false;
+
+async function api(tabelle){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    {
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function post(tabelle, daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle,
+    {
+      method:"POST",
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+function istLeitung(rolle){
+  const r = (rolle || "").toLowerCase();
+
+  return (
+    r.includes("chef") ||
+    r.includes("kommandant") ||
+    r.includes("bürgermeister") ||
+    r.includes("leiter") ||
+    r.includes("leitung")
+  );
+}
+
+function formatDatum(datum){
+  if(!datum) return "";
+  const d = new Date(datum);
+  return d.toLocaleDateString("de-DE") + " • " +
+         d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr";
+}
+
+async function ladeOrganisation(){
+  const box = document.getElementById("inhalt");
+
+  try{
+    const users = await api("Users");
+    const organisationen = await api("Organisationen");
+    const userOrgs = await api("User_organisationen");
+    const nachrichten = await api("Organisation_Nachrichten");
+    const auftraege = await api("Auftraege");
+
+    aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
+    aktuelleOrganisation = organisationen.find(o => String(o.id) === String(ORG_ID));
+
+    if(!aktuelleOrganisation){
+      box.innerHTML = "<div class='leer'>Organisation nicht gefunden.</div>";
+      return;
+    }
+
+    document.getElementById("titel").innerText = aktuelleOrganisation.Name.toUpperCase();
+
+    const meinEintrag = userOrgs.find(e =>
+      String(e.User_id) === String(USER_ID) &&
+      String(e.Organisation_id) === String(ORG_ID) &&
+      e.Aktiv === true
+    );
+
+    darfVerwalten =
+      (aktuellerUser && aktuellerUser.Admin === true) ||
+      (meinEintrag && istLeitung(meinEintrag.Rolle));
+
+    const mitglieder = userOrgs.filter(e =>
+      String(e.Organisation_id) === String(ORG_ID) &&
+      e.Aktiv === true
+    );
+
+    const orgNachrichten = nachrichten.filter(n =>
+      String(n.Organisation_id) === String(ORG_ID) &&
+      n.Aktiv !== false
+    );
+
+    const orgAuftraege = auftraege.filter(a =>
+      a.Sichtbarkeit === "organisation" &&
+      String(a.Ziel_id) === String(ORG_ID)
+    );
+
+    let html = "";
+
+    html += `
+      <div class="card">
+        <h2>Informationen</h2>
+        <div class="label">Name</div>
+        <div class="value">${aktuelleOrganisation.Name || "-"}</div>
+
+        <div class="label">Farbe</div>
+        <div class="value">${aktuelleOrganisation.Farbe || "-"}</div>
+
+        <div class="label">Deine Rechte</div>
+        <div class="value">${darfVerwalten ? "Verwaltung erlaubt" : "Nur Ansicht"}</div>
+      </div>
+    `;
+
+    html += `
+      <div class="card">
+        <h2>Mitglieder</h2>
+    `;
+
+    if(mitglieder.length === 0){
+      html += "<div class='value'>Keine Mitglieder.</div>";
+    }else{
+      mitglieder.forEach(m => {
+        const user = users.find(u => String(u.id) === String(m.User_id));
+
+        html += `
+          <div class="item">
+            <b>${user ? user.Vorname : "Unbekannt"}</b><br>
+            <span>${user ? user["PSN-Username"] : ""}</span><br>
+            Rolle: ${m.Rolle || "-"}
+          </div>
+        `;
+      });
+    }
+
+    html += "</div>";
+
+    html += `
+      <div class="card">
+        <h2>Nachrichten</h2>
+    `;
+
+    if(orgNachrichten.length === 0){
+      html += "<div class='value'>Keine Nachrichten.</div>";
+    }else{
+      orgNachrichten
+        .sort((a,b) => new Date(b.Erstellt_am || 0) - new Date(a.Erstellt_am || 0))
+        .forEach(n => {
+          html += `
+            <div class="item ${n.Wichtig === true ? "wichtig" : ""}">
+              <b>${n.Titel || "Nachricht"}</b><br><br>
+              ${n.Nachricht || ""}<br><br>
+              <span>Von: ${n.Erstellt_von || "-"} | ${formatDatum(n.Erstellt_am)}</span>
+            </div>
+          `;
+        });
+    }
+
+    html += "</div>";
+
+    if(darfVerwalten){
+      html += `
+        <div class="card">
+          <h2>Nachricht erstellen</h2>
+
+          <input id="neuTitel" placeholder="Titel">
+          <textarea id="neuNachricht" placeholder="Nachricht"></textarea>
+
+          <button class="green" onclick="nachrichtErstellen(false)">Normale Nachricht speichern</button>
+          <button class="red" onclick="nachrichtErstellen(true)">Wichtige Nachricht speichern</button>
+
+          <div id="meldung" class="msg"></div>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="card">
+        <h2>Organisations-Aufträge</h2>
+    `;
+
+    if(orgAuftraege.length === 0){
+      html += "<div class='value'>Keine Aufträge.</div>";
+    }else{
+      orgAuftraege.forEach(a => {
+        html += `
+          <div class="item">
+            <b>${a.Titel || "Auftrag"}</b><br><br>
+            ${a.Beschreibung || ""}<br><br>
+            <span>Status: ${a.Status || "-"} | Von: ${a.Erstellt_von || "-"}</span>
+          </div>
+        `;
+      });
+    }
+
+    html += "</div>";
+
+    box.innerHTML = html;
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Organisation konnte nicht geladen werden.<br><br>" + err.message + "</div>";
+  }
+}
+
+async function nachrichtErstellen(wichtig){
+  const titel = document.getElementById("neuTitel").value.trim();
+  const nachricht = document.getElementById("neuNachricht").value.trim();
+  const meldung = document.getElementById("meldung");
+
+  meldung.innerText = "";
+
+  if(!titel || !nachricht){
+    meldung.innerText = "Bitte Titel und Nachricht ausfüllen.";
+    return;
+  }
+
+  try{
+    await post("Organisation_Nachrichten", {
+      Organisation_id: Number(ORG_ID),
+      Titel: titel,
+      Nachricht: nachricht,
+      Erstellt_von: aktuellerUser ? aktuellerUser["PSN-Username"] : "Unbekannt",
+      Erstellt_am: new Date().toISOString(),
+      Wichtig: wichtig,
+      Aktiv: true
+    });
+
+    meldung.innerText = "Nachricht wurde gespeichert.";
+
+    document.getElementById("neuTitel").value = "";
+    document.getElementById("neuNachricht").value = "";
+
+    await ladeOrganisation();
+
+  }catch(err){
+    meldung.innerText = "Nachricht konnte nicht gespeichert werden.";
+  }
+}
+
+ladeOrganisation();
+</script>
+
+</body>
+</html>
