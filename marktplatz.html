@@ -50,12 +50,18 @@ h1{
 .filter button{
   flex:1;
   padding:12px;
-  border:none;
+  border:2px solid #008000;
   border-radius:10px;
   background:#006600;
   color:white;
   font-weight:bold;
   font-size:15px;
+}
+
+.filter button.aktiv{
+  background:red;
+  border-color:red;
+  box-shadow:0 0 14px rgba(255,0,0,0.65);
 }
 
 .card{
@@ -174,9 +180,9 @@ input{
 <h1>MARKTPLATZ</h1>
 
 <div class="filter">
-  <button onclick="filter='alle'; ladeAngebote()">ALLE</button>
-  <button onclick="filter='ware'; ladeAngebote()">WAREN</button>
-  <button onclick="filter='dienstleistung'; ladeAngebote()">DIENST</button>
+  <button id="btnAlle" onclick="setFilter('alle')">ALLE</button>
+  <button id="btnWare" onclick="setFilter('ware')">WAREN</button>
+  <button id="btnDienst" onclick="setFilter('dienstleistung')">DIENST</button>
 </div>
 
 <div id="liste">Lade...</div>
@@ -211,7 +217,28 @@ function aktuellerHof(){
   return localStorage.getItem("hof") || "BGA F&M";
 }
 
+function aktuellerUserId(){
+  return Number(localStorage.getItem("user_id") || 1);
+}
+
+function aktuellerHofId(){
+  return Number(localStorage.getItem("hof_id") || 1);
+}
+
+function setFilter(neuerFilter){
+  filter = neuerFilter;
+  ladeAngebote();
+}
+
+function filterButtonsAktualisieren(){
+  document.getElementById("btnAlle").className = filter === "alle" ? "aktiv" : "";
+  document.getElementById("btnWare").className = filter === "ware" ? "aktiv" : "";
+  document.getElementById("btnDienst").className = filter === "dienstleistung" ? "aktiv" : "";
+}
+
 async function ladeAngebote(){
+  filterButtonsAktualisieren();
+
   const box = document.getElementById("liste");
 
   const res = await fetch(
@@ -292,6 +319,30 @@ function schliessePopup(){
   document.getElementById("popupBg").style.display = "none";
 }
 
+async function erstelleBenachrichtigung(titel, nachricht){
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
+    {
+      method:"POST",
+      headers:{
+        "apikey": SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Titel:titel,
+        Nachricht:nachricht,
+        Typ:"Marktplatz",
+        User_id:aktuellerUserId(),
+        Hof_id:aktuellerHofId(),
+        Gelesen:false,
+        Erstellt_am:new Date().toISOString()
+      })
+    }
+  );
+}
+
 async function bestellen(){
   if(!ausgewaehltesAngebot){
     return;
@@ -314,10 +365,10 @@ async function bestellen(){
   const gesamtpreis = menge * Number(ausgewaehltesAngebot.Preis || 0);
 
   const beschreibung =
-    "Bestellung über Marktplatz:\\n" +
-    "Angebot: " + (ausgewaehltesAngebot.Titel || "-") + "\\n" +
-    "Kategorie: " + (ausgewaehltesAngebot.Kategorie || "-") + "\\n" +
-    "Menge: " + menge + " x " + (ausgewaehltesAngebot.Inhalt || "") + " " + (ausgewaehltesAngebot.Einheit || "") + "\\n" +
+    "Bestellung über Marktplatz:\n" +
+    "Angebot: " + (ausgewaehltesAngebot.Titel || "-") + "\n" +
+    "Kategorie: " + (ausgewaehltesAngebot.Kategorie || "-") + "\n" +
+    "Menge: " + menge + " x " + (ausgewaehltesAngebot.Inhalt || "") + " " + (ausgewaehltesAngebot.Einheit || "") + "\n" +
     "Gesamtpreis: " + gesamtpreis + " €";
 
   const res = await fetch(
@@ -350,6 +401,11 @@ async function bestellen(){
     alert(fehler);
     return;
   }
+
+  await erstelleBenachrichtigung(
+    "Neue Marktplatz-Bestellung",
+    aktuellerUser() + " hat bestellt: " + menge + " x " + (ausgewaehltesAngebot.Titel || "Angebot")
+  );
 
   alert("Bestellung wurde als Auftrag erstellt.");
   schliessePopup();
