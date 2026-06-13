@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feld</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:35px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:40px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+h2{
+  color:#00ff22;
+  margin-top:0;
+}
+
+.label{
+  color:#ffaa33;
+  margin-top:12px;
+  font-size:16px;
+}
+
+.value{
+  color:white;
+  font-size:21px;
+  margin-top:4px;
+}
+
+input, select{
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:18px;
+}
+
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:white;
+  font-size:20px;
+  margin-top:14px;
+}
+
+.row input{
+  width:28px;
+  height:28px;
+}
+
+button{
+  width:100%;
+  margin-top:16px;
+  padding:16px;
+  border:none;
+  border-radius:12px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.green{
+  background:#008800;
+  color:white;
+}
+
+.red{
+  background:#aa0000;
+  color:white;
+}
+
+.warn{
+  border:2px solid #ff9900;
+  box-shadow:0 0 18px rgba(255,150,0,0.6);
+}
+
+.msg{
+  color:#ffaa33;
+  text-align:center;
+  margin-top:15px;
+  font-weight:bold;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+  font-size:20px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='felder.html'">← Zurück</button>
+
+<h1 id="titel">FELD</h1>
+
+<div id="inhalt">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Disti1701";
+const USER_HOF_ID = Number(localStorage.getItem("hof_id") || 1);
+
+if(!USER_ID){
+  location.href = "login.html";
+}
+
+const params = new URLSearchParams(location.search);
+const FELD_ID = params.get("id");
+
+let feld = null;
+let user = null;
+let hof = null;
+let darfBearbeiten = false;
+let istAdmin = false;
+
+const fruchtStufen = {
+  "Gras":4,
+  "Weizen":8,
+  "Gerste":8,
+  "Hafer":8,
+  "Raps":8,
+  "Sorghum":8,
+  "Mais":8,
+  "Silomais":8,
+  "Silagemais":8,
+  "Sonnenblumen":8,
+  "Sojabohnen":8,
+  "Kartoffeln":6,
+  "Zuckerrüben":6,
+  "Zuckerrueben":6,
+  "Baumwolle":8,
+  "Pappel":12,
+  "Ölrettich":3,
+  "Oelrettich":3,
+  "Senf":3,
+  "Humusaktiv":3,
+  "Klee":4,
+  "Luzerne":4
+};
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function jaNein(wert){
+  return wert === true ? "Ja" : "Nein";
+}
+
+function bool(wert){
+  return wert === true ? "checked" : "";
+}
+
+function tageSeit(datum){
+  if(!datum) return null;
+  const start = new Date(datum);
+  const heute = new Date();
+  const diff = heute - start;
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function berechneWachstum(){
+  const frucht = feld.Fruchtart || "";
+  const max = fruchtStufen[frucht] || 4;
+  const tage = tageSeit(feld.Gesaet_am);
+
+  if(tage === null){
+    return {
+      text:"Keine Aussaat gespeichert",
+      stufe:feld.Wachstumsstufe || 0,
+      max:max,
+      erntereif:feld.Erntebereit === true
+    };
+  }
+
+  const stufe = Math.min(max, Math.max(0, tage));
+  const erntereif = stufe >= max;
+
+  return {
+    text:tage + " RL-Tage / " + tage + " Ingame-Monate seit Aussaat",
+    stufe:stufe,
+    max:max,
+    erntereif:erntereif
+  };
+}
+
+async function api(tabelle){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    {
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function patchFeld(daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Felder?id=eq." + FELD_ID,
+    {
+      method:"PATCH",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle,
+    {
+      method:"POST",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function erntereifMelden(wachstum){
+  if(!wachstum.erntereif) return;
+  if(feld.Ernte_Benachrichtigt === true) return;
+
+  const titel = "🌾 Feld erntereif";
+  const nachricht =
+    "Feld " + feld.Feldnummer + " (" + text(feld.Fruchtart) + ") ist erntereif.";
+
+  await post("Benachrichtigungen", {
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Feld",
+    User_id:null,
+    Hof_id:feld.Hof_id || null,
+    Organisation_id:null,
+    Gelesen:false,
+    Erledigt:false,
+    Archiviert:false,
+    Erstellt_am:new Date().toISOString()
+  });
+
+  await post("Telegram_queue", {
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Feld",
+    User_id:null,
+    Hof_id:feld.Hof_id || null,
+    Organisation_id:null,
+    Chat_id:null,
+    Gesendet:false,
+    Erstellt_am:new Date().toISOString()
+  });
+
+  await patchFeld({
+    Erntebereit:true,
+    Ernte_Benachrichtigt:true
+  });
+
+  feld.Erntebereit = true;
+  feld.Ernte_Benachrichtigt = true;
+}
+
+async function laden(){
+  const box = document.getElementById("inhalt");
+
+  try{
+    const felder = await api("Felder");
+    const users = await api("Users");
+    const hoefe = await api("Hoefe");
+
+    feld = felder.find(f => String(f.id) === String(FELD_ID));
+    user = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!feld){
+      box.innerHTML = "<div class='leer'>Feld nicht gefunden.</div>";
+      return;
+    }
+
+    hof = hoefe.find(h => String(h.id) === String(feld.Hof_id));
+
+    istAdmin = user && user.Admin === true;
+    darfBearbeiten = istAdmin || Number(feld.Hof_id) === USER_HOF_ID;
+
+    document.getElementById("titel").innerText = "FELD " + text(feld.Feldnummer);
+
+    const wachstum = berechneWachstum();
+
+    await erntereifMelden(wachstum);
+
+    let html = "";
+
+    html += `
+      <div class="card ${wachstum.erntereif ? "warn" : ""}">
+        <h2>Übersicht</h2>
+
+        <div class="label">Feldnummer</div>
+        <div class="value">${text(feld.Feldnummer)}</div>
+
+        <div class="label">Besitzer</div>
+        <div class="value">${text(feld.Besitzer || (hof ? hof.Name : ""))}</div>
+
+        <div class="label">Hof</div>
+        <div class="value">${hof ? hof.Name : "-"}</div>
+
+        <div class="label">Größe</div>
+        <div class="value">${text(feld.Feldgroesse)}</div>
+
+        <div class="label">Frucht</div>
+        <div class="value">${text(feld.Fruchtart)}</div>
+
+        <div class="label">Wachstum berechnet</div>
+        <div class="value">${wachstum.stufe} / ${wachstum.max}</div>
+
+        <div class="label">Zeit seit Aussaat</div>
+        <div class="value">${wachstum.text}</div>
+
+        <div class="label">Erntereif</div>
+        <div class="value">${wachstum.erntereif ? "Ja 🌾" : "Nein"}</div>
+
+        <div class="label">Deine Rechte</div>
+        <div class="value">${darfBearbeiten ? "Bearbeiten erlaubt" : "Nur Ansicht"}</div>
+      </div>
+    `;
+
+    html += `
+      <div class="card">
+        <h2>Details</h2>
+
+        <div class="label">Manuelle Wachstumsstufe</div>
+        <div class="value">${text(feld.Wachstumsstufe)}</div>
+
+        <div class="label">Letzte Aktion</div>
+        <div class="value">${text(feld.Letzte_Aktion)}</div>
+
+        <div class="label">Gekalkt</div>
+        <div class="value">${jaNein(feld.Gekalkt)}</div>
+
+        <div class="label">Gedüngt 1x</div>
+        <div class="value">${jaNein(feld.Geduengt_1x)}</div>
+
+        <div class="label">Gedüngt 2x</div>
+        <div class="value">${jaNein(feld.Geduengt_2x)}</div>
+
+        <div class="label">Gepflügt</div>
+        <div class="value">${jaNein(feld.Gepfluegt)}</div>
+
+        <div class="label">Gegrubbert</div>
+        <div class="value">${jaNein(feld.Gegrubbert)}</div>
+
+        <div class="label">Gesät</div>
+        <div class="value">${jaNein(feld.Gesaet)}</div>
+
+        <div class="label">Gewalzt</div>
+        <div class="value">${jaNein(feld.Gewalzt)}</div>
+
+        <div class="label">Unkraut</div>
+        <div class="value">${jaNein(feld.Unkraut)}</div>
+
+        <div class="label">Düngen nötig</div>
+        <div class="value">${jaNein(feld["Duengen_nötig"])}</div>
+      </div>
+    `;
+
+    if(darfBearbeiten){
+      html += `
+        <div class="card">
+          <h2>Bearbeiten</h2>
+
+          ${istAdmin ? `
+            <div class="label">Feldnummer nur Admin</div>
+            <input id="feldnummer" value="${text(feld.Feldnummer)}">
+
+            <div class="label">Feldgröße nur Admin</div>
+            <input id="feldgroesse" value="${text(feld.Feldgroesse)}">
+
+            <div class="label">Besitzer nur Admin</div>
+            <input id="besitzer" value="${text(feld.Besitzer)}">
+          ` : `
+            <div class="label">Feldnummer</div>
+            <div class="value">${text(feld.Feldnummer)}</div>
+
+            <div class="label">Feldgröße</div>
+            <div class="value">${text(feld.Feldgroesse)}</div>
+
+            <div class="label">Besitzer</div>
+            <div class="value">${text(feld.Besitzer)}</div>
+          `}
+
+          <div class="label">Fruchtart</div>
+          <input id="fruchtart" value="${text(feld.Fruchtart)}">
+
+          <div class="label">Wachstumsstufe manuell</div>
+          <input id="wachstumsstufe" type="number" value="${feld.Wachstumsstufe || 0}">
+
+          <div class="label">Aussaat-Datum</div>
+          <input id="gesaetAm" type="date" value="${feld.Gesaet_am ? feld.Gesaet_am.substring(0,10) : ""}">
+
+          <div class="label">Letzte Aktion</div>
+          <input id="letzteAktion" value="${text(feld.Letzte_Aktion)}">
+
+          <div class="row">Gekalkt <input id="gekalkt" type="checkbox" ${bool(feld.Gekalkt)}></div>
+          <div class="row">Gedüngt 1x <input id="ged1" type="checkbox" ${bool(feld.Geduengt_1x)}></div>
+          <div class="row">Gedüngt 2x <input id="ged2" type="checkbox" ${bool(feld.Geduengt_2x)}></div>
+          <div class="row">Gepflügt <input id="gepfluegt" type="checkbox" ${bool(feld.Gepfluegt)}></div>
+          <div class="row">Gegrubbert <input id="gegrubbert" type="checkbox" ${bool(feld.Gegrubbert)}></div>
+          <div class="row">Gesät <input id="gesaet" type="checkbox" ${bool(feld.Gesaet)}></div>
+          <div class="row">Gewalzt <input id="gewalzt" type="checkbox" ${bool(feld.Gewalzt)}></div>
+          <div class="row">Unkraut <input id="unkraut" type="checkbox" ${bool(feld.Unkraut)}></div>
+          <div class="row">Düngen nötig <input id="duengenNoetig" type="checkbox" ${bool(feld["Duengen_nötig"])}></div>
+          <div class="row">Erntebereit <input id="erntebereit" type="checkbox" ${bool(feld.Erntebereit)}></div>
+
+          <button class="green" onclick="speichern()">Speichern</button>
+          <button class="red" onclick="ernteReset()">Nach Ernte zurücksetzen</button>
+
+          <div id="meldung" class="msg"></div>
+        </div>
+      `;
+    }
+
+    box.innerHTML = html;
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Feld konnte nicht geladen werden.<br><br>" + err.message + "</div>";
+  }
+}
+
+async function speichern(){
+  const meldung = document.getElementById("meldung");
+  meldung.innerText = "Speichere...";
+
+  try{
+    let daten = {
+      Fruchtart:document.getElementById("fruchtart").value.trim(),
+      Wachstumsstufe:Number(document.getElementById("wachstumsstufe").value || 0),
+      Gesaet_am:document.getElementById("gesaetAm").value
+        ? new Date(document.getElementById("gesaetAm").value).toISOString()
+        : null,
+      Letzte_Aktion:document.getElementById("letzteAktion").value.trim(),
+      Gekalkt:document.getElementById("gekalkt").checked,
+      Geduengt_1x:document.getElementById("ged1").checked,
+      Geduengt_2x:document.getElementById("ged2").checked,
+      Gepfluegt:document.getElementById("gepfluegt").checked,
+      Gegrubbert:document.getElementById("gegrubbert").checked,
+      Gesaet:document.getElementById("gesaet").checked,
+      Gewalzt:document.getElementById("gewalzt").checked,
+      Unkraut:document.getElementById("unkraut").checked,
+      "Duengen_nötig":document.getElementById("duengenNoetig").checked,
+      Erntebereit:document.getElementById("erntebereit").checked
+    };
+
+    if(istAdmin){
+      daten.Feldnummer = Number(document.getElementById("feldnummer").value || 0);
+      daten.Feldgroesse = document.getElementById("feldgroesse").value.trim();
+      daten.Besitzer = document.getElementById("besitzer").value.trim();
+    }
+
+    await patchFeld(daten);
+
+    meldung.innerText = "Gespeichert.";
+    await laden();
+
+  }catch(err){
+    meldung.innerText = "Fehler beim Speichern: " + err.message;
+  }
+}
+
+async function ernteReset(){
+  if(!confirm("Feld nach Ernte zurücksetzen?")){
+    return;
+  }
+
+  try{
+    await patchFeld({
+      Fruchtart:"",
+      Wachstumsstufe:0,
+      Gesaet:false,
+      Gesaet_am:null,
+      Erntebereit:false,
+      Ernte_Benachrichtigt:false,
+      Geduengt_1x:false,
+      Geduengt_2x:false,
+      Gewalzt:false,
+      Unkraut:false,
+      Letzte_Aktion:"Geerntet"
+    });
+
+    await laden();
+
+  }catch(err){
+    alert("Fehler: " + err.message);
+  }
+}
+
+laden();
+</script>
+
+</body>
+  </html>
