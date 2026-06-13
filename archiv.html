@@ -135,7 +135,13 @@ async function ladeArchiv(){
     div.className = "card";
 
     div.innerHTML = `
-      <div class="titel">${e.Titel || "Eintrag"}</div>
+      <div class="titel">
+${e.Titel || "Eintrag"}
+</div>
+
+<div style="color:#00ccff;margin-top:8px;font-size:18px;">
+Auftrag ID: ${e.Auftrag_id || "-"}
+</div>
 
       <div class="text">
         ${e.Nachricht || ""}
