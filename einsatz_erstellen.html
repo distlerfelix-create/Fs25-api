@@ -66,22 +66,19 @@ textarea{
   display:flex;
   align-items:center;
   gap:10px;
-
   width:100%;
   margin-top:10px;
   padding:12px 15px;
-
   background:#000;
   border:1px solid #006600;
   border-radius:10px;
-
   color:white;
   font-size:18px;
 }
 
 .org input{
   width:auto;
-  margin-right:10px;
+  margin:0;
 }
 
 button{
@@ -162,15 +159,13 @@ async function ladeOrganisationen(){
   box.innerHTML = "";
 
   organisationen.forEach(org => {
-    const div = document.createElement("div");
+    const div = document.createElement("label");
     div.className = "org";
 
     div.innerHTML = `
-<label style="display:flex;align-items:center;gap:10px;width:100%;">
-  <input type="checkbox" value="${org.id}">
-  <span>${org.Name}</span>
-</label>
-`;
+      <input type="checkbox" value="${org.id}">
+      <span>${org.Name}</span>
+    `;
 
     box.appendChild(div);
   });
@@ -263,24 +258,26 @@ async function einsatzErstellen(){
           "Prefer":"return=minimal"
         },
         body:JSON.stringify({
-          Titel:"Neuer Einsatz",
-          Nachricht:titel + " wurde für " + (org ? org.Name : "eine Organisation") + " erstellt.",
+          Titel:"🚨 Neuer Einsatz: " + titel,
+          Nachricht:beschreibung,
           Typ:"Einsatz",
-          User_id:USER_ID,
-          Hof_id:HOF_ID,
+          User_id:null,
+          Hof_id:null,
+          Organisation_id:orgId,
+          Auftrag_id:auftrag.id,
           Gelesen:false,
+          Erledigt:false,
           Erstellt_am:new Date().toISOString()
         })
       }
     );
   }
 
-  meldung.innerText = "Einsatz wurde erstellt und Organisationen wurden verständigt.";
+  meldung.innerText = "Einsatz wurde erstellt und die Organisationen wurden verständigt.";
 
   document.getElementById("titel").value = "";
   document.getElementById("beschreibung").value = "";
   document.getElementById("belohnung").value = "";
-
   document.querySelectorAll("#orgListe input").forEach(x => x.checked = false);
 }
 
