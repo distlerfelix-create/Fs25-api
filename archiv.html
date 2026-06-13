@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Archiv</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:30px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:38px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #006600;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:15px;
+}
+
+.titel{
+  color:#00ff22;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.text{
+  color:white;
+  margin-top:10px;
+  white-space:pre-line;
+}
+
+.typ{
+  color:#ffaa33;
+  margin-top:12px;
+}
+
+button{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.green{
+  background:#008800;
+  color:white;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
+
+<h1>ARCHIV</h1>
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+async function ladeArchiv(){
+
+  const box = document.getElementById("liste");
+
+  const res = await fetch(
+    SUPABASE_URL +
+    "/rest/v1/Benachrichtigungen?select=*&Archiviert=eq.true&order=id.desc",
+    {
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  const data = await res.json();
+
+  if(!data || data.length === 0){
+    box.innerHTML =
+      "<div class='leer'>Keine archivierten Einträge vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML = "";
+
+  data.forEach(e => {
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="titel">${e.Titel || "Eintrag"}</div>
+
+      <div class="text">
+        ${e.Nachricht || ""}
+      </div>
+
+      <div class="typ">
+        ${e.Typ || "-"}
+      </div>
+
+      <button class="green"
+        onclick="wiederherstellen(${e.id})">
+        Wiederherstellen
+      </button>
+    `;
+
+    box.appendChild(div);
+  });
+
+}
+
+async function wiederherstellen(id){
+
+  const ok = confirm(
+    "Eintrag wiederherstellen?"
+  );
+
+  if(!ok) return;
+
+  await fetch(
+    SUPABASE_URL +
+    "/rest/v1/Benachrichtigungen?id=eq." + id,
+    {
+      method:"PATCH",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        Prefer:"return=minimal"
+      },
+      body:JSON.stringify({
+        Archiviert:false
+      })
+    }
+  );
+
+  ladeArchiv();
+}
+
+ladeArchiv();
+</script>
+
+</body>
+</html>
