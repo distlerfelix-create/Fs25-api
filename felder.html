@@ -65,6 +65,21 @@ h1{
   background:#003300;
 }
 
+.card.erntereif{
+  border:2px solid #00cc44;
+  box-shadow:0 0 18px rgba(0,255,80,0.55);
+}
+
+.card.duengen{
+  border:2px solid #ffaa00;
+  box-shadow:0 0 18px rgba(255,170,0,0.45);
+}
+
+.card.unkraut{
+  border:2px solid #cc0000;
+  box-shadow:0 0 18px rgba(255,0,0,0.45);
+}
+
 .feldnummer{
   color:#00ff22;
   font-size:30px;
@@ -88,6 +103,16 @@ h1{
   font-size:17px;
   line-height:1.5;
 }
+
+.warnung{
+  margin-top:14px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.gruen{color:#00ff22;}
+.gelb{color:#ffaa00;}
+.rot{color:#ff3333;}
 
 .leer{
   color:white;
@@ -170,6 +195,35 @@ function hofName(hofId){
   return hof ? hof.Name : "-";
 }
 
+function duengenNoetig(f){
+  return f["Duengen_nötig"] === true || f.Duengen_noetig === true;
+}
+
+function statusKlasse(f){
+  if(f.Erntebereit === true) return "erntereif";
+  if(f.Unkraut === true) return "unkraut";
+  if(duengenNoetig(f)) return "duengen";
+  return "";
+}
+
+function warnungen(f){
+  let html = "";
+
+  if(f.Erntebereit === true){
+    html += `<div class="warnung gruen">🌾 Erntereif</div>`;
+  }
+
+  if(duengenNoetig(f)){
+    html += `<div class="warnung gelb">💩 Düngen nötig</div>`;
+  }
+
+  if(f.Unkraut === true){
+    html += `<div class="warnung rot">🌿 Unkraut vorhanden</div>`;
+  }
+
+  return html;
+}
+
 function zeigeFelder(){
   const box = document.getElementById("liste");
   const suchtext = document.getElementById("suche").value.toLowerCase().trim();
@@ -205,7 +259,7 @@ function zeigeFelder(){
         : hofName(f.Hof_id);
 
     const div = document.createElement("div");
-    div.className = "card";
+    div.className = "card " + statusKlasse(f);
 
     div.onclick = function(){
       location.href = "feld.html?id=" + f.id;
@@ -213,6 +267,8 @@ function zeigeFelder(){
 
     div.innerHTML = `
       <div class="feldnummer">🌱 Feld ${text(f.Feldnummer)}</div>
+
+      ${warnungen(f)}
 
       <div class="info">
         <span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br>
