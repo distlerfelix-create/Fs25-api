@@ -51,7 +51,6 @@ h1{
   border-radius:14px;
   padding:18px;
   margin-bottom:14px;
-  width:100%;
   box-shadow:0 0 10px rgba(0,255,0,0.18);
 }
 
@@ -69,10 +68,6 @@ h1{
   border:2px solid #00cc44;
   box-shadow:0 0 16px rgba(0,255,80,0.45);
   opacity:0.85;
-}
-
-.card:active{
-  background:#003300;
 }
 
 .titel{
@@ -95,9 +90,8 @@ h1{
   margin-top:10px;
 }
 
-.badge-neu{
+.badge-neu,.badge-einsatz,.badge-erledigt{
   display:inline-block;
-  background:red;
   color:white;
   border-radius:20px;
   padding:3px 10px;
@@ -105,25 +99,9 @@ h1{
   margin-left:8px;
 }
 
-.badge-einsatz{
-  display:inline-block;
-  background:#ff6600;
-  color:white;
-  border-radius:20px;
-  padding:3px 10px;
-  font-size:14px;
-  margin-left:8px;
-}
-
-.badge-erledigt{
-  display:inline-block;
-  background:#008800;
-  color:white;
-  border-radius:20px;
-  padding:3px 10px;
-  font-size:14px;
-  margin-left:8px;
-}
+.badge-neu{background:red;}
+.badge-einsatz{background:#ff6600;}
+.badge-erledigt{background:#008800;}
 
 .leer{
   color:white;
@@ -174,7 +152,7 @@ h1{
 
 .popup button{
   width:100%;
-  margin-top:18px;
+  margin-top:14px;
   padding:16px;
   color:white;
   border:none;
@@ -183,17 +161,10 @@ h1{
   font-weight:bold;
 }
 
-.btn-green{
-  background:#007a00;
-}
-
-.btn-red{
-  background:#cc3300;
-}
-
-.btn-dark{
-  background:#333;
-}
+.btn-red{background:#cc3300;}
+.btn-green{background:#007a00;}
+.btn-dark{background:#333;}
+.btn-orange{background:#cc7700;}
 </style>
 </head>
 
@@ -218,6 +189,10 @@ h1{
       Einsatz beendet
     </button>
 
+    <button class="btn-orange" onclick="archivieren()">
+      Archivieren
+    </button>
+
     <button class="btn-dark" onclick="schliessePopup()">Schließen</button>
   </div>
 </div>
@@ -227,8 +202,6 @@ const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
 const USERNAME = localStorage.getItem("username") || "Disti1701";
-const USER_ID = Number(localStorage.getItem("user_id") || 1);
-const HOF_ID = Number(localStorage.getItem("hof_id") || 1);
 
 let organisationen = [];
 let aktuelleBenachrichtigung = null;
@@ -238,19 +211,23 @@ function orgName(id){
   return org ? org.Name : "Organisation " + id;
 }
 
+function schliessePopup(){
+  document.getElementById("popupBg").style.display = "none";
+}
+
 function zeigePopup(b){
   aktuelleBenachrichtigung = b;
 
-  const titel = b.Titel || "Benachrichtigung";
-  const nachricht = b.Nachricht || "";
-  const typ = b.Typ || "-";
   const org = b.Organisation_id ? orgName(b.Organisation_id) : "";
 
-  document.getElementById("popupTitel").innerText = titel;
-  document.getElementById("popupNachricht").innerText = nachricht;
+  document.getElementById("popupTitel").innerText =
+    b.Titel || "Benachrichtigung";
+
+  document.getElementById("popupNachricht").innerText =
+    b.Nachricht || "";
 
   document.getElementById("popupTyp").innerText =
-    "Typ: " + typ + (org ? " | Organisation: " + org : "");
+    "Typ: " + (b.Typ || "-") + (org ? " | Organisation: " + org : "");
 
   const btn = document.getElementById("einsatzBeendenBtn");
 
@@ -261,10 +238,6 @@ function zeigePopup(b){
   }
 
   document.getElementById("popupBg").style.display = "flex";
-}
-
-function schliessePopup(){
-  document.getElementById("popupBg").style.display = "none";
 }
 
 async function patchBenachrichtigung(id,daten){
@@ -285,6 +258,23 @@ async function patchBenachrichtigung(id,daten){
 
 async function markiereAlsGelesen(id){
   await patchBenachrichtigung(id,{Gelesen:true});
+}
+
+async function archivieren(){
+  if(!aktuelleBenachrichtigung){
+    return;
+  }
+
+  await patchBenachrichtigung(
+    aktuelleBenachrichtigung.id,
+    {
+      Archiviert:true,
+      Gelesen:true
+    }
+  );
+
+  schliessePopup();
+  await ladeBenachrichtigungen();
 }
 
 async function ladeOrganisationen(){
@@ -363,6 +353,7 @@ async function einsatzBeenden(){
         Auftrag_id:auftragId,
         Gelesen:false,
         Erledigt:true,
+        Archiviert:false,
         Erstellt_am:new Date().toISOString()
       })
     }
@@ -379,7 +370,7 @@ async function ladeBenachrichtigungen(){
   await ladeOrganisationen();
 
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Benachrichtigungen?select=*&order=id.desc",
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen?select=*&Archiviert=neq.true&order=id.desc",
     {
       headers:{
         "apikey":SUPABASE_KEY,
@@ -432,7 +423,7 @@ async function ladeBenachrichtigungen(){
       if(istNeu){
         await markiereAlsGelesen(b.id);
         b.Gelesen = true;
-        ladeBenachrichtigungen();
+        await ladeBenachrichtigungen();
       }
     };
 
