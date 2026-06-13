@@ -7,21 +7,81 @@
 
 <style>
 *{box-sizing:border-box;}
-body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
-.app{max-width:700px;margin:auto;padding:20px;}
-.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
-h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;}
-.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 0 10px rgba(0,255,0,0.18);}
-.titel{color:#00ff22;font-size:24px;font-weight:bold;}
-.info{color:white;margin-top:10px;font-size:18px;line-height:1.5;white-space:pre-line;}
-.orange{color:#ffaa33;}
-select,input{width:100%;padding:14px;margin-top:12px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
-button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
-.green{background:#008800;color:white;}
-.red{background:#aa0000;color:white;}
-.dark{background:#333;color:white;}
-.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line;}
-.leer{color:white;text-align:center;margin-top:40px;font-size:18px;}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+  text-align:center;
+}
+
+.app{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:30px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  font-family:Georgia,serif;
+  font-size:42px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+button{
+  width:100%;
+  margin:7px 0;
+  padding:17px;
+  border:none;
+  border-radius:14px;
+  background:#008800;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+}
+
+button:active{
+  background:#00aa00;
+}
+
+.red{
+  background:#aa0000;
+}
+
+.dark{
+  background:#333;
+}
+
+.info{
+  color:white;
+  font-size:18px;
+  line-height:1.5;
+}
+
+.leer{
+  color:white;
+  margin-top:40px;
+  font-size:18px;
+}
 </style>
 </head>
 
@@ -32,7 +92,7 @@ button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;fo
 
 <h1>ADMIN</h1>
 
-<div id="inhalt">Lade...</div>
+<div id="inhalt">Prüfe Adminrechte...</div>
 
 </div>
 
@@ -41,21 +101,16 @@ const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
 const USER_ID = localStorage.getItem("user_id");
-const USERNAME = localStorage.getItem("username") || "Admin";
 
 if(!USER_ID){
   location.href = "login.html";
 }
 
-let users = [];
-let hoefe = [];
-let registrierungen = [];
-let passwortResets = [];
-let aktuellerUser = null;
+async function pruefen(){
+  const box = document.getElementById("inhalt");
 
-async function api(tabelle){
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    SUPABASE_URL + "/rest/v1/Users?select=*&id=eq." + USER_ID,
     {
       headers:{
         "apikey":SUPABASE_KEY,
@@ -64,433 +119,49 @@ async function api(tabelle){
     }
   );
 
-  if(!res.ok){
-    throw new Error(await res.text());
+  const data = await res.json();
+  const user = data[0];
+
+  if(!user || user.Admin !== true){
+    box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
+    return;
   }
 
-  return await res.json();
-}
-
-async function post(tabelle,daten){
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/" + tabelle,
-    {
-      method:"POST",
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify(daten)
-    }
-  );
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
-}
-
-async function patch(tabelle,id,daten){
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id,
-    {
-      method:"PATCH",
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify(daten)
-    }
-  );
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
-}
-
-function text(wert){
-  return wert === null || wert === undefined || wert === "" ? "-" : wert;
-}
-
-function hofSelectHtml(id, ausgewaehlt){
-  let html = `<select id="hof_${id}">`;
-  html += `<option value="">Hof auswählen</option>`;
-
-  hoefe.forEach(h => {
-    html += `<option value="${h.id}" ${String(h.id) === String(ausgewaehlt) ? "selected" : ""}>${h.Name}</option>`;
-  });
-
-  html += `</select>`;
-  return html;
-}
-
-async function laden(){
-  const box = document.getElementById("inhalt");
-
-  try{
-    users = await api("Users");
-    hoefe = await api("Hoefe");
-    registrierungen = await api("Registrierungen");
-    passwortResets = await api("Passwort_Reset");
-
-    aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
-
-    if(!aktuellerUser || aktuellerUser.Admin !== true){
-      box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
-      return;
-    }
-
-    anzeigen();
-
-  }catch(err){
-    box.innerHTML = "<div class='leer'>Fehler:<br><br>" + err.message + "</div>";
-  }
-}
-
-function anzeigen(){
-  const box = document.getElementById("inhalt");
-
-  const offeneRegistrierungen = registrierungen.filter(r => r.Status === "Offen");
-  const offeneResets = passwortResets.filter(r => r.Status === "Offen");
-
-  let html = "";
-
-  html += `
+  box.innerHTML = `
     <div class="card">
-      <div class="titel">Übersicht</div>
       <div class="info">
-        Offene Registrierungen: <span class="orange">${offeneRegistrierungen.length}</span><br>
-        Passwort-Reset-Anträge: <span class="orange">${offeneResets.length}</span><br>
-        Benutzer gesamt: <span class="orange">${users.length}</span>
+        Angemeldet als:<br>
+        <b>${user.Vorname || user["PSN-Username"]}</b>
       </div>
     </div>
-  `;
 
-  html += `
     <div class="card">
-      <div class="titel">Passwort vergessen</div>
-      <div class="info">Offene Anträge: <span class="orange">${offeneResets.length}</span></div>
+      <button onclick="location.href='admin_registrierungen.html'">REGISTRIERUNGEN</button>
+      <button onclick="location.href='admin_passwort.html'">PASSWORT RESET</button>
+      <button onclick="location.href='admin_users.html'">BENUTZER</button>
+      <button onclick="location.href='admin_hoefe.html'">HÖFE</button>
+      <button onclick="location.href='admin_organisationen.html'">ORGANISATIONEN</button>
+      <button onclick="location.href='admin_felder.html'">FELDER</button>
+      <button onclick="location.href='admin_marktplatz.html'">MARKTPLATZ</button>
+      <button onclick="location.href='admin_auftraege.html'">AUFTRÄGE / EINSÄTZE</button>
+      <button onclick="location.href='admin_benachrichtigungen.html'">BENACHRICHTIGUNGEN</button>
+      <button onclick="location.href='admin_server.html'">SERVERSTATUS</button>
+      <button onclick="location.href='admin_telegram.html'">TELEGRAM</button>
     </div>
-  `;
 
-  if(offeneResets.length === 0){
-    html += `<div class="card"><div class="info">Keine offenen Passwort-Anträge.</div></div>`;
-  }
-
-  offeneResets.forEach(r => {
-    const passenderUser = users.find(u =>
-      String(u["PSN-Username"]).toLowerCase() === String(r.Username).toLowerCase()
-    );
-
-    html += `
-      <div class="card">
-        <div class="titel">${text(r.Spielername)}</div>
-
-        <div class="info">
-          <span class="orange">PSN:</span> ${text(r.Username)}<br>
-          <span class="orange">Nachricht:</span><br>${text(r.Nachricht)}<br>
-          <span class="orange">User gefunden:</span> ${passenderUser ? "Ja" : "Nein"}<br>
-          <span class="orange">Status:</span> ${text(r.Status)}
-        </div>
-
-        <input id="resetpass_${r.id}" placeholder="Neues Passwort">
-
-        <button class="green" onclick="resetErledigen(${r.id})">Passwort setzen & erledigen</button>
-        <button class="red" onclick="resetAblehnen(${r.id})">Antrag ablehnen</button>
-
-        <div id="msg_reset_${r.id}" class="msg"></div>
-      </div>
-    `;
-  });
-
-  html += `
     <div class="card">
-      <div class="titel">Registrierungen</div>
-      <div class="info">
-        Offene Anträge: <span class="orange">${offeneRegistrierungen.length}</span>
-      </div>
+      <button class="dark" onclick="location.href='index.html'">ZUR HOME-SEITE</button>
+      <button class="red" onclick="logout()">LOGOUT</button>
     </div>
   `;
-
-  if(offeneRegistrierungen.length === 0){
-    html += `<div class="card"><div class="info">Keine offenen Registrierungen.</div></div>`;
-  }
-
-  offeneRegistrierungen.forEach(r => {
-    html += `
-      <div class="card">
-        <div class="titel">${text(r.Spielername)}</div>
-
-        <div class="info">
-          <span class="orange">PSN:</span> ${text(r.Username)}<br>
-          <span class="orange">Telegram:</span> ${text(r.Telegram)}<br>
-          <span class="orange">Status:</span> ${text(r.Status)}
-        </div>
-
-        ${hofSelectHtml("reg_" + r.id, r.Hof_id)}
-
-        <button class="green" onclick="genehmigen(${r.id})">Genehmigen</button>
-        <button class="red" onclick="ablehnen(${r.id})">Ablehnen</button>
-
-        <div id="msg_reg_${r.id}" class="msg"></div>
-      </div>
-    `;
-  });
-
-  html += `
-    <div class="card">
-      <div class="titel">Benutzerverwaltung</div>
-      <div class="info">Benutzer gesamt: ${users.length}</div>
-    </div>
-  `;
-
-  users.forEach(u => {
-    html += `
-      <div class="card">
-        <div class="titel">${text(u.Vorname)}</div>
-
-        <div class="info">
-          <span class="orange">PSN:</span> ${text(u["PSN-Username"])}<br>
-          <span class="orange">Hof:</span> ${text(u.Hof)}<br>
-          <span class="orange">Telegram:</span> ${text(u.Telegram_id)}<br>
-          <span class="orange">Admin:</span> ${u.Admin === true ? "Ja" : "Nein"}<br>
-          <span class="orange">Aktiviert:</span> ${u.Aktiviert === true ? "Ja" : "Nein"}
-        </div>
-
-        <input id="pass_${u.id}" placeholder="Neues Passwort">
-        <input id="telegram_${u.id}" value="${u.Telegram_id || ""}" placeholder="Telegram-ID">
-
-        ${hofSelectHtml("user_" + u.id, u.Hof_id)}
-
-        <button class="green" onclick="benutzerSpeichern(${u.id})">Benutzer speichern</button>
-        <button class="dark" onclick="adminUmschalten(${u.id})">${u.Admin === true ? "Admin entfernen" : "Admin setzen"}</button>
-        <button class="red" onclick="aktivUmschalten(${u.id})">${u.Aktiviert === true ? "Benutzer deaktivieren" : "Benutzer aktivieren"}</button>
-
-        <div id="msg_user_${u.id}" class="msg"></div>
-      </div>
-    `;
-  });
-
-  box.innerHTML = html;
 }
 
-async function resetErledigen(resetId){
-  const meldung = document.getElementById("msg_reset_" + resetId);
-  const neuesPasswort = document.getElementById("resetpass_" + resetId).value.trim();
-
-  meldung.innerText = "";
-
-  if(!neuesPasswort){
-    meldung.innerText = "Bitte neues Passwort eingeben.";
-    return;
-  }
-
-  const reset = passwortResets.find(r => String(r.id) === String(resetId));
-
-  if(!reset){
-    meldung.innerText = "Antrag nicht gefunden.";
-    return;
-  }
-
-  const user = users.find(u =>
-    String(u["PSN-Username"]).toLowerCase() === String(reset.Username).toLowerCase()
-  );
-
-  if(!user){
-    meldung.innerText = "Kein Benutzer mit diesem PSN-Username gefunden.";
-    return;
-  }
-
-  try{
-    await patch("Users", user.id, {
-      Passwort:neuesPasswort
-    });
-
-    await patch("Passwort_Reset", resetId, {
-      Status:"Erledigt",
-      Bearbeitet_von:USERNAME
-    });
-
-    meldung.innerText =
-      "Passwort wurde gesetzt.\nBitte dem Spieler privat mitteilen.";
-
-    await laden();
-
-  }catch(err){
-    meldung.innerText = "Fehler:\n" + err.message;
-  }
+function logout(){
+  localStorage.clear();
+  location.href = "login.html";
 }
 
-async function resetAblehnen(resetId){
-  if(!confirm("Passwort-Antrag wirklich ablehnen?")){
-    return;
-  }
-
-  const meldung = document.getElementById("msg_reset_" + resetId);
-
-  try{
-    await patch("Passwort_Reset", resetId, {
-      Status:"Abgelehnt",
-      Bearbeitet_von:USERNAME
-    });
-
-    meldung.innerText = "Antrag abgelehnt.";
-    await laden();
-
-  }catch(err){
-    meldung.innerText = "Fehler:\n" + err.message;
-  }
-}
-
-async function genehmigen(regId){
-  const meldung = document.getElementById("msg_reg_" + regId);
-  const hofId = document.getElementById("hof_reg_" + regId).value;
-
-  meldung.innerText = "";
-
-  if(!hofId){
-    meldung.innerText = "Bitte zuerst einen Hof auswählen.";
-    return;
-  }
-
-  const reg = registrierungen.find(r => String(r.id) === String(regId));
-  const hof = hoefe.find(h => String(h.id) === String(hofId));
-
-  if(!reg){
-    meldung.innerText = "Registrierung nicht gefunden.";
-    return;
-  }
-
-  const existiert = users.find(u =>
-    String(u["PSN-Username"]).toLowerCase() === String(reg.Username).toLowerCase()
-  );
-
-  if(existiert){
-    meldung.innerText = "Dieser Benutzer existiert bereits.";
-    return;
-  }
-
-  try{
-    meldung.innerText = "Benutzer wird erstellt...";
-
-    await post("Users", {
-      "PSN-Username":reg.Username,
-      Vorname:reg.Spielername,
-      Passwort:reg.Passwort,
-      Telegram_id:reg.Telegram || "",
-      Hof_id:Number(hofId),
-      Hof:hof ? hof.Name : "",
-      Admin:false,
-      Aktiviert:true
-    });
-
-    await patch("Registrierungen", regId, {
-      Status:"Genehmigt",
-      Bearbeitet_von:USERNAME,
-      Hof_id:Number(hofId)
-    });
-
-    meldung.innerText = "Registrierung genehmigt.";
-    await laden();
-
-  }catch(err){
-    meldung.innerText = "Fehler:\n" + err.message;
-  }
-}
-
-async function ablehnen(regId){
-  if(!confirm("Registrierung wirklich ablehnen?")){
-    return;
-  }
-
-  const meldung = document.getElementById("msg_reg_" + regId);
-
-  try{
-    await patch("Registrierungen", regId, {
-      Status:"Abgelehnt",
-      Bearbeitet_von:USERNAME
-    });
-
-    meldung.innerText = "Registrierung abgelehnt.";
-    await laden();
-
-  }catch(err){
-    meldung.innerText = "Fehler:\n" + err.message;
-  }
-}
-
-async function benutzerSpeichern(userId){
-  const meldung = document.getElementById("msg_user_" + userId);
-  const passwort = document.getElementById("pass_" + userId).value.trim();
-  const telegram = document.getElementById("telegram_" + userId).value.trim();
-  const hofId = document.getElementById("hof_user_" + userId).value;
-
-  meldung.innerText = "Speichere...";
-
-  const hof = hoefe.find(h => String(h.id) === String(hofId));
-
-  let daten = {
-    Telegram_id:telegram,
-    Hof_id:hofId ? Number(hofId) : null,
-    Hof:hof ? hof.Name : ""
-  };
-
-  if(passwort){
-    daten.Passwort = passwort;
-  }
-
-  try{
-    await patch("Users", userId, daten);
-    meldung.innerText = "Benutzer gespeichert.";
-    await laden();
-
-  }catch(err){
-    meldung.innerText = "Fehler:\n" + err.message;
-  }
-}
-
-async function adminUmschalten(userId){
-  const u = users.find(x => String(x.id) === String(userId));
-
-  if(!u){
-    return;
-  }
-
-  if(String(userId) === String(USER_ID)){
-    alert("Du kannst deinen eigenen Adminstatus nicht ändern.");
-    return;
-  }
-
-  await patch("Users", userId, {
-    Admin: !(u.Admin === true)
-  });
-
-  await laden();
-}
-
-async function aktivUmschalten(userId){
-  const u = users.find(x => String(x.id) === String(userId));
-
-  if(!u){
-    return;
-  }
-
-  if(String(userId) === String(USER_ID)){
-    alert("Du kannst dich nicht selbst deaktivieren.");
-    return;
-  }
-
-  await patch("Users", userId, {
-    Aktiviert: !(u.Aktiviert === true)
-  });
-
-  await laden();
-}
-
-laden();
+pruefen();
 </script>
 
 </body>
