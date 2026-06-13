@@ -397,8 +397,9 @@ async function auftragBeenden(){
     });
 
     await post("Telegram_queue", {
-      Titel:"✅ Einsatz/Auftrag beendet",
-      Nachricht:"Der Auftrag wurde von " + USERNAME + " beendet.",
+      Titel:"✅ " + auftrag.Titel,
+Nachricht:"Der Auftrag '" + auftrag.Titel +
+"' wurde von " + USERNAME + " beendet.",
       Typ:"Auftrag",
       User_id:null,
       Hof_id:auftrag.Hof_id || null,
