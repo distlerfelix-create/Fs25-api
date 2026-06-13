@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrierungen</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:30px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-size:38px;
+  font-family:Georgia,serif;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+}
+
+.titel{
+  color:#00ff22;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.info{
+  color:white;
+  margin-top:10px;
+  line-height:1.5;
+  font-size:18px;
+}
+
+.orange{
+  color:#ffaa33;
+}
+
+select{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:17px;
+}
+
+button{
+  width:100%;
+  margin-top:10px;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.green{
+  background:#008800;
+  color:white;
+}
+
+.red{
+  background:#aa0000;
+  color:white;
+}
+
+.msg{
+  color:#ffaa33;
+  text-align:center;
+  margin-top:10px;
+  white-space:pre-line;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">
+← Zurück
+</button>
+
+<h1>REGISTRIERUNGEN</h1>
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+let registrierungen = [];
+let hoefe = [];
+let users = [];
+
+const USERNAME =
+localStorage.getItem("username") || "Admin";
+
+async function api(tabelle){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    {
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  return await res.json();
+}
+
+async function laden(){
+
+  registrierungen =
+    await api("Registrierungen");
+
+  hoefe =
+    await api("Hoefe");
+
+  users =
+    await api("Users");
+
+  anzeigen();
+}
+
+function hofSelect(id){
+
+  let html =
+    `<select id="hof_${id}">`;
+
+  html +=
+    `<option value="">Hof wählen</option>`;
+
+  hoefe.forEach(h=>{
+
+    html += `
+      <option value="${h.id}">
+        ${h.Name}
+      </option>
+    `;
+  });
+
+  html += `</select>`;
+
+  return html;
+}
+
+function anzeigen(){
+
+  const box =
+    document.getElementById("liste");
+
+  const offen =
+    registrierungen.filter(
+      r => r.Status === "Offen"
+    );
+
+  if(offen.length === 0){
+
+    box.innerHTML =
+      "<div class='leer'>Keine offenen Registrierungen.</div>";
+
+    return;
+  }
+
+  box.innerHTML = "";
+
+  offen.forEach(r=>{
+
+    const div =
+      document.createElement("div");
+
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="titel">
+        ${r.Spielername || "-"}
+      </div>
+
+      <div class="info">
+        <span class="orange">PSN:</span>
+        ${r.Username || "-"}<br>
+
+        <span class="orange">Telegram:</span>
+        ${r.Telegram || "-"}<br>
+
+        <span class="orange">Status:</span>
+        ${r.Status}
+      </div>
+
+      ${hofSelect(r.id)}
+
+      <button class="green"
+        onclick="genehmigen(${r.id})">
+        Genehmigen
+      </button>
+
+      <button class="red"
+        onclick="ablehnen(${r.id})">
+        Ablehnen
+      </button>
+
+      <div id="msg_${r.id}"
+        class="msg"></div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+async function genehmigen(id){
+
+  const meldung =
+    document.getElementById(
+      "msg_" + id
+    );
+
+  const hofId =
+    document.getElementById(
+      "hof_" + id
+    ).value;
+
+  if(!hofId){
+
+    meldung.innerText =
+      "Bitte Hof auswählen.";
+
+    return;
+  }
+
+  const reg =
+    registrierungen.find(
+      x => x.id == id
+    );
+
+  const hof =
+    hoefe.find(
+      x => x.id == hofId
+    );
+
+  const vorhanden =
+    users.find(
+      u =>
+      String(
+        u["PSN-Username"]
+      ).toLowerCase()
+      ===
+      String(
+        reg.Username
+      ).toLowerCase()
+    );
+
+  if(vorhanden){
+
+    meldung.innerText =
+      "Benutzer existiert bereits.";
+
+    return;
+  }
+
+  await fetch(
+    SUPABASE_URL +
+    "/rest/v1/Users",
+    {
+      method:"POST",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:
+        "Bearer " +
+        SUPABASE_KEY,
+        "Content-Type":
+        "application/json",
+        Prefer:
+        "return=minimal"
+      },
+      body:JSON.stringify({
+
+        "PSN-Username":
+        reg.Username,
+
+        Vorname:
+        reg.Spielername,
+
+        Passwort:
+        reg.Passwort,
+
+        Telegram_id:
+        reg.Telegram || "",
+
+        Hof_id:
+        Number(hofId),
+
+        Hof:
+        hof.Name,
+
+        Aktiviert:true,
+        Admin:false
+      })
+    }
+  );
+
+  await fetch(
+    SUPABASE_URL +
+    "/rest/v1/Registrierungen?id=eq." + id,
+    {
+      method:"PATCH",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:
+        "Bearer " +
+        SUPABASE_KEY,
+        "Content-Type":
+        "application/json",
+        Prefer:
+        "return=minimal"
+      },
+      body:JSON.stringify({
+        Status:"Genehmigt",
+        Bearbeitet_von:USERNAME,
+        Hof_id:Number(hofId)
+      })
+    }
+  );
+
+  laden();
+}
+
+async function ablehnen(id){
+
+  await fetch(
+    SUPABASE_URL +
+    "/rest/v1/Registrierungen?id=eq." + id,
+    {
+      method:"PATCH",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:
+        "Bearer " +
+        SUPABASE_KEY,
+        "Content-Type":
+        "application/json",
+        Prefer:
+        "return=minimal"
+      },
+      body:JSON.stringify({
+        Status:"Abgelehnt",
+        Bearbeitet_von:USERNAME
+      })
+    }
+  );
+
+  laden();
+}
+
+laden();
+</script>
+
+</body>
+</html>
