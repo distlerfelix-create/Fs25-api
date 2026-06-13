@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Benutzer</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif;}
+.search,input,select{width:100%;padding:14px;margin-top:12px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;}
+.info{color:white;margin-top:10px;line-height:1.5;font-size:18px;}
+.orange{color:#ffaa33;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+
+<h1>BENUTZER</h1>
+
+<input id="suche" class="search" placeholder="Benutzer suchen..." oninput="anzeigen()">
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+if(!USER_ID){ location.href = "login.html"; }
+
+let users = [];
+let hoefe = [];
+
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
+    headers:{apikey:SUPABASE_KEY, Authorization:"Bearer " + SUPABASE_KEY}
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"PATCH",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function loeschen(tabelle,id){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"DELETE",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      Prefer:"return=minimal"
+    }
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function hofSelect(id, hofId){
+  let html = `<select id="hof_${id}">`;
+  html += `<option value="">Kein Hof</option>`;
+  hoefe.forEach(h=>{
+    html += `<option value="${h.id}" ${String(h.id)===String(hofId) ? "selected" : ""}>${h.Name}</option>`;
+  });
+  html += `</select>`;
+  return html;
+}
+
+async function laden(){
+  const box = document.getElementById("liste");
+
+  try{
+    users = await api("Users");
+    hoefe = await api("Hoefe");
+
+    const admin = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!admin || admin.Admin !== true){
+      box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    anzeigen();
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Fehler:<br><br>" + err.message + "</div>";
+  }
+}
+
+function anzeigen(){
+  const box = document.getElementById("liste");
+  const suche = document.getElementById("suche").value.toLowerCase().trim();
+
+  const gefiltert = users.filter(u=>{
+    const s = [
+      u.Vorname,
+      u["PSN-Username"],
+      u.Hof,
+      u.Telegram_id
+    ].join(" ").toLowerCase();
+
+    return s.includes(suche);
+  });
+
+  if(gefiltert.length === 0){
+    box.innerHTML = "<div class='leer'>Keine Benutzer gefunden.</div>";
+    return;
+  }
+
+  box.innerHTML = "";
+
+  gefiltert.forEach(u=>{
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="titel">${text(u.Vorname)}</div>
+
+      <div class="info">
+        <span class="orange">PSN:</span> ${text(u["PSN-Username"])}<br>
+        <span class="orange">Hof:</span> ${text(u.Hof)}<br>
+        <span class="orange">Telegram:</span> ${text(u.Telegram_id)}<br>
+        <span class="orange">Admin:</span> ${u.Admin === true ? "Ja" : "Nein"}<br>
+        <span class="orange">Aktiviert:</span> ${u.Aktiviert === true ? "Ja" : "Nein"}
+      </div>
+
+      <input id="vorname_${u.id}" value="${u.Vorname || ""}" placeholder="Vorname">
+      <input id="psn_${u.id}" value="${u["PSN-Username"] || ""}" placeholder="PSN-Username">
+      <input id="pass_${u.id}" placeholder="Neues Passwort">
+      <input id="telegram_${u.id}" value="${u.Telegram_id || ""}" placeholder="Telegram-ID">
+
+      ${hofSelect(u.id,u.Hof_id)}
+
+      <button class="green" onclick="speichern(${u.id})">Speichern</button>
+      <button class="dark" onclick="adminUmschalten(${u.id})">${u.Admin === true ? "Admin entfernen" : "Admin setzen"}</button>
+      <button class="red" onclick="aktivUmschalten(${u.id})">${u.Aktiviert === true ? "Deaktivieren" : "Aktivieren"}</button>
+      <button class="red" onclick="benutzerLoeschen(${u.id})">Benutzer löschen</button>
+
+      <div id="msg_${u.id}" class="msg"></div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+async function speichern(id){
+  const msg = document.getElementById("msg_" + id);
+  msg.innerText = "Speichere...";
+
+  const hofId = document.getElementById("hof_" + id).value;
+  const hof = hoefe.find(h => String(h.id) === String(hofId));
+  const passwort = document.getElementById("pass_" + id).value.trim();
+
+  let daten = {
+    Vorname:document.getElementById("vorname_" + id).value.trim(),
+    "PSN-Username":document.getElementById("psn_" + id).value.trim(),
+    Telegram_id:document.getElementById("telegram_" + id).value.trim(),
+    Hof_id:hofId ? Number(hofId) : null,
+    Hof:hof ? hof.Name : ""
+  };
+
+  if(passwort){
+    daten.Passwort = passwort;
+  }
+
+  try{
+    await patch("Users", id, daten);
+    msg.innerText = "Gespeichert.";
+    await laden();
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function adminUmschalten(id){
+  if(String(id) === String(USER_ID)){
+    alert("Du kannst deinen eigenen Adminstatus nicht ändern.");
+    return;
+  }
+
+  const u = users.find(x => String(x.id) === String(id));
+  await patch("Users", id, {Admin:!(u.Admin === true)});
+  await laden();
+}
+
+async function aktivUmschalten(id){
+  if(String(id) === String(USER_ID)){
+    alert("Du kannst dich nicht selbst deaktivieren.");
+    return;
+  }
+
+  const u = users.find(x => String(x.id) === String(id));
+  await patch("Users", id, {Aktiviert:!(u.Aktiviert === true)});
+  await laden();
+}
+
+async function benutzerLoeschen(id){
+  if(String(id) === String(USER_ID)){
+    alert("Du kannst dich nicht selbst löschen.");
+    return;
+  }
+
+  if(!confirm("Benutzer wirklich löschen?")){
+    return;
+  }
+
+  try{
+    await loeschen("Users", id);
+    await laden();
+  }catch(err){
+    alert("Fehler:\n" + err.message);
+  }
+}
+
+laden();
+</script>
+
+</body>
+</html>
