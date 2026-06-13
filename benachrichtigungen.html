@@ -6,9 +6,7 @@
 <title>Benachrichtigungen</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box;}
 
 body{
   margin:0;
@@ -44,9 +42,7 @@ h1{
 }
 
 @media (max-width:500px){
-  h1{
-    font-size:26px;
-  }
+  h1{font-size:26px;}
 }
 
 .card{
@@ -64,6 +60,17 @@ h1{
   box-shadow:0 0 14px rgba(255,0,0,0.45);
 }
 
+.card.einsatz{
+  border:2px solid #ff6600;
+  box-shadow:0 0 18px rgba(255,100,0,0.6);
+}
+
+.card.erledigt{
+  border:2px solid #00cc44;
+  box-shadow:0 0 16px rgba(0,255,80,0.45);
+  opacity:0.85;
+}
+
 .card:active{
   background:#003300;
 }
@@ -79,6 +86,7 @@ h1{
   margin-top:10px;
   font-size:clamp(16px,4vw,20px);
   line-height:1.4;
+  white-space:pre-line;
 }
 
 .typ{
@@ -90,6 +98,26 @@ h1{
 .badge-neu{
   display:inline-block;
   background:red;
+  color:white;
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:14px;
+  margin-left:8px;
+}
+
+.badge-einsatz{
+  display:inline-block;
+  background:#ff6600;
+  color:white;
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:14px;
+  margin-left:8px;
+}
+
+.badge-erledigt{
+  display:inline-block;
+  background:#008800;
   color:white;
   border-radius:20px;
   padding:3px 10px;
@@ -135,6 +163,7 @@ h1{
 .popup p{
   font-size:clamp(17px,4vw,22px);
   line-height:1.4;
+  white-space:pre-line;
 }
 
 .popup .popup-typ{
@@ -145,9 +174,8 @@ h1{
 
 .popup button{
   width:100%;
-  margin-top:25px;
+  margin-top:18px;
   padding:16px;
-  background:#007a00;
   color:white;
   border:none;
   border-radius:12px;
@@ -155,10 +183,16 @@ h1{
   font-weight:bold;
 }
 
-@media (min-width:800px){
-  .card{
-    padding:24px;
-  }
+.btn-green{
+  background:#007a00;
+}
+
+.btn-red{
+  background:#cc3300;
+}
+
+.btn-dark{
+  background:#333;
 }
 </style>
 </head>
@@ -179,7 +213,12 @@ h1{
     <h2 id="popupTitel"></h2>
     <p id="popupNachricht"></p>
     <div class="popup-typ" id="popupTyp"></div>
-    <button onclick="schliessePopup()">Schließen</button>
+
+    <button id="einsatzBeendenBtn" class="btn-red" onclick="einsatzBeenden()" style="display:none">
+      Einsatz beendet
+    </button>
+
+    <button class="btn-dark" onclick="schliessePopup()">Schließen</button>
   </div>
 </div>
 
@@ -187,10 +226,40 @@ h1{
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
-function zeigePopup(titel,nachricht,typ){
+const USERNAME = localStorage.getItem("username") || "Disti1701";
+const USER_ID = Number(localStorage.getItem("user_id") || 1);
+const HOF_ID = Number(localStorage.getItem("hof_id") || 1);
+
+let organisationen = [];
+let aktuelleBenachrichtigung = null;
+
+function orgName(id){
+  const org = organisationen.find(o => String(o.id) === String(id));
+  return org ? org.Name : "Organisation " + id;
+}
+
+function zeigePopup(b){
+  aktuelleBenachrichtigung = b;
+
+  const titel = b.Titel || "Benachrichtigung";
+  const nachricht = b.Nachricht || "";
+  const typ = b.Typ || "-";
+  const org = b.Organisation_id ? orgName(b.Organisation_id) : "";
+
   document.getElementById("popupTitel").innerText = titel;
   document.getElementById("popupNachricht").innerText = nachricht;
-  document.getElementById("popupTyp").innerText = "Typ: " + typ;
+
+  document.getElementById("popupTyp").innerText =
+    "Typ: " + typ + (org ? " | Organisation: " + org : "");
+
+  const btn = document.getElementById("einsatzBeendenBtn");
+
+  if(b.Typ === "Einsatz" && b.Erledigt !== true){
+    btn.style.display = "block";
+  }else{
+    btn.style.display = "none";
+  }
+
   document.getElementById("popupBg").style.display = "flex";
 }
 
@@ -198,33 +267,123 @@ function schliessePopup(){
   document.getElementById("popupBg").style.display = "none";
 }
 
-async function markiereAlsGelesen(id){
+async function patchBenachrichtigung(id,daten){
   await fetch(
     SUPABASE_URL + "/rest/v1/Benachrichtigungen?id=eq." + id,
     {
       method:"PATCH",
       headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+}
+
+async function markiereAlsGelesen(id){
+  await patchBenachrichtigung(id,{Gelesen:true});
+}
+
+async function ladeOrganisationen(){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Organisationen?select=*",
+    {
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  organisationen = await res.json();
+}
+
+async function einsatzBeenden(){
+  if(!aktuelleBenachrichtigung || !aktuelleBenachrichtigung.Auftrag_id){
+    alert("Kein Auftrag verknüpft.");
+    return;
+  }
+
+  const auftragId = aktuelleBenachrichtigung.Auftrag_id;
+
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Auftraege?id=eq." + auftragId,
+    {
+      method:"PATCH",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
         "Content-Type":"application/json",
         "Prefer":"return=minimal"
       },
       body:JSON.stringify({
+        Status:"Erledigt",
+        Erledigt_am:new Date().toISOString()
+      })
+    }
+  );
+
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen?Auftrag_id=eq." + auftragId,
+    {
+      method:"PATCH",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Erledigt:true,
         Gelesen:true
       })
     }
   );
+
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
+    {
+      method:"POST",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Titel:"✅ Einsatz beendet",
+        Nachricht:"Der Einsatz wurde von " + USERNAME + " beendet.",
+        Typ:"Einsatz beendet",
+        User_id:null,
+        Hof_id:null,
+        Organisation_id:aktuelleBenachrichtigung.Organisation_id,
+        Auftrag_id:auftragId,
+        Gelesen:false,
+        Erledigt:true,
+        Erstellt_am:new Date().toISOString()
+      })
+    }
+  );
+
+  alert("Einsatz wurde beendet.");
+  schliessePopup();
+  await ladeBenachrichtigungen();
 }
 
 async function ladeBenachrichtigungen(){
   const box = document.getElementById("liste");
 
+  await ladeOrganisationen();
+
   const res = await fetch(
     SUPABASE_URL + "/rest/v1/Benachrichtigungen?select=*&order=id.desc",
     {
       headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
       }
     }
   );
@@ -236,6 +395,16 @@ async function ladeBenachrichtigungen(){
     return;
   }
 
+  data.sort((a,b)=>{
+    const aEinsatz = a.Typ === "Einsatz" && a.Erledigt !== true;
+    const bEinsatz = b.Typ === "Einsatz" && b.Erledigt !== true;
+
+    if(aEinsatz && !bEinsatz) return -1;
+    if(!aEinsatz && bEinsatz) return 1;
+
+    return b.id - a.id;
+  });
+
   box.innerHTML = "";
 
   data.forEach(b => {
@@ -243,16 +412,26 @@ async function ladeBenachrichtigungen(){
     const nachricht = b.Nachricht || "";
     const typ = b.Typ || "-";
     const istNeu = b.Gelesen !== true;
+    const istEinsatz = typ === "Einsatz";
+    const istErledigt = b.Erledigt === true;
+    const org = b.Organisation_id ? orgName(b.Organisation_id) : "";
 
     const div = document.createElement("div");
-    div.className = istNeu ? "card neu" : "card";
+
+    if(istEinsatz && !istErledigt){
+      div.className = istNeu ? "card neu einsatz" : "card einsatz";
+    }else if(istErledigt || typ === "Einsatz beendet"){
+      div.className = "card erledigt";
+    }else{
+      div.className = istNeu ? "card neu" : "card";
+    }
 
     div.onclick = async function(){
-      zeigePopup(titel,nachricht,typ);
+      zeigePopup(b);
 
       if(istNeu){
         await markiereAlsGelesen(b.id);
-        div.className = "card";
+        b.Gelesen = true;
         ladeBenachrichtigungen();
       }
     };
@@ -261,9 +440,16 @@ async function ladeBenachrichtigungen(){
       <div class="titel">
         ${titel}
         ${istNeu ? "<span class='badge-neu'>NEU</span>" : ""}
+        ${istEinsatz && !istErledigt ? "<span class='badge-einsatz'>EINSATZ</span>" : ""}
+        ${istErledigt ? "<span class='badge-erledigt'>ERLEDIGT</span>" : ""}
       </div>
+
       <div class="text">${nachricht}</div>
-      <div class="typ">${typ}</div>
+
+      <div class="typ">
+        ${typ}
+        ${org ? " | " + org : ""}
+      </div>
     `;
 
     box.appendChild(div);
