@@ -13,7 +13,7 @@ body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
 h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;}
 .card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 0 10px rgba(0,255,0,0.18);}
 .titel{color:#00ff22;font-size:24px;font-weight:bold;}
-.info{color:white;margin-top:10px;font-size:18px;line-height:1.5;}
+.info{color:white;margin-top:10px;font-size:18px;line-height:1.5;white-space:pre-line;}
 .orange{color:#ffaa33;}
 select,input{width:100%;padding:14px;margin-top:12px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
 button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
@@ -50,6 +50,7 @@ if(!USER_ID){
 let users = [];
 let hoefe = [];
 let registrierungen = [];
+let passwortResets = [];
 let aktuellerUser = null;
 
 async function api(tabelle){
@@ -133,6 +134,7 @@ async function laden(){
     users = await api("Users");
     hoefe = await api("Hoefe");
     registrierungen = await api("Registrierungen");
+    passwortResets = await api("Passwort_Reset");
 
     aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
 
@@ -151,24 +153,73 @@ async function laden(){
 function anzeigen(){
   const box = document.getElementById("inhalt");
 
-  const offen = registrierungen.filter(r => r.Status === "Offen");
+  const offeneRegistrierungen = registrierungen.filter(r => r.Status === "Offen");
+  const offeneResets = passwortResets.filter(r => r.Status === "Offen");
 
   let html = "";
 
   html += `
     <div class="card">
-      <div class="titel">Registrierungen</div>
+      <div class="titel">Übersicht</div>
       <div class="info">
-        Offene Anträge: <span class="orange">${offen.length}</span>
+        Offene Registrierungen: <span class="orange">${offeneRegistrierungen.length}</span><br>
+        Passwort-Reset-Anträge: <span class="orange">${offeneResets.length}</span><br>
+        Benutzer gesamt: <span class="orange">${users.length}</span>
       </div>
     </div>
   `;
 
-  if(offen.length === 0){
+  html += `
+    <div class="card">
+      <div class="titel">Passwort vergessen</div>
+      <div class="info">Offene Anträge: <span class="orange">${offeneResets.length}</span></div>
+    </div>
+  `;
+
+  if(offeneResets.length === 0){
+    html += `<div class="card"><div class="info">Keine offenen Passwort-Anträge.</div></div>`;
+  }
+
+  offeneResets.forEach(r => {
+    const passenderUser = users.find(u =>
+      String(u["PSN-Username"]).toLowerCase() === String(r.Username).toLowerCase()
+    );
+
+    html += `
+      <div class="card">
+        <div class="titel">${text(r.Spielername)}</div>
+
+        <div class="info">
+          <span class="orange">PSN:</span> ${text(r.Username)}<br>
+          <span class="orange">Nachricht:</span><br>${text(r.Nachricht)}<br>
+          <span class="orange">User gefunden:</span> ${passenderUser ? "Ja" : "Nein"}<br>
+          <span class="orange">Status:</span> ${text(r.Status)}
+        </div>
+
+        <input id="resetpass_${r.id}" placeholder="Neues Passwort">
+
+        <button class="green" onclick="resetErledigen(${r.id})">Passwort setzen & erledigen</button>
+        <button class="red" onclick="resetAblehnen(${r.id})">Antrag ablehnen</button>
+
+        <div id="msg_reset_${r.id}" class="msg"></div>
+      </div>
+    `;
+  });
+
+  html += `
+    <div class="card">
+      <div class="titel">Registrierungen</div>
+      <div class="info">
+        Offene Anträge: <span class="orange">${offeneRegistrierungen.length}</span>
+      </div>
+    </div>
+  `;
+
+  if(offeneRegistrierungen.length === 0){
     html += `<div class="card"><div class="info">Keine offenen Registrierungen.</div></div>`;
   }
 
-  offen.forEach(r => {
+  offeneRegistrierungen.forEach(r => {
     html += `
       <div class="card">
         <div class="titel">${text(r.Spielername)}</div>
@@ -224,6 +275,74 @@ function anzeigen(){
   });
 
   box.innerHTML = html;
+}
+
+async function resetErledigen(resetId){
+  const meldung = document.getElementById("msg_reset_" + resetId);
+  const neuesPasswort = document.getElementById("resetpass_" + resetId).value.trim();
+
+  meldung.innerText = "";
+
+  if(!neuesPasswort){
+    meldung.innerText = "Bitte neues Passwort eingeben.";
+    return;
+  }
+
+  const reset = passwortResets.find(r => String(r.id) === String(resetId));
+
+  if(!reset){
+    meldung.innerText = "Antrag nicht gefunden.";
+    return;
+  }
+
+  const user = users.find(u =>
+    String(u["PSN-Username"]).toLowerCase() === String(reset.Username).toLowerCase()
+  );
+
+  if(!user){
+    meldung.innerText = "Kein Benutzer mit diesem PSN-Username gefunden.";
+    return;
+  }
+
+  try{
+    await patch("Users", user.id, {
+      Passwort:neuesPasswort
+    });
+
+    await patch("Passwort_Reset", resetId, {
+      Status:"Erledigt",
+      Bearbeitet_von:USERNAME
+    });
+
+    meldung.innerText =
+      "Passwort wurde gesetzt.\nBitte dem Spieler privat mitteilen.";
+
+    await laden();
+
+  }catch(err){
+    meldung.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function resetAblehnen(resetId){
+  if(!confirm("Passwort-Antrag wirklich ablehnen?")){
+    return;
+  }
+
+  const meldung = document.getElementById("msg_reset_" + resetId);
+
+  try{
+    await patch("Passwort_Reset", resetId, {
+      Status:"Abgelehnt",
+      Bearbeitet_von:USERNAME
+    });
+
+    meldung.innerText = "Antrag abgelehnt.";
+    await laden();
+
+  }catch(err){
+    meldung.innerText = "Fehler:\n" + err.message;
+  }
 }
 
 async function genehmigen(regId){
