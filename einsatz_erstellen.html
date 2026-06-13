@@ -259,7 +259,7 @@ async function einsatzErstellen(){
         },
         body:JSON.stringify({
           Titel:"🚨 Neuer Einsatz: " + titel,
-          Nachricht:beschreibung,
+          Nachricht:"Organisation: " + (org ? org.Name : "-") + "\n\n" + beschreibung,
           Typ:"Einsatz",
           User_id:null,
           Hof_id:null,
