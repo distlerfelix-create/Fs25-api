@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:30px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:38px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 0 10px rgba(0,255,0,0.18);
+}
+
+.titel{
+  color:#00ff22;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.info{
+  color:white;
+  margin-top:10px;
+  font-size:18px;
+  line-height:1.5;
+}
+
+.orange{
+  color:#ffaa33;
+}
+
+select, input{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:17px;
+}
+
+button{
+  width:100%;
+  margin-top:12px;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+
+.msg{
+  color:#ffaa33;
+  text-align:center;
+  margin-top:12px;
+  font-weight:bold;
+  white-space:pre-line;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:40px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
+
+<h1>ADMIN</h1>
+
+<div id="inhalt">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Admin";
+
+if(!USER_ID){
+  location.href = "login.html";
+}
+
+let users = [];
+let hoefe = [];
+let registrierungen = [];
+let aktuellerUser = null;
+
+async function api(tabelle){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
+    {
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle,
+    {
+      method:"POST",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id,
+    {
+      method:"PATCH",
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function hofSelectHtml(regId){
+  let html = `<select id="hof_${regId}">`;
+  html += `<option value="">Hof auswählen</option>`;
+
+  hoefe.forEach(h => {
+    html += `<option value="${h.id}">${h.Name}</option>`;
+  });
+
+  html += `</select>`;
+  return html;
+}
+
+async function laden(){
+  const box = document.getElementById("inhalt");
+
+  try{
+    users = await api("Users");
+    hoefe = await api("Hoefe");
+    registrierungen = await api("Registrierungen");
+
+    aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!aktuellerUser || aktuellerUser.Admin !== true){
+      box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    anzeigen();
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Fehler:<br><br>" + err.message + "</div>";
+  }
+}
+
+function anzeigen(){
+  const box = document.getElementById("inhalt");
+
+  const offen = registrierungen.filter(r => r.Status === "Offen");
+
+  let html = "";
+
+  html += `
+    <div class="card">
+      <div class="titel">Registrierungen</div>
+      <div class="info">
+        Offene Anträge: <span class="orange">${offen.length}</span>
+      </div>
+    </div>
+  `;
+
+  if(offen.length === 0){
+    html += `<div class="card"><div class="info">Keine offenen Registrierungen.</div></div>`;
+  }
+
+  offen.forEach(r => {
+    html += `
+      <div class="card">
+        <div class="titel">${text(r.Spielername)}</div>
+
+        <div class="info">
+          <span class="orange">PSN:</span> ${text(r.Username)}<br>
+          <span class="orange">Telegram:</span> ${text(r.Telegram)}<br>
+          <span class="orange">Status:</span> ${text(r.Status)}
+        </div>
+
+        ${hofSelectHtml(r.id)}
+
+        <button class="green" onclick="genehmigen(${r.id})">Genehmigen</button>
+        <button class="red" onclick="ablehnen(${r.id})">Ablehnen</button>
+
+        <div id="msg_${r.id}" class="msg"></div>
+      </div>
+    `;
+  });
+
+  html += `
+    <div class="card">
+      <div class="titel">Benutzer</div>
+      <div class="info">Aktive Benutzer: ${users.length}</div>
+      <button class="dark" onclick="alert('Benutzerverwaltung bauen wir im nächsten Schritt.')">
+        Benutzerverwaltung
+      </button>
+    </div>
+  `;
+
+  box.innerHTML = html;
+}
+
+async function genehmigen(regId){
+  const meldung = document.getElementById("msg_" + regId);
+  const hofId = document.getElementById("hof_" + regId).value;
+
+  meldung.innerText = "";
+
+  if(!hofId){
+    meldung.innerText = "Bitte zuerst einen Hof auswählen.";
+    return;
+  }
+
+  const reg = registrierungen.find(r => String(r.id) === String(regId));
+  const hof = hoefe.find(h => String(h.id) === String(hofId));
+
+  if(!reg){
+    meldung.innerText = "Registrierung nicht gefunden.";
+    return;
+  }
+
+  const existiert = users.find(u =>
+    String(u["PSN-Username"]).toLowerCase() === String(reg.Username).toLowerCase()
+  );
+
+  if(existiert){
+    meldung.innerText = "Dieser Benutzer existiert bereits.";
+    return;
+  }
+
+  try{
+    meldung.innerText = "Benutzer wird erstellt...";
+
+    await post("Users", {
+      "PSN-Username":reg.Username,
+      Vorname:reg.Spielername,
+      Passwort:reg.Passwort,
+      Telegram_id:reg.Telegram || "",
+      Hof_id:Number(hofId),
+      Hof:hof ? hof.Name : "",
+      Admin:false,
+      Aktiviert:true
+    });
+
+    await patch("Registrierungen", regId, {
+      Status:"Genehmigt",
+      Bearbeitet_von:USERNAME,
+      Hof_id:Number(hofId)
+    });
+
+    meldung.innerText = "Registrierung genehmigt.";
+    await laden();
+
+  }catch(err){
+    meldung.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function ablehnen(regId){
+  if(!confirm("Registrierung wirklich ablehnen?")){
+    return;
+  }
+
+  const meldung = document.getElementById("msg_" + regId);
+
+  try{
+    await patch("Registrierungen", regId, {
+      Status:"Abgelehnt",
+      Bearbeitet_von:USERNAME
+    });
+
+    meldung.innerText = "Registrierung abgelehnt.";
+    await laden();
+
+  }catch(err){
+    meldung.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+laden();
+</script>
+
+</body>
+</html>
