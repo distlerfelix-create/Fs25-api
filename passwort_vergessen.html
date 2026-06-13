@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passwort vergessen</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:30px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:38px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:20px;
+}
+
+label{
+  display:block;
+  color:#ffaa33;
+  margin-top:14px;
+}
+
+input,
+textarea{
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:18px;
+}
+
+textarea{
+  min-height:120px;
+}
+
+button{
+  width:100%;
+  margin-top:18px;
+  padding:16px;
+  border:none;
+  border-radius:12px;
+  background:#008800;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.msg{
+  text-align:center;
+  color:#ffaa33;
+  margin-top:15px;
+  white-space:pre-line;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<button class="back" onclick="location.href='login.html'">
+← Zurück
+</button>
+
+<h1>PASSWORT VERGESSEN</h1>
+
+<div class="card">
+
+<label>PSN-Username</label>
+<input id="username">
+
+<label>Spielername</label>
+<input id="spielername">
+
+<label>Nachricht an den Admin</label>
+<textarea id="nachricht"
+placeholder="z.B. Passwort vergessen, bitte zurücksetzen."></textarea>
+
+<button onclick="absenden()">
+Antrag senden
+</button>
+
+<div id="meldung" class="msg"></div>
+
+</div>
+
+</div>
+
+<script>
+const SUPABASE_URL =
+"https://iddfyhsxsdjgestwxcei.supabase.co";
+
+const SUPABASE_KEY =
+
+async function absenden(){
+
+  const username =
+    document.getElementById("username").value.trim();
+
+  const spielername =
+    document.getElementById("spielername").value.trim();
+
+  const nachricht =
+    document.getElementById("nachricht").value.trim();
+
+  const meldung =
+    document.getElementById("meldung");
+
+  meldung.innerText = "";
+
+  if(!username || !spielername){
+    meldung.innerText =
+      "Bitte Username und Spielernamen angeben.";
+    return;
+  }
+
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Passwort_Reset",
+    {
+      method:"POST",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:"Bearer " + SUPABASE_KEY,
+        "Content-Type":"application/json",
+        Prefer:"return=minimal"
+      },
+      body:JSON.stringify({
+        Username:username,
+        Spielername:spielername,
+        Nachricht:nachricht,
+        Status:"Offen"
+      })
+    }
+  );
+
+  if(!res.ok){
+    meldung.innerText =
+      "Fehler beim Senden.";
+    return;
+  }
+
+  meldung.innerText =
+    "Antrag erfolgreich gesendet.\n" +
+    "Ein Admin wird dein Passwort zurücksetzen.";
+
+  document.getElementById("username").value = "";
+  document.getElementById("spielername").value = "";
+  document.getElementById("nachricht").value = "";
+}
+</script>
+
+</body>
+</html>
