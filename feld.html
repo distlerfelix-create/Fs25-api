@@ -3,19 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Feld</title>
+<title>Feld Detail</title>
 
 <style>
 *{box-sizing:border-box;}
 
 body{
   margin:0;
+  overflow-x:hidden;
   background:#000;
   color:#00ff22;
   font-family:Arial,sans-serif;
 }
 
 .app{
+  width:100%;
   max-width:700px;
   margin:auto;
   padding:20px;
@@ -27,7 +29,7 @@ body{
   border:1px solid #555;
   padding:14px 22px;
   border-radius:12px;
-  margin-bottom:35px;
+  margin-bottom:30px;
   font-size:18px;
 }
 
@@ -35,7 +37,8 @@ h1{
   color:white;
   text-align:center;
   font-family:Georgia,serif;
-  font-size:40px;
+  font-size:38px;
+  margin:20px 0 30px;
 }
 
 .card{
@@ -47,6 +50,16 @@ h1{
   box-shadow:0 0 10px rgba(0,255,0,0.18);
 }
 
+.card.erntereif{
+  border:2px solid #00cc44;
+  box-shadow:0 0 18px rgba(0,255,80,0.55);
+}
+
+.card.warnung{
+  border:2px solid #ffaa00;
+  box-shadow:0 0 18px rgba(255,170,0,0.45);
+}
+
 h2{
   color:#00ff22;
   margin-top:0;
@@ -54,8 +67,8 @@ h2{
 
 .label{
   color:#ffaa33;
+  font-size:15px;
   margin-top:12px;
-  font-size:16px;
 }
 
 .value{
@@ -63,6 +76,26 @@ h2{
   font-size:21px;
   margin-top:4px;
 }
+
+.status{
+  color:white;
+  font-size:18px;
+  line-height:1.6;
+  margin-top:12px;
+}
+
+.badge{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:20px;
+  margin:6px 4px 6px 0;
+  font-weight:bold;
+}
+
+.green{background:#008800;color:white;}
+.orange{background:#cc7700;color:white;}
+.red{background:#aa0000;color:white;}
+.gray{background:#333;color:white;}
 
 input, select{
   width:100%;
@@ -80,7 +113,7 @@ input, select{
   align-items:center;
   justify-content:space-between;
   color:white;
-  font-size:20px;
+  font-size:19px;
   margin-top:14px;
 }
 
@@ -91,33 +124,33 @@ input, select{
 
 button{
   width:100%;
-  margin-top:16px;
+  margin-top:14px;
   padding:16px;
   border:none;
   border-radius:12px;
-  font-size:20px;
+  font-size:19px;
   font-weight:bold;
 }
 
-.green{
+.btn-green{
   background:#008800;
   color:white;
 }
 
-.red{
+.btn-red{
   background:#aa0000;
   color:white;
 }
 
-.warn{
-  border:2px solid #ff9900;
-  box-shadow:0 0 18px rgba(255,150,0,0.6);
+.btn-dark{
+  background:#333;
+  color:white;
 }
 
 .msg{
   color:#ffaa33;
   text-align:center;
-  margin-top:15px;
+  margin-top:14px;
   font-weight:bold;
 }
 
@@ -125,7 +158,7 @@ button{
   color:white;
   text-align:center;
   margin-top:40px;
-  font-size:20px;
+  font-size:18px;
 }
 </style>
 </head>
@@ -135,7 +168,7 @@ button{
 
 <button class="back" onclick="location.href='felder.html'">← Zurück</button>
 
-<h1 id="titel">FELD</h1>
+<h1 id="seitenTitel">FELD</h1>
 
 <div id="inhalt">Lade...</div>
 
@@ -159,8 +192,9 @@ const FELD_ID = params.get("id");
 let feld = null;
 let user = null;
 let hof = null;
-let darfBearbeiten = false;
 let istAdmin = false;
+let darfBearbeiten = false;
+let bearbeitenOffen = false;
 
 const fruchtStufen = {
   "Gras":4,
@@ -191,33 +225,36 @@ function text(wert){
   return wert === null || wert === undefined || wert === "" ? "-" : wert;
 }
 
-function jaNein(wert){
-  return wert === true ? "Ja" : "Nein";
+function checked(wert){
+  return wert === true ? "checked" : "";
 }
 
-function bool(wert){
-  return wert === true ? "checked" : "";
+function jaNein(wert){
+  return wert === true ? "✅ Ja" : "❌ Nein";
+}
+
+function duengenNoetig(){
+  return feld["Duengen_nötig"] === true || feld.Duengen_noetig === true;
 }
 
 function tageSeit(datum){
   if(!datum) return null;
   const start = new Date(datum);
   const heute = new Date();
-  const diff = heute - start;
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  return Math.floor((heute - start) / (1000 * 60 * 60 * 24));
 }
 
-function berechneWachstum(){
+function wachstumBerechnen(){
   const frucht = feld.Fruchtart || "";
   const max = fruchtStufen[frucht] || 4;
   const tage = tageSeit(feld.Gesaet_am);
 
   if(tage === null){
     return {
-      text:"Keine Aussaat gespeichert",
-      stufe:feld.Wachstumsstufe || 0,
+      stufe: feld.Wachstumsstufe || 0,
       max:max,
-      erntereif:feld.Erntebereit === true
+      text:"Kein Aussaatdatum gespeichert",
+      erntereif: feld.Erntebereit === true
     };
   }
 
@@ -225,9 +262,9 @@ function berechneWachstum(){
   const erntereif = stufe >= max;
 
   return {
-    text:tage + " RL-Tage / " + tage + " Ingame-Monate seit Aussaat",
     stufe:stufe,
     max:max,
+    text:tage + " RL-Tage / " + tage + " Ingame-Monate seit Aussaat",
     erntereif:erntereif
   };
 }
@@ -290,13 +327,14 @@ async function post(tabelle,daten){
   }
 }
 
-async function erntereifMelden(wachstum){
+async function erntereifBenachrichtigen(wachstum){
   if(!wachstum.erntereif) return;
   if(feld.Ernte_Benachrichtigt === true) return;
 
   const titel = "🌾 Feld erntereif";
   const nachricht =
-    "Feld " + feld.Feldnummer + " (" + text(feld.Fruchtart) + ") ist erntereif.";
+    "Feld " + text(feld.Feldnummer) +
+    " (" + text(feld.Fruchtart) + ") ist erntereif.";
 
   await post("Benachrichtigungen", {
     Titel:titel,
@@ -353,147 +391,175 @@ async function laden(){
     istAdmin = user && user.Admin === true;
     darfBearbeiten = istAdmin || Number(feld.Hof_id) === USER_HOF_ID;
 
-    document.getElementById("titel").innerText = "FELD " + text(feld.Feldnummer);
+    document.getElementById("seitenTitel").innerText =
+      "FELD " + text(feld.Feldnummer);
 
-    const wachstum = berechneWachstum();
+    const wachstum = wachstumBerechnen();
 
-    await erntereifMelden(wachstum);
+    await erntereifBenachrichtigen(wachstum);
 
-    let html = "";
+    anzeigen(wachstum);
 
+  }catch(err){
+    box.innerHTML =
+      "<div class='leer'>Feld konnte nicht geladen werden.<br><br>" +
+      err.message +
+      "</div>";
+  }
+}
+
+function anzeigen(wachstum){
+  const box = document.getElementById("inhalt");
+
+  let statusBadges = "";
+
+  if(wachstum.erntereif){
+    statusBadges += `<span class="badge green">🌾 Erntereif</span>`;
+  }
+
+  if(duengenNoetig()){
+    statusBadges += `<span class="badge orange">💩 Düngen nötig</span>`;
+  }
+
+  if(feld.Unkraut === true){
+    statusBadges += `<span class="badge red">🌿 Unkraut</span>`;
+  }
+
+  if(statusBadges === ""){
+    statusBadges = `<span class="badge gray">Keine Warnungen</span>`;
+  }
+
+  let html = `
+    <div class="card ${wachstum.erntereif ? "erntereif" : ""}">
+      <h2>Übersicht</h2>
+
+      ${statusBadges}
+
+      <div class="label">Feldnummer</div>
+      <div class="value">${text(feld.Feldnummer)}</div>
+
+      <div class="label">Besitzer</div>
+      <div class="value">${text(feld.Besitzer || (hof ? hof.Name : ""))}</div>
+
+      <div class="label">Hof</div>
+      <div class="value">${hof ? hof.Name : "-"}</div>
+
+      <div class="label">Größe</div>
+      <div class="value">${text(feld.Feldgroesse)} ha</div>
+
+      <div class="label">Frucht</div>
+      <div class="value">${text(feld.Fruchtart)}</div>
+
+      <div class="label">Wachstum berechnet</div>
+      <div class="value">${wachstum.stufe} / ${wachstum.max}</div>
+
+      <div class="label">Zeit seit Aussaat</div>
+      <div class="value">${wachstum.text}</div>
+
+      <div class="label">Deine Rechte</div>
+      <div class="value">${darfBearbeiten ? "Bearbeiten erlaubt" : "Nur Ansicht"}</div>
+    </div>
+
+    <div class="card">
+      <h2>Feldstatus</h2>
+
+      <div class="status">
+        Gekalkt: ${jaNein(feld.Gekalkt)}<br>
+        Gedüngt 1x: ${jaNein(feld.Geduengt_1x)}<br>
+        Gedüngt 2x: ${jaNein(feld.Geduengt_2x)}<br>
+        Gepflügt: ${jaNein(feld.Gepfluegt)}<br>
+        Gegrubbert: ${jaNein(feld.Gegrubbert)}<br>
+        Gesät: ${jaNein(feld.Gesaet)}<br>
+        Gewalzt: ${jaNein(feld.Gewalzt)}<br>
+        Unkraut: ${jaNein(feld.Unkraut)}<br>
+        Düngen nötig: ${jaNein(duengenNoetig())}<br>
+        Erntebereit: ${wachstum.erntereif ? "✅ Ja" : jaNein(feld.Erntebereit)}
+      </div>
+
+      <div class="label">Manuelle Wachstumsstufe</div>
+      <div class="value">${text(feld.Wachstumsstufe)}</div>
+
+      <div class="label">Letzte Aktion</div>
+      <div class="value">${text(feld.Letzte_Aktion)}</div>
+    </div>
+  `;
+
+  if(darfBearbeiten){
     html += `
-      <div class="card ${wachstum.erntereif ? "warn" : ""}">
-        <h2>Übersicht</h2>
+      <div class="card">
+        <button class="btn-green" onclick="formularUmschalten()">
+          ${bearbeitenOffen ? "Bearbeiten schließen" : "Feld bearbeiten"}
+        </button>
+      </div>
+    `;
+  }
 
+  if(darfBearbeiten && bearbeitenOffen){
+    html += bearbeitungsFormular();
+  }
+
+  box.innerHTML = html;
+}
+
+function bearbeitungsFormular(){
+  return `
+    <div class="card">
+      <h2>Bearbeiten</h2>
+
+      ${istAdmin ? `
+        <div class="label">Feldnummer nur Admin</div>
+        <input id="feldnummer" value="${text(feld.Feldnummer)}">
+
+        <div class="label">Feldgröße nur Admin</div>
+        <input id="feldgroesse" value="${text(feld.Feldgroesse)}">
+
+        <div class="label">Besitzer nur Admin</div>
+        <input id="besitzer" value="${text(feld.Besitzer)}">
+      ` : `
         <div class="label">Feldnummer</div>
         <div class="value">${text(feld.Feldnummer)}</div>
 
+        <div class="label">Feldgröße</div>
+        <div class="value">${text(feld.Feldgroesse)} ha</div>
+
         <div class="label">Besitzer</div>
         <div class="value">${text(feld.Besitzer || (hof ? hof.Name : ""))}</div>
+      `}
 
-        <div class="label">Hof</div>
-        <div class="value">${hof ? hof.Name : "-"}</div>
+      <div class="label">Fruchtart</div>
+      <input id="fruchtart" value="${text(feld.Fruchtart)}">
 
-        <div class="label">Größe</div>
-        <div class="value">${text(feld.Feldgroesse)}</div>
+      <div class="label">Wachstumsstufe manuell</div>
+      <input id="wachstumsstufe" type="number" value="${feld.Wachstumsstufe || 0}">
 
-        <div class="label">Frucht</div>
-        <div class="value">${text(feld.Fruchtart)}</div>
+      <div class="label">Aussaatdatum</div>
+      <input id="gesaetAm" type="date" value="${feld.Gesaet_am ? feld.Gesaet_am.substring(0,10) : ""}">
 
-        <div class="label">Wachstum berechnet</div>
-        <div class="value">${wachstum.stufe} / ${wachstum.max}</div>
+      <div class="label">Letzte Aktion</div>
+      <input id="letzteAktion" value="${text(feld.Letzte_Aktion)}">
 
-        <div class="label">Zeit seit Aussaat</div>
-        <div class="value">${wachstum.text}</div>
+      <div class="row">Gekalkt <input id="gekalkt" type="checkbox" ${checked(feld.Gekalkt)}></div>
+      <div class="row">Gedüngt 1x <input id="ged1" type="checkbox" ${checked(feld.Geduengt_1x)}></div>
+      <div class="row">Gedüngt 2x <input id="ged2" type="checkbox" ${checked(feld.Geduengt_2x)}></div>
+      <div class="row">Gepflügt <input id="gepfluegt" type="checkbox" ${checked(feld.Gepfluegt)}></div>
+      <div class="row">Gegrubbert <input id="gegrubbert" type="checkbox" ${checked(feld.Gegrubbert)}></div>
+      <div class="row">Gesät <input id="gesaet" type="checkbox" ${checked(feld.Gesaet)}></div>
+      <div class="row">Gewalzt <input id="gewalzt" type="checkbox" ${checked(feld.Gewalzt)}></div>
+      <div class="row">Unkraut <input id="unkraut" type="checkbox" ${checked(feld.Unkraut)}></div>
+      <div class="row">Düngen nötig <input id="duengenNoetig" type="checkbox" ${checked(duengenNoetig())}></div>
+      <div class="row">Erntebereit <input id="erntebereit" type="checkbox" ${checked(feld.Erntebereit)}></div>
 
-        <div class="label">Erntereif</div>
-        <div class="value">${wachstum.erntereif ? "Ja 🌾" : "Nein"}</div>
+      <button class="btn-green" onclick="speichern()">Speichern</button>
+      <button class="btn-red" onclick="ernteReset()">Nach Ernte zurücksetzen</button>
 
-        <div class="label">Deine Rechte</div>
-        <div class="value">${darfBearbeiten ? "Bearbeiten erlaubt" : "Nur Ansicht"}</div>
-      </div>
-    `;
+      <div id="meldung" class="msg"></div>
+    </div>
+  `;
+}
 
-    html += `
-      <div class="card">
-        <h2>Details</h2>
-
-        <div class="label">Manuelle Wachstumsstufe</div>
-        <div class="value">${text(feld.Wachstumsstufe)}</div>
-
-        <div class="label">Letzte Aktion</div>
-        <div class="value">${text(feld.Letzte_Aktion)}</div>
-
-        <div class="label">Gekalkt</div>
-        <div class="value">${jaNein(feld.Gekalkt)}</div>
-
-        <div class="label">Gedüngt 1x</div>
-        <div class="value">${jaNein(feld.Geduengt_1x)}</div>
-
-        <div class="label">Gedüngt 2x</div>
-        <div class="value">${jaNein(feld.Geduengt_2x)}</div>
-
-        <div class="label">Gepflügt</div>
-        <div class="value">${jaNein(feld.Gepfluegt)}</div>
-
-        <div class="label">Gegrubbert</div>
-        <div class="value">${jaNein(feld.Gegrubbert)}</div>
-
-        <div class="label">Gesät</div>
-        <div class="value">${jaNein(feld.Gesaet)}</div>
-
-        <div class="label">Gewalzt</div>
-        <div class="value">${jaNein(feld.Gewalzt)}</div>
-
-        <div class="label">Unkraut</div>
-        <div class="value">${jaNein(feld.Unkraut)}</div>
-
-        <div class="label">Düngen nötig</div>
-        <div class="value">${jaNein(feld["Duengen_nötig"])}</div>
-      </div>
-    `;
-
-    if(darfBearbeiten){
-      html += `
-        <div class="card">
-          <h2>Bearbeiten</h2>
-
-          ${istAdmin ? `
-            <div class="label">Feldnummer nur Admin</div>
-            <input id="feldnummer" value="${text(feld.Feldnummer)}">
-
-            <div class="label">Feldgröße nur Admin</div>
-            <input id="feldgroesse" value="${text(feld.Feldgroesse)}">
-
-            <div class="label">Besitzer nur Admin</div>
-            <input id="besitzer" value="${text(feld.Besitzer)}">
-          ` : `
-            <div class="label">Feldnummer</div>
-            <div class="value">${text(feld.Feldnummer)}</div>
-
-            <div class="label">Feldgröße</div>
-            <div class="value">${text(feld.Feldgroesse)}</div>
-
-            <div class="label">Besitzer</div>
-            <div class="value">${text(feld.Besitzer)}</div>
-          `}
-
-          <div class="label">Fruchtart</div>
-          <input id="fruchtart" value="${text(feld.Fruchtart)}">
-
-          <div class="label">Wachstumsstufe manuell</div>
-          <input id="wachstumsstufe" type="number" value="${feld.Wachstumsstufe || 0}">
-
-          <div class="label">Aussaat-Datum</div>
-          <input id="gesaetAm" type="date" value="${feld.Gesaet_am ? feld.Gesaet_am.substring(0,10) : ""}">
-
-          <div class="label">Letzte Aktion</div>
-          <input id="letzteAktion" value="${text(feld.Letzte_Aktion)}">
-
-          <div class="row">Gekalkt <input id="gekalkt" type="checkbox" ${bool(feld.Gekalkt)}></div>
-          <div class="row">Gedüngt 1x <input id="ged1" type="checkbox" ${bool(feld.Geduengt_1x)}></div>
-          <div class="row">Gedüngt 2x <input id="ged2" type="checkbox" ${bool(feld.Geduengt_2x)}></div>
-          <div class="row">Gepflügt <input id="gepfluegt" type="checkbox" ${bool(feld.Gepfluegt)}></div>
-          <div class="row">Gegrubbert <input id="gegrubbert" type="checkbox" ${bool(feld.Gegrubbert)}></div>
-          <div class="row">Gesät <input id="gesaet" type="checkbox" ${bool(feld.Gesaet)}></div>
-          <div class="row">Gewalzt <input id="gewalzt" type="checkbox" ${bool(feld.Gewalzt)}></div>
-          <div class="row">Unkraut <input id="unkraut" type="checkbox" ${bool(feld.Unkraut)}></div>
-          <div class="row">Düngen nötig <input id="duengenNoetig" type="checkbox" ${bool(feld["Duengen_nötig"])}></div>
-          <div class="row">Erntebereit <input id="erntebereit" type="checkbox" ${bool(feld.Erntebereit)}></div>
-
-          <button class="green" onclick="speichern()">Speichern</button>
-          <button class="red" onclick="ernteReset()">Nach Ernte zurücksetzen</button>
-
-          <div id="meldung" class="msg"></div>
-        </div>
-      `;
-    }
-
-    box.innerHTML = html;
-
-  }catch(err){
-    box.innerHTML = "<div class='leer'>Feld konnte nicht geladen werden.<br><br>" + err.message + "</div>";
-  }
+function formularUmschalten(){
+  bearbeitenOffen = !bearbeitenOffen;
+  anzeigen(wachstumBerechnen());
 }
 
 async function speichern(){
@@ -501,12 +567,12 @@ async function speichern(){
   meldung.innerText = "Speichere...";
 
   try{
+    const gesaetDatum = document.getElementById("gesaetAm").value;
+
     let daten = {
       Fruchtart:document.getElementById("fruchtart").value.trim(),
       Wachstumsstufe:Number(document.getElementById("wachstumsstufe").value || 0),
-      Gesaet_am:document.getElementById("gesaetAm").value
-        ? new Date(document.getElementById("gesaetAm").value).toISOString()
-        : null,
+      Gesaet_am:gesaetDatum ? new Date(gesaetDatum).toISOString() : null,
       Letzte_Aktion:document.getElementById("letzteAktion").value.trim(),
       Gekalkt:document.getElementById("gekalkt").checked,
       Geduengt_1x:document.getElementById("ged1").checked,
@@ -526,13 +592,18 @@ async function speichern(){
       daten.Besitzer = document.getElementById("besitzer").value.trim();
     }
 
+    if(daten.Erntebereit === false){
+      daten.Ernte_Benachrichtigt = false;
+    }
+
     await patchFeld(daten);
 
     meldung.innerText = "Gespeichert.";
+    bearbeitenOffen = false;
     await laden();
 
   }catch(err){
-    meldung.innerText = "Fehler beim Speichern: " + err.message;
+    meldung.innerText = "Fehler: " + err.message;
   }
 }
 
@@ -556,6 +627,7 @@ async function ernteReset(){
       Letzte_Aktion:"Geerntet"
     });
 
+    bearbeitenOffen = false;
     await laden();
 
   }catch(err){
@@ -567,4 +639,4 @@ laden();
 </script>
 
 </body>
-  </html>
+</html>
