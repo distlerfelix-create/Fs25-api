@@ -1,0 +1,101 @@
+name: Create Telegram Queue From Notifications
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  create_queue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create queue entries
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 << 'PY'
+          import os
+          import json
+          import urllib.request
+          import urllib.parse
+
+          supabase_url = os.environ["SUPABASE_URL"]
+          supabase_key = os.environ["SUPABASE_KEY"]
+          default_chat_id = os.environ["TELEGRAM_CHAT_ID"]
+
+          headers = {
+              "apikey": supabase_key,
+              "Authorization": "Bearer " + supabase_key,
+              "Content-Type": "application/json"
+          }
+
+          def request_json(url, method="GET", data=None):
+              body = None
+              if data is not None:
+                  body = json.dumps(data).encode("utf-8")
+
+              req = urllib.request.Request(
+                  url,
+                  data=body,
+                  headers=headers,
+                  method=method
+              )
+
+              with urllib.request.urlopen(req, timeout=30) as res:
+                  text = res.read().decode("utf-8")
+                  return json.loads(text) if text else None
+
+          def patch_notification(row_id, data):
+              url = f"{supabase_url}/rest/v1/Benachrichtigungen?id=eq.{row_id}"
+              request_json(url, method="PATCH", data=data)
+
+          url = (
+              f"{supabase_url}/rest/v1/Benachrichtigungen"
+              "?select=*"
+              "&Telegram_gesendet=eq.false"
+              "&Archiviert=neq.true"
+              "&order=id.asc"
+              "&limit=10"
+          )
+
+          rows = request_json(url)
+
+          if not rows:
+              print("Keine neuen Benachrichtigungen.")
+              raise SystemExit(0)
+
+          for row in rows:
+              row_id = row["id"]
+              titel = row.get("Titel") or "FS25 RP"
+              nachricht = row.get("Nachricht") or ""
+              typ = row.get("Typ") or "Benachrichtigung"
+
+              queue_data = {
+                  "Titel": titel,
+                  "Nachricht": nachricht,
+                  "Typ": typ,
+                  "Chat_id": default_chat_id,
+                  "User_id": row.get("User_id"),
+                  "Hof_id": row.get("Hof_id"),
+                  "Organisation_id": row.get("Organisation_id"),
+                  "Auftrag_id": row.get("Auftrag_id"),
+                  "Gesendet": False,
+                  "Status": "Offen",
+                  "Fehler": None
+              }
+
+              request_json(
+                  f"{supabase_url}/rest/v1/Telegram_queue",
+                  method="POST",
+                  data=queue_data
+              )
+
+              patch_notification(row_id, {
+                  "Telegram_gesendet": True
+              })
+
+              print("Queue erstellt für Benachrichtigung", row_id)
+          PY
