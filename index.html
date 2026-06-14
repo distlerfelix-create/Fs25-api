@@ -340,9 +340,17 @@ async function ladeHome(){
     document.getElementById("hofname").innerText = user.Hof || (hof ? hof.Name : "-");
 
     const ungelesen = benachrichtigungen.filter(b =>
-      b.Gelesen !== true &&
-      b.Archiviert !== true
-    ).length;
+  b.Gelesen !== true &&
+  b.Archiviert !== true &&
+  (
+    String(b.User_id) === String(USER_ID) ||
+    String(b.Hof_id) === String(user.Hof_id) ||
+    b.User_id === null ||
+    b.User_id === "" ||
+    b.Hof_id === null ||
+    b.Hof_id === ""
+  )
+).length;
 
     if(ungelesen > 0){
       document.getElementById("badge").style.display = "inline-block";
