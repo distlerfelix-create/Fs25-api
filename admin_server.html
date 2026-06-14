@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Serverstatus</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;}
+.info{color:white;margin-top:10px;line-height:1.6;font-size:18px;}
+.orange{color:#ffaa33;}
+.online{color:#00ff22;font-weight:bold;}
+.offline{color:red;font-weight:bold;}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.dark{background:#333;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;}
+pre{background:#000;border:1px solid #008000;border-radius:10px;color:white;padding:14px;overflow:auto;font-size:14px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+
+<h1>SERVERSTATUS</h1>
+
+<div id="inhalt">Lade...</div>
+
+</div>
+
+<script>
+const STATUS_URL = "https://raw.githubusercontent.com/distlerfelix-create/Fs25-api/main/status.json";
+
+let statusData = null;
+
+async function laden(){
+  const box = document.getElementById("inhalt");
+
+  box.innerHTML = "<div class='leer'>Serverstatus wird geladen...</div>";
+
+  try{
+    const res = await fetch(STATUS_URL + "?t=" + Date.now(), {
+      cache:"no-store"
+    });
+
+    if(!res.ok){
+      throw new Error("status.json konnte nicht geladen werden.");
+    }
+
+    statusData = await res.json();
+    anzeigen();
+
+  }catch(err){
+    box.innerHTML = `
+      <div class="card">
+        <div class="titel">Fehler</div>
+        <div class="info">${err.message}</div>
+        <button class="green" onclick="laden()">Erneut laden</button>
+      </div>
+    `;
+  }
+}
+
+function anzeigen(){
+  const box = document.getElementById("inhalt");
+
+  const online = statusData.serverOnline === true;
+
+  box.innerHTML = `
+    <div class="card">
+      <div class="titel">Live Status</div>
+
+      <div class="info">
+        <span class="orange">Server:</span> ${statusData.servername || "-"}<br>
+        <span class="orange">Map:</span> ${statusData.map || "-"}<br>
+        <span class="orange">Status:</span>
+        <span class="${online ? "online" : "offline"}">
+          ${statusData.status || (online ? "Online" : "Offline")}
+        </span><br>
+        <span class="orange">Spieler online:</span> ${statusData.spielerOnline ?? "-"}<br>
+        <span class="orange">Monat:</span> ${statusData.monat || "-"}<br>
+        <span class="orange">Tag:</span> ${statusData.tag ?? "-"}<br>
+        <span class="orange">Zeit:</span> ${statusData.zeit || "-"}<br>
+        <span class="orange">Letztes Update:</span> ${statusData.letztesUpdate || "-"}<br>
+        <span class="orange">dayTimeRaw:</span> ${statusData.dayTimeRaw ?? "-"}
+      </div>
+
+      <button class="green" onclick="laden()">Status neu laden</button>
+      <button class="dark" onclick="location.href='index.html'">Home öffnen</button>
+    </div>
+
+    <div class="card">
+      <div class="titel">Rohdaten</div>
+      <pre>${JSON.stringify(statusData,null,2)}</pre>
+    </div>
+
+    <div class="card">
+      <div class="titel">Hinweis</div>
+      <div class="info">
+        Dieser Status kommt aus GitHub:<br><br>
+        Fs25-api / status.json<br><br>
+        Bearbeiten ist hier aktuell nicht möglich.
+        Diese Seite liest nur die aktuelle Datei aus.
+      </div>
+    </div>
+  `;
+}
+
+laden();
+</script>
+
+</body>
+</html>
