@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Telegram</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif;}
+input,textarea,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px;}
+textarea{min-height:100px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;}
+.card.offen{border:2px solid #ffaa33;}
+.card.fehler{border:2px solid red;}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;}
+.info{color:white;margin-top:10px;line-height:1.5;font-size:17px;white-space:pre-line;}
+.orange{color:#ffaa33;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.orangeBtn{background:#cc7700;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;}
+.tabs{display:flex;gap:8px;margin-bottom:15px;}
+.tabs button{font-size:15px;padding:12px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+
+<h1>TELEGRAM</h1>
+
+<div class="tabs">
+  <button class="dark" onclick="filter='offen';anzeigen()">Offen</button>
+  <button class="dark" onclick="filter='gesendet';anzeigen()">Gesendet</button>
+  <button class="dark" onclick="filter='fehler';anzeigen()">Fehler</button>
+  <button class="dark" onclick="filter='alle';anzeigen()">Alle</button>
+</div>
+
+<input id="suche" placeholder="Telegram Queue suchen..." oninput="anzeigen()">
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Admin";
+
+if(!USER_ID){ location.href="login.html"; }
+
+let users = [];
+let queue = [];
+let filter = "offen";
+
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY
+    }
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"PATCH",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function loeschen(tabelle,id){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"DELETE",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      Prefer:"return=minimal"
+    }
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+async function laden(){
+  const box = document.getElementById("liste");
+
+  try{
+    users = await api("Users");
+    queue = await api("Telegram_queue");
+
+    const admin = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!admin || admin.Admin !== true){
+      box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    anzeigen();
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Fehler:<br><br>" + err.message + "</div>";
+  }
+}
+
+function anzeigen(){
+  const box = document.getElementById("liste");
+  const suche = document.getElementById("suche").value.toLowerCase().trim();
+
+  let html = `
+    <div class="card">
+      <div class="titel">Testnachricht</div>
+
+      <input id="test_chat" placeholder="Telegram Chat ID / Empfänger">
+      <textarea id="test_text" placeholder="Nachricht"></textarea>
+
+      <button class="green" onclick="testErstellen()">Testnachricht in Queue legen</button>
+      <div id="msg_test" class="msg"></div>
+    </div>
+  `;
+
+  let liste = queue.filter(e=>{
+    const status = String(e.Status || "Offen").toLowerCase();
+
+    if(filter === "offen" && status !== "offen") return false;
+    if(filter === "gesendet" && status !== "gesendet") return false;
+    if(filter === "fehler" && status !== "fehler") return false;
+
+    const s = JSON.stringify(e).toLowerCase();
+    return s.includes(suche);
+  });
+
+  liste.sort((a,b)=>Number(b.id)-Number(a.id));
+
+  if(liste.length === 0){
+    html += "<div class='leer'>Keine Telegram-Einträge gefunden.</div>";
+  }
+
+  liste.forEach(e=>{
+    const status = String(e.Status || "Offen");
+    const cls = status === "Fehler" ? "fehler" : status === "Offen" ? "offen" : "";
+
+    html += `
+      <div class="card ${cls}">
+        <div class="titel">Telegram #${e.id}</div>
+
+        <div class="info">
+          <span class="orange">Status:</span> ${text(e.Status || "Offen")}<br>
+          <span class="orange">Chat ID:</span> ${text(e.Chat_id)}<br>
+          <span class="orange">Typ:</span> ${text(e.Typ)}<br>
+          <span class="orange">Fehler:</span> ${text(e.Fehler)}<br>
+          <span class="orange">Erstellt:</span> ${text(e.created_at)}<br><br>
+          ${text(e.Nachricht)}
+        </div>
+
+        <input id="chat_${e.id}" value="${e.Chat_id || ""}" placeholder="Chat ID">
+        <input id="typ_${e.id}" value="${e.Typ || ""}" placeholder="Typ">
+        <textarea id="nachricht_${e.id}" placeholder="Nachricht">${e.Nachricht || ""}</textarea>
+
+        <select id="status_${e.id}">
+          <option ${status==="Offen" ? "selected" : ""}>Offen</option>
+          <option ${status==="Gesendet" ? "selected" : ""}>Gesendet</option>
+          <option ${status==="Fehler" ? "selected" : ""}>Fehler</option>
+        </select>
+
+        <button class="green" onclick="speichern(${e.id})">Speichern</button>
+        <button class="orangeBtn" onclick="aufOffen(${e.id})">Erneut senden</button>
+        <button class="dark" onclick="alsGesendet(${e.id})">Als gesendet markieren</button>
+        <button class="red" onclick="eintragLoeschen(${e.id})">Löschen</button>
+
+        <div id="msg_${e.id}" class="msg"></div>
+      </div>
+    `;
+  });
+
+  box.innerHTML = html;
+}
+
+async function testErstellen(){
+  const msg = document.getElementById("msg_test");
+  msg.innerText = "";
+
+  const chat = document.getElementById("test_chat").value.trim();
+  const nachricht = document.getElementById("test_text").value.trim();
+
+  if(!nachricht){
+    msg.innerText = "Bitte Nachricht eingeben.";
+    return;
+  }
+
+  try{
+    await post("Telegram_queue", {
+      Chat_id:chat || null,
+      Nachricht:nachricht,
+      Typ:"Test",
+      Status:"Offen",
+      Fehler:null
+    });
+
+    await laden();
+
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function speichern(id){
+  const msg = document.getElementById("msg_" + id);
+  msg.innerText = "Speichere...";
+
+  try{
+    await patch("Telegram_queue", id, {
+      Chat_id:document.getElementById("chat_" + id).value.trim() || null,
+      Typ:document.getElementById("typ_" + id).value.trim(),
+      Nachricht:document.getElementById("nachricht_" + id).value.trim(),
+      Status:document.getElementById("status_" + id).value
+    });
+
+    await laden();
+
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function aufOffen(id){
+  await patch("Telegram_queue", id, {
+    Status:"Offen",
+    Fehler:null
+  });
+
+  await laden();
+}
+
+async function alsGesendet(id){
+  await patch("Telegram_queue", id, {
+    Status:"Gesendet",
+    Fehler:null
+  });
+
+  await laden();
+}
+
+async function eintragLoeschen(id){
+  if(!confirm("Telegram-Eintrag wirklich löschen?")){
+    return;
+  }
+
+  await loeschen("Telegram_queue", id);
+  await laden();
+}
+
+laden();
+</script>
+
+</body>
+</html>
