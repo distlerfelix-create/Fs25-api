@@ -58,6 +58,14 @@ h1{
   font-weight:bold;
 }
 
+.server-online{
+  color:#00ff22!important;
+}
+
+.server-offline{
+  color:red!important;
+}
+
 .admin{
   display:none;
   width:100%;
@@ -149,6 +157,7 @@ h1{
 <div class="card stats">
   🔔 Neue Benachrichtigungen: <span id="anzahlBenachrichtigungen">0</span><br>
   🚨 Offene Einsätze: <span id="anzahlEinsaetze">0</span><br>
+  📋 Offene Aufträge: <span id="anzahlAuftraege">0</span><br>
   🌾 Erntereife Felder: <span id="anzahlFelder">0</span><br>
   🏪 Aktive Angebote: <span id="anzahlAngebote">0</span><br>
   👥 Spieler: <span id="anzahlSpieler">0</span>
@@ -156,23 +165,27 @@ h1{
 
 <div class="card stats">
   <b>SERVER STATUS</b><br>
+  Server: <span id="servername">...</span><br>
+  Map: <span id="map">...</span><br>
   Spieler Online: <span id="spieler">...</span><br>
   Monat: <span id="monat">...</span><br>
   Tag: <span id="tag">...</span><br>
   Zeit: <span id="zeit">...</span><br>
   Status: <span id="server">...</span><br>
-  GitHubupdate: <span id="githubupdate">...</span>
+  Update: <span id="githubupdate">...</span>
 </div>
 
-<button id="adminButton" class="admin">🛡️ ADMIN</button>
+<button id="adminButton" class="admin" onclick="location.href='admin.html'">🛡️ ADMIN</button>
 
 <div class="menu">
   <button onclick="location.href='benachrichtigungen.html'">BENACHRICHTIGUNGEN <span id="badge" class="badge" style="display:none">0</span></button>
+  <button onclick="location.href='archiv.html'">ARCHIV</button>
   <button onclick="location.href='nachrichten.html'">NACHRICHTEN</button>
   <button onclick="location.href='felder.html'">FELDVERWALTUNG</button>
+  <button onclick="location.href='auftraege.html'">AUFTRÄGE / EINSÄTZE</button>
+  <button onclick="location.href='einsatz_erstellen.html'">🚨 EINSATZ ERSTELLEN</button>
   <button onclick="location.href='marktplatz.html'">MARKTPLATZ</button>
   <button onclick="location.href='organisationen.html'">ORGANISATIONEN</button>
-  <button onclick="location.href='einsatz_erstellen.html'">🚨 EINSATZ ERSTELLEN</button>
   <button onclick="location.href='profil.html'">PROFIL</button>
   <button class="logout" onclick="logout()">LOGOUT</button>
 </div>
@@ -187,6 +200,7 @@ h1{
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const STATUS_URL = "https://raw.githubusercontent.com/distlerfelix-create/Fs25-api/main/status.json";
 
 const USER_ID = localStorage.getItem("user_id");
 
@@ -212,20 +226,46 @@ async function api(tabelle){
   return await res.json();
 }
 
-function wert(obj,namen,fallback=""){
-  for(const n of namen){
-    if(obj && obj[n] !== undefined && obj[n] !== null){
-      return obj[n];
+async function ladeServerstatus(){
+  try{
+    const res = await fetch(STATUS_URL + "?t=" + Date.now(), {
+      cache:"no-store"
+    });
+
+    if(!res.ok){
+      throw new Error("status.json nicht erreichbar");
     }
+
+    const status = await res.json();
+
+    document.getElementById("servername").innerText = status.servername || "-";
+    document.getElementById("map").innerText = status.map || "-";
+    document.getElementById("spieler").innerText = status.spielerOnline ?? "0";
+    document.getElementById("monat").innerText = status.monat || "-";
+    document.getElementById("tag").innerText = status.tag ?? "-";
+    document.getElementById("zeit").innerText = status.zeit || "-";
+    document.getElementById("githubupdate").innerText = status.letztesUpdate || "-";
+
+    const server = document.getElementById("server");
+
+    if(status.serverOnline === true){
+      server.innerText = "🟢 Online";
+      server.className = "server-online";
+    }else{
+      server.innerText = "🔴 Offline";
+      server.className = "server-offline";
+    }
+
+  }catch(err){
+    document.getElementById("server").innerText = "🔴 Fehler";
+    document.getElementById("githubupdate").innerText = "Status konnte nicht geladen werden";
   }
-  return fallback;
 }
 
 async function ladeHome(){
   try{
     const users = await api("Users");
     const hoefe = await api("Hoefe");
-    const serverstatus = await api("Serverstatus");
     const benachrichtigungen = await api("Benachrichtigungen");
     const felder = await api("Felder");
     const angebote = await api("Angebote");
@@ -235,7 +275,7 @@ async function ladeHome(){
 
     const user = users.find(u => String(u.id) === String(USER_ID));
 
-    if(!user){
+    if(!user || user.Aktiviert === false){
       localStorage.clear();
       location.href = "login.html";
       return;
@@ -256,14 +296,23 @@ async function ladeHome(){
     if(ungelesen > 0){
       document.getElementById("badge").style.display = "inline-block";
       document.getElementById("badge").innerText = ungelesen;
+    }else{
+      document.getElementById("badge").style.display = "none";
     }
 
     const offeneEinsaetze = auftraege.filter(a =>
-      a.Auftragstyp === "Einsatz" &&
+      (a.Auftragstyp === "Einsatz" || a.Typ === "Einsatz") &&
       a.Status !== "Erledigt"
     ).length;
 
     document.getElementById("anzahlEinsaetze").innerText = offeneEinsaetze;
+
+    const offeneAuftraege = auftraege.filter(a =>
+      !(a.Auftragstyp === "Einsatz" || a.Typ === "Einsatz") &&
+      a.Status !== "Erledigt"
+    ).length;
+
+    document.getElementById("anzahlAuftraege").innerText = offeneAuftraege;
 
     const erntereif = felder.filter(f => f.Erntebereit === true).length;
     document.getElementById("anzahlFelder").innerText = erntereif;
@@ -271,20 +320,8 @@ async function ladeHome(){
     const aktiveAngebote = angebote.filter(a => a.Aktiv === true).length;
     document.getElementById("anzahlAngebote").innerText = aktiveAngebote;
 
-    document.getElementById("anzahlSpieler").innerText = users.length;
-
-    const status = serverstatus[0] || {};
-
-    document.getElementById("spieler").innerText = wert(status,["spieler_online","Spieler_online"],"0");
-    document.getElementById("monat").innerText = wert(status,["monat","Monat"],"-");
-    document.getElementById("tag").innerText = wert(status,["tag","Tag"],"-");
-    document.getElementById("zeit").innerText = wert(status,["zeit","Zeit"],"-");
-
-    const online = wert(status,["server_online","Server_online"],false);
-    document.getElementById("server").innerText = online === true ? "🟢 Online" : "🔴 Offline";
-
-    document.getElementById("githubupdate").innerText =
-      wert(status,["github_update","Github_update","letztes_update","Letztes_update"],"-");
+    const aktiveSpieler = users.filter(u => u.Aktiviert !== false).length;
+    document.getElementById("anzahlSpieler").innerText = aktiveSpieler;
 
     if(user.Admin === true){
       document.getElementById("adminButton").style.display = "block";
@@ -303,11 +340,20 @@ async function ladeHome(){
     }else{
       meineOrgs.forEach(e => {
         const org = organisationen.find(o => String(o.id) === String(e.Organisation_id));
+
         const div = document.createElement("div");
         div.className = "org";
+
+        div.onclick = function(){
+          if(org){
+            location.href = "organisation.html?id=" + org.id;
+          }
+        };
+
         div.innerHTML =
           "<b>" + (org ? org.Name : "Organisation") + "</b><br>" +
           "<span>Rolle: " + (e.Rolle || "-") + "</span>";
+
         orgBox.appendChild(div);
       });
     }
@@ -323,6 +369,10 @@ function logout(){
 }
 
 ladeHome();
+ladeServerstatus();
+
+setInterval(ladeHome, 60000);
+setInterval(ladeServerstatus, 30000);
 </script>
 
 </body>
