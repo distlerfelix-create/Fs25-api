@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Benachrichtigungen</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif;}
+input,textarea,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px;}
+textarea{min-height:100px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;}
+.card.neu{border:2px solid red;}
+.card.archiv{opacity:.65;}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;}
+.info{color:white;margin-top:10px;line-height:1.5;font-size:17px;white-space:pre-line;}
+.orange{color:#ffaa33;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.orangeBtn{background:#cc7700;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;}
+.tabs{display:flex;gap:8px;margin-bottom:15px;}
+.tabs button{font-size:15px;padding:12px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+
+<h1>BENACHRICHTIGUNGEN</h1>
+
+<div class="tabs">
+  <button class="dark" onclick="filter='aktiv';anzeigen()">Aktiv</button>
+  <button class="dark" onclick="filter='archiv';anzeigen()">Archiv</button>
+  <button class="dark" onclick="filter='alle';anzeigen()">Alle</button>
+</div>
+
+<input id="suche" placeholder="Benachrichtigung suchen..." oninput="anzeigen()">
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "DEIN_KEY";
+
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Admin";
+
+if(!USER_ID){ location.href="login.html"; }
+
+let users = [];
+let benachrichtigungen = [];
+let filter = "aktiv";
+
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY
+    }
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"PATCH",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function loeschen(tabelle,id){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"DELETE",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      Prefer:"return=minimal"
+    }
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function checked(wert){
+  return wert === true ? "Ja" : "Nein";
+}
+
+async function laden(){
+  const box = document.getElementById("liste");
+
+  try{
+    users = await api("Users");
+    benachrichtigungen = await api("Benachrichtigungen");
+
+    const admin = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!admin || admin.Admin !== true){
+      box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    anzeigen();
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Fehler:<br><br>" + err.message + "</div>";
+  }
+}
+
+function anzeigen(){
+  const box = document.getElementById("liste");
+  const suche = document.getElementById("suche").value.toLowerCase().trim();
+
+  let html = `
+    <div class="card">
+      <div class="titel">Neue Admin-Benachrichtigung</div>
+
+      <input id="neu_titel" placeholder="Titel">
+      <textarea id="neu_nachricht" placeholder="Nachricht"></textarea>
+      <input id="neu_typ" placeholder="Typ, z.B. Admin">
+
+      <button class="green" onclick="neuErstellen()">Benachrichtigung erstellen</button>
+      <div id="msg_neu" class="msg"></div>
+    </div>
+  `;
+
+  let liste = benachrichtigungen.filter(b=>{
+    if(filter === "aktiv" && b.Archiviert === true) return false;
+    if(filter === "archiv" && b.Archiviert !== true) return false;
+
+    const s = [
+      b.Titel,
+      b.Nachricht,
+      b.Typ,
+      b.User_id,
+      b.Hof_id,
+      b.Organisation_id,
+      b.Auftrag_id
+    ].join(" ").toLowerCase();
+
+    return s.includes(suche);
+  });
+
+  liste.sort((a,b)=>Number(b.id)-Number(a.id));
+
+  if(liste.length === 0){
+    html += "<div class='leer'>Keine Benachrichtigungen gefunden.</div>";
+  }
+
+  liste.forEach(b=>{
+    const istNeu = b.Gelesen !== true;
+    const istArchiv = b.Archiviert === true;
+
+    html += `
+      <div class="card ${istNeu ? "neu" : ""} ${istArchiv ? "archiv" : ""}">
+        <div class="titel">${text(b.Titel)}</div>
+
+        <div class="info">
+          <span class="orange">ID:</span> ${b.id}<br>
+          <span class="orange">Typ:</span> ${text(b.Typ)}<br>
+          <span class="orange">Gelesen:</span> ${checked(b.Gelesen)}<br>
+          <span class="orange">Archiviert:</span> ${checked(b.Archiviert)}<br>
+          <span class="orange">Erledigt:</span> ${checked(b.Erledigt)}<br>
+          <span class="orange">User_id:</span> ${text(b.User_id)}<br>
+          <span class="orange">Hof_id:</span> ${text(b.Hof_id)}<br>
+          <span class="orange">Organisation_id:</span> ${text(b.Organisation_id)}<br>
+          <span class="orange">Auftrag_id:</span> ${text(b.Auftrag_id)}<br><br>
+          ${text(b.Nachricht)}
+        </div>
+
+        <input id="titel_${b.id}" value="${b.Titel || ""}" placeholder="Titel">
+        <textarea id="nachricht_${b.id}" placeholder="Nachricht">${b.Nachricht || ""}</textarea>
+        <input id="typ_${b.id}" value="${b.Typ || ""}" placeholder="Typ">
+
+        <button class="green" onclick="speichern(${b.id})">Speichern</button>
+        <button class="dark" onclick="gelesenUmschalten(${b.id})">${b.Gelesen === true ? "Als ungelesen setzen" : "Als gelesen setzen"}</button>
+        <button class="orangeBtn" onclick="archivUmschalten(${b.id})">${b.Archiviert === true ? "Wiederherstellen" : "Archivieren"}</button>
+        <button class="dark" onclick="erledigtUmschalten(${b.id})">${b.Erledigt === true ? "Erledigt entfernen" : "Als erledigt setzen"}</button>
+        <button class="red" onclick="eintragLoeschen(${b.id})">Löschen</button>
+
+        <div id="msg_${b.id}" class="msg"></div>
+      </div>
+    `;
+  });
+
+  box.innerHTML = html;
+}
+
+async function neuErstellen(){
+  const msg = document.getElementById("msg_neu");
+  msg.innerText = "";
+
+  const titel = document.getElementById("neu_titel").value.trim();
+  const nachricht = document.getElementById("neu_nachricht").value.trim();
+  const typ = document.getElementById("neu_typ").value.trim() || "Admin";
+
+  if(!titel || !nachricht){
+    msg.innerText = "Bitte Titel und Nachricht eingeben.";
+    return;
+  }
+
+  try{
+    await post("Benachrichtigungen", {
+      Titel:titel,
+      Nachricht:nachricht,
+      Typ:typ,
+      User_id:null,
+      Hof_id:null,
+      Organisation_id:null,
+      Auftrag_id:null,
+      Gelesen:false,
+      Erledigt:false,
+      Archiviert:false,
+      Erstellt_am:new Date().toISOString()
+    });
+
+    await laden();
+
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function speichern(id){
+  const msg = document.getElementById("msg_" + id);
+  msg.innerText = "Speichere...";
+
+  try{
+    await patch("Benachrichtigungen", id, {
+      Titel:document.getElementById("titel_" + id).value.trim(),
+      Nachricht:document.getElementById("nachricht_" + id).value.trim(),
+      Typ:document.getElementById("typ_" + id).value.trim()
+    });
+
+    msg.innerText = "Gespeichert.";
+    await laden();
+
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function gelesenUmschalten(id){
+  const b = benachrichtigungen.find(x => String(x.id) === String(id));
+  if(!b) return;
+
+  await patch("Benachrichtigungen", id, {
+    Gelesen:!(b.Gelesen === true)
+  });
+
+  await laden();
+}
+
+async function archivUmschalten(id){
+  const b = benachrichtigungen.find(x => String(x.id) === String(id));
+  if(!b) return;
+
+  await patch("Benachrichtigungen", id, {
+    Archiviert:!(b.Archiviert === true)
+  });
+
+  await laden();
+}
+
+async function erledigtUmschalten(id){
+  const b = benachrichtigungen.find(x => String(x.id) === String(id));
+  if(!b) return;
+
+  await patch("Benachrichtigungen", id, {
+    Erledigt:!(b.Erledigt === true)
+  });
+
+  await laden();
+}
+
+async function eintragLoeschen(id){
+  if(!confirm("Benachrichtigung wirklich löschen?")){
+    return;
+  }
+
+  await loeschen("Benachrichtigungen", id);
+  await laden();
+}
+
+laden();
+</script>
+
+</body>
+</html>
