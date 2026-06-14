@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Angebote</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif;}
+input,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;}
+.info{color:white;margin-top:10px;line-height:1.5;font-size:17px;}
+.orange{color:#ffaa33;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px;font-size:17px;}
+.row input{width:26px;height:26px;}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+
+<h1>ANGEBOTE</h1>
+
+<input id="suche" placeholder="Angebot suchen..." oninput="anzeigen()">
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+if(!USER_ID){ location.href="login.html"; }
+
+let users = [];
+let hoefe = [];
+let angebote = [];
+
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY
+    }
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"PATCH",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      "Content-Type":"application/json",
+      Prefer:"return=minimal"
+    },
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function loeschen(tabelle,id){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"DELETE",
+    headers:{
+      apikey:SUPABASE_KEY,
+      Authorization:"Bearer " + SUPABASE_KEY,
+      Prefer:"return=minimal"
+    }
+  });
+
+  if(!res.ok) throw new Error(await res.text());
+}
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function checked(wert){
+  return wert === true ? "checked" : "";
+}
+
+function hofName(id){
+  const h = hoefe.find(x => String(x.id) === String(id));
+  return h ? h.Name : "-";
+}
+
+function hofSelect(id,aktuell){
+  let html = `<select id="hof_${id}">`;
+  html += `<option value="">Kein Hof</option>`;
+
+  hoefe.forEach(h=>{
+    html += `<option value="${h.id}" ${String(h.id)===String(aktuell) ? "selected" : ""}>${h.Name}</option>`;
+  });
+
+  html += `</select>`;
+  return html;
+}
+
+async function laden(){
+  const box = document.getElementById("liste");
+
+  try{
+    users = await api("Users");
+    hoefe = await api("Hoefe");
+    angebote = await api("Angebote");
+
+    const admin = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!admin || admin.Admin !== true){
+      box.innerHTML = "<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    anzeigen();
+
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Fehler:<br><br>" + err.message + "</div>";
+  }
+}
+
+function anzeigen(){
+  const box = document.getElementById("liste");
+  const suche = document.getElementById("suche").value.toLowerCase().trim();
+
+  let html = `
+    <div class="card">
+      <div class="titel">Neues Angebot</div>
+
+      <input id="neu_titel" placeholder="Titel">
+      <input id="neu_kategorie" placeholder="Kategorie">
+      <input id="neu_inhalt" type="number" placeholder="Inhalt / Menge">
+      <input id="neu_einheit" placeholder="Einheit">
+      <input id="neu_preis" type="number" placeholder="Preis">
+      <input id="neu_bestand" type="number" placeholder="Bestand">
+
+      ${hofSelect("neu","")}
+
+      <button class="green" onclick="angebotErstellen()">Angebot erstellen</button>
+      <div id="msg_neu" class="msg"></div>
+    </div>
+  `;
+
+  let liste = angebote.filter(a=>{
+    const s = [
+      a.Titel,
+      a.Kategorie,
+      a.Einheit,
+      hofName(a.Hof_id),
+      a.Preis,
+      a.Bestand,
+      a.Inhalt
+    ].join(" ").toLowerCase();
+
+    return s.includes(suche);
+  });
+
+  liste.sort((a,b)=>Number(b.id)-Number(a.id));
+
+  if(liste.length === 0){
+    html += "<div class='leer'>Keine Angebote gefunden.</div>";
+  }
+
+  liste.forEach(a=>{
+    html += `
+      <div class="card">
+        <div class="titel">${text(a.Titel)}</div>
+
+        <div class="info">
+          <span class="orange">ID:</span> ${a.id}<br>
+          <span class="orange">Kategorie:</span> ${text(a.Kategorie)}<br>
+          <span class="orange">Inhalt:</span> ${text(a.Inhalt)} ${text(a.Einheit)}<br>
+          <span class="orange">Preis:</span> ${text(a.Preis)} €<br>
+          <span class="orange">Bestand:</span> ${text(a.Bestand)}<br>
+          <span class="orange">Hof:</span> ${hofName(a.Hof_id)}<br>
+          <span class="orange">Aktiv:</span> ${a.Aktiv === true ? "Ja" : "Nein"}
+        </div>
+
+        <input id="titel_${a.id}" value="${a.Titel || ""}" placeholder="Titel">
+        <input id="kategorie_${a.id}" value="${a.Kategorie || ""}" placeholder="Kategorie">
+        <input id="inhalt_${a.id}" type="number" value="${a.Inhalt || 0}" placeholder="Inhalt">
+        <input id="einheit_${a.id}" value="${a.Einheit || ""}" placeholder="Einheit">
+        <input id="preis_${a.id}" type="number" value="${a.Preis || 0}" placeholder="Preis">
+        <input id="bestand_${a.id}" type="number" value="${a.Bestand || 0}" placeholder="Bestand">
+
+        ${hofSelect(a.id,a.Hof_id)}
+
+        <div class="row">Aktiv <input id="aktiv_${a.id}" type="checkbox" ${checked(a.Aktiv)}></div>
+
+        <button class="green" onclick="angebotSpeichern(${a.id})">Speichern</button>
+        <button class="dark" onclick="aktivUmschalten(${a.id})">${a.Aktiv === true ? "Deaktivieren" : "Aktivieren"}</button>
+        <button class="red" onclick="angebotLoeschen(${a.id})">Löschen</button>
+
+        <div id="msg_${a.id}" class="msg"></div>
+      </div>
+    `;
+  });
+
+  box.innerHTML = html;
+}
+
+async function angebotErstellen(){
+  const msg = document.getElementById("msg_neu");
+  msg.innerText = "";
+
+  const titel = document.getElementById("neu_titel").value.trim();
+
+  if(!titel){
+    msg.innerText = "Bitte Titel eingeben.";
+    return;
+  }
+
+  const hofId = document.getElementById("hof_neu").value;
+
+  try{
+    await post("Angebote", {
+      Titel:titel,
+      Kategorie:document.getElementById("neu_kategorie").value.trim(),
+      Inhalt:Number(document.getElementById("neu_inhalt").value || 0),
+      Einheit:document.getElementById("neu_einheit").value.trim(),
+      Preis:Number(document.getElementById("neu_preis").value || 0),
+      Bestand:Number(document.getElementById("neu_bestand").value || 0),
+      Hof_id:hofId ? Number(hofId) : null,
+      Aktiv:true
+    });
+
+    await laden();
+
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function angebotSpeichern(id){
+  const msg = document.getElementById("msg_" + id);
+  msg.innerText = "Speichere...";
+
+  const hofId = document.getElementById("hof_" + id).value;
+
+  try{
+    await patch("Angebote", id, {
+      Titel:document.getElementById("titel_" + id).value.trim(),
+      Kategorie:document.getElementById("kategorie_" + id).value.trim(),
+      Inhalt:Number(document.getElementById("inhalt_" + id).value || 0),
+      Einheit:document.getElementById("einheit_" + id).value.trim(),
+      Preis:Number(document.getElementById("preis_" + id).value || 0),
+      Bestand:Number(document.getElementById("bestand_" + id).value || 0),
+      Hof_id:hofId ? Number(hofId) : null,
+      Aktiv:document.getElementById("aktiv_" + id).checked
+    });
+
+    msg.innerText = "Gespeichert.";
+    await laden();
+
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+async function aktivUmschalten(id){
+  const angebot = angebote.find(a => String(a.id) === String(id));
+  if(!angebot) return;
+
+  try{
+    await patch("Angebote", id, {
+      Aktiv:!(angebot.Aktiv === true)
+    });
+
+    await laden();
+
+  }catch(err){
+    alert("Fehler:\n" + err.message);
+  }
+}
+
+async function angebotLoeschen(id){
+  if(!confirm("Angebot wirklich löschen?")){
+    return;
+  }
+
+  try{
+    await loeschen("Angebote", id);
+    await laden();
+
+  }catch(err){
+    alert("Fehler:\n" + err.message);
+  }
+}
+
+laden();
+</script>
+
+</body>
+</html>
