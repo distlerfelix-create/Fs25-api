@@ -20,7 +20,6 @@ jobs:
           import os
           import json
           import urllib.request
-          import urllib.parse
 
           supabase_url = os.environ["SUPABASE_URL"]
           supabase_key = os.environ["SUPABASE_KEY"]
@@ -34,6 +33,7 @@ jobs:
 
           def request_json(url, method="GET", data=None):
               body = None
+
               if data is not None:
                   body = json.dumps(data).encode("utf-8")
 
@@ -61,27 +61,33 @@ jobs:
           )
 
           rows = request_json(url)
-          rows = [r for r in rows if r.get("Archiviert") is not True]
 
           if not rows:
               print("Keine neuen Benachrichtigungen.")
               raise SystemExit(0)
 
+          rows = [r for r in rows if r.get("Archiviert") is not True]
+
+          if not rows:
+              print("Keine nicht-archivierten Benachrichtigungen.")
+              raise SystemExit(0)
+
           for row in rows:
               row_id = row["id"]
+
               titel = row.get("Titel") or "FS25 RP"
               nachricht = row.get("Nachricht") or ""
               typ = row.get("Typ") or "Benachrichtigung"
 
               queue_data = {
-    "Titel": titel,
-    "Nachricht": nachricht,
-    "Typ": typ,
-    "Chat_id": int(default_chat_id),
-    "Gesendet": False,
-    "Status": "Offen",
-    "Fehler": None
-}
+                  "Titel": titel,
+                  "Nachricht": nachricht,
+                  "Typ": typ,
+                  "Chat_id": int(default_chat_id),
+                  "Gesendet": False,
+                  "Status": "Offen",
+                  "Fehler": None
+              }
 
               request_json(
                   f"{supabase_url}/rest/v1/Telegram_queue",
