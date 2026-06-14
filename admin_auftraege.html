@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Aufträge</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif;}
+input,textarea,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px;}
+textarea{min-height:100px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;}
+.card.einsatz{border:2px solid #ff6600;}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;}
+.info{color:white;margin-top:10px;line-height:1.5;font-size:17px;white-space:pre-line;}
+.orange{color:#ffaa33;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.orangeBtn{background:#cc7700;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;}
+.tabs{display:flex;gap:8px;margin-bottom:14px;}
+.tabs button{font-size:15px;padding:12px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+
+<h1>AUFTRÄGE</h1>
+
+<div class="tabs">
+  <button class="dark" onclick="filter='offen';anzeigen()">Offen</button>
+  <button class="dark" onclick="filter='laufend';anzeigen()">Laufend</button>
+  <button class="dark" onclick="filter='erledigt';anzeigen()">Erledigt</button>
+</div>
+
+<input id="suche" placeholder="Auftrag suchen..." oninput="anzeigen()">
+
+<div id="liste">Lade...</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "DEIN_KEY";
+
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Admin";
+
+if(!USER_ID){ location.href="login.html"; }
+
+let users=[];
+let auftraege=[];
+let filter="offen";
+
+async function api(t){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return await r.json();
+}
+
+async function post(t,d){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{
+    method:"POST",
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
+    body:JSON.stringify(d)
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function patch(t,id,d){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{
+    method:"PATCH",
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
+    body:JSON.stringify(d)
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function del(t,id){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{
+    method:"DELETE",
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,Prefer:"return=minimal"}
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+function text(v){return v===null||v===undefined||v===""?"-":v}
+
+function userSelect(id,aktuell){
+  let html=`<select id="user_${id}"><option value="">Spieler wählen</option>`;
+  users.forEach(u=>{
+    const name=u.Vorname || u["PSN-Username"] || "Spieler";
+    html+=`<option value="${name}" ${String(name)===String(aktuell)?"selected":""}>${name}</option>`;
+  });
+  html+=`</select>`;
+  return html;
+}
+
+async function laden(){
+  const box=document.getElementById("liste");
+
+  try{
+    users=await api("Users");
+    auftraege=await api("Auftraege");
+
+    const admin=users.find(u=>String(u.id)===String(USER_ID));
+    if(!admin||admin.Admin!==true){
+      box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    anzeigen();
+
+  }catch(e){
+    box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>";
+  }
+}
+
+function anzeigen(){
+  const box=document.getElementById("liste");
+  const suche=document.getElementById("suche").value.toLowerCase().trim();
+
+  let html=`
+    <div class="card">
+      <div class="titel">Neuen Auftrag erstellen</div>
+      <input id="neu_titel" placeholder="Titel">
+      <textarea id="neu_beschreibung" placeholder="Beschreibung"></textarea>
+      <select id="neu_typ">
+        <option>Auftrag</option>
+        <option>Einsatz</option>
+        <option>Marktplatz</option>
+      </select>
+      <input id="neu_organisation" placeholder="Organisation / Mehrere">
+      <input id="neu_hof" placeholder="Hof">
+      <input id="neu_belohnung" type="number" placeholder="Belohnung">
+      <button class="green" onclick="auftragErstellen()">Auftrag erstellen</button>
+      <div id="msg_neu" class="msg"></div>
+    </div>
+  `;
+
+  let liste=auftraege.filter(a=>{
+    const status=(a.Status||"").toLowerCase();
+
+    if(filter==="offen" && status!=="offen") return false;
+    if(filter==="laufend" && !(status==="angenommen" || status==="in arbeit")) return false;
+    if(filter==="erledigt" && status!=="erledigt") return false;
+
+    const s=[
+      a.Titel,a.Beschreibung,a.Typ,a.Auftragstyp,a.Status,
+      a.Organisation,a.Hof,a.Erstellt_von,a.Angenommen_von
+    ].join(" ").toLowerCase();
+
+    return s.includes(suche);
+  });
+
+  liste.sort((a,b)=>Number(b.id)-Number(a.id));
+
+  if(liste.length===0){
+    html+="<div class='leer'>Keine Aufträge gefunden.</div>";
+  }
+
+  liste.forEach(a=>{
+    const istEinsatz=(a.Typ==="Einsatz" || a.Auftragstyp==="Einsatz");
+
+    html+=`
+      <div class="card ${istEinsatz?"einsatz":""}">
+        <div class="titel">${istEinsatz?"🚨 ":"📋 "}${text(a.Titel)}</div>
+
+        <div class="info">
+          <span class="orange">ID:</span> ${a.id}<br>
+          <span class="orange">Status:</span> ${text(a.Status)}<br>
+          <span class="orange">Typ:</span> ${text(a.Typ || a.Auftragstyp)}<br>
+          <span class="orange">Auftragstyp:</span> ${text(a.Auftragstyp)}<br>
+          <span class="orange">Organisation:</span> ${text(a.Organisation)}<br>
+          <span class="orange">Hof:</span> ${text(a.Hof)}<br>
+          <span class="orange">Belohnung:</span> ${text(a.Belohnung)} €<br>
+          <span class="orange">Erstellt von:</span> ${text(a.Erstellt_von)}<br>
+          <span class="orange">Angenommen von:</span> ${text(a.Angenommen_von)}<br>
+          <span class="orange">Erledigt am:</span> ${text(a.Erledigt_am)}<br><br>
+          ${text(a.Beschreibung)}
+        </div>
+
+        <input id="titel_${a.id}" value="${a.Titel||""}" placeholder="Titel">
+        <textarea id="beschreibung_${a.id}" placeholder="Beschreibung">${a.Beschreibung||""}</textarea>
+
+        <select id="status_${a.id}">
+          <option ${a.Status==="Offen"?"selected":""}>Offen</option>
+          <option ${a.Status==="Angenommen"?"selected":""}>Angenommen</option>
+          <option ${a.Status==="In Arbeit"?"selected":""}>In Arbeit</option>
+          <option ${a.Status==="Erledigt"?"selected":""}>Erledigt</option>
+        </select>
+
+        <select id="typ_${a.id}">
+          <option ${a.Typ==="Auftrag"?"selected":""}>Auftrag</option>
+          <option ${a.Typ==="Einsatz"?"selected":""}>Einsatz</option>
+          <option ${a.Typ==="Marktplatz"?"selected":""}>Marktplatz</option>
+        </select>
+
+        <input id="auftragstyp_${a.id}" value="${a.Auftragstyp||""}" placeholder="Auftragstyp">
+        <input id="organisation_${a.id}" value="${a.Organisation||""}" placeholder="Organisation">
+        <input id="hof_${a.id}" value="${a.Hof||""}" placeholder="Hof">
+        <input id="belohnung_${a.id}" type="number" value="${a.Belohnung||0}" placeholder="Belohnung">
+
+        ${userSelect(a.id,a.Angenommen_von)}
+
+        <button class="green" onclick="auftragSpeichern(${a.id})">Speichern</button>
+        <button class="orangeBtn" onclick="zuweisen(${a.id})">Spieler zuweisen</button>
+        <button class="dark" onclick="statusSetzen(${a.id},'Offen')">Zurück auf Offen</button>
+        <button class="green" onclick="abschliessen(${a.id})">Abschließen</button>
+        <button class="dark" onclick="location.href='auftrag.html?id=${a.id}'">Öffnen</button>
+        <button class="red" onclick="auftragLoeschen(${a.id})">Löschen</button>
+
+        <div id="msg_${a.id}" class="msg"></div>
+      </div>
+    `;
+  });
+
+  box.innerHTML=html;
+}
+
+async function auftragErstellen(){
+  const msg=document.getElementById("msg_neu");
+  msg.innerText="";
+
+  const titel=document.getElementById("neu_titel").value.trim();
+  if(!titel){msg.innerText="Bitte Titel eingeben.";return;}
+
+  const typ=document.getElementById("neu_typ").value;
+
+  try{
+    await post("Auftraege",{
+      Titel:titel,
+      Beschreibung:document.getElementById("neu_beschreibung").value.trim(),
+      Typ:typ,
+      Auftragstyp:typ==="Einsatz"?"Einsatz":"",
+      Status:"Offen",
+      Organisation:document.getElementById("neu_organisation").value.trim(),
+      Hof:document.getElementById("neu_hof").value.trim(),
+      Belohnung:Number(document.getElementById("neu_belohnung").value||0),
+      Erstellt_von:USERNAME,
+      Angenommen_von:null,
+      Sichtbarkeit:typ==="Einsatz"?"organisation":null
+    });
+
+    await laden();
+
+  }catch(e){
+    msg.innerText="Fehler:\n"+e.message;
+  }
+}
+
+async function auftragSpeichern(id){
+  const msg=document.getElementById("msg_"+id);
+  msg.innerText="Speichere...";
+
+  const status=document.getElementById("status_"+id).value;
+
+  try{
+    await patch("Auftraege",id,{
+      Titel:document.getElementById("titel_"+id).value.trim(),
+      Beschreibung:document.getElementById("beschreibung_"+id).value.trim(),
+      Status:status,
+      Typ:document.getElementById("typ_"+id).value,
+      Auftragstyp:document.getElementById("auftragstyp_"+id).value.trim(),
+      Organisation:document.getElementById("organisation_"+id).value.trim(),
+      Hof:document.getElementById("hof_"+id).value.trim(),
+      Belohnung:Number(document.getElementById("belohnung_"+id).value||0),
+      Angenommen_von:document.getElementById("user_"+id).value || null,
+      Erledigt_am:status==="Erledigt" ? new Date().toISOString() : null
+    });
+
+    msg.innerText="Gespeichert.";
+    await laden();
+
+  }catch(e){
+    msg.innerText="Fehler:\n"+e.message;
+  }
+}
+
+async function zuweisen(id){
+  const spieler=document.getElementById("user_"+id).value;
+  const msg=document.getElementById("msg_"+id);
+
+  if(!spieler){
+    msg.innerText="Bitte Spieler auswählen.";
+    return;
+  }
+
+  try{
+    await patch("Auftraege",id,{
+      Angenommen_von:spieler,
+      Status:"Angenommen"
+    });
+    await laden();
+  }catch(e){
+    msg.innerText="Fehler:\n"+e.message;
+  }
+}
+
+async function statusSetzen(id,status){
+  try{
+    await patch("Auftraege",id,{
+      Status:status,
+      Angenommen_von:status==="Offen"?null:undefined,
+      Erledigt_am:status==="Erledigt"?new Date().toISOString():null
+    });
+    await laden();
+  }catch(e){
+    alert("Fehler:\n"+e.message);
+  }
+}
+
+async function abschliessen(id){
+  if(!confirm("Auftrag wirklich abschließen?")) return;
+
+  try{
+    await patch("Auftraege",id,{
+      Status:"Erledigt",
+      Erledigt_am:new Date().toISOString()
+    });
+    await laden();
+  }catch(e){
+    alert("Fehler:\n"+e.message);
+  }
+}
+
+async function auftragLoeschen(id){
+  if(!confirm("Auftrag wirklich löschen?")) return;
+
+  try{
+    await del("Auftraege",id);
+    await laden();
+  }catch(e){
+    alert("Fehler:\n"+e.message);
+  }
+}
+
+laden();
+</script>
+</body>
+</html>
