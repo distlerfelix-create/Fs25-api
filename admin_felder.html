@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Felder</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}
+.app{max-width:700px;margin:auto;padding:20px}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px}
+h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif}
+input,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px}
+.titel{color:#00ff22;font-size:24px;font-weight:bold}
+.info{color:white;margin-top:10px;line-height:1.5;font-size:17px}
+.orange{color:#ffaa33}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}
+.green{background:#008800;color:white}
+.red{background:#aa0000;color:white}
+.dark{background:#333;color:white}
+.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px;font-size:17px}
+.row input{width:26px;height:26px}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}
+.leer{color:white;text-align:center;margin-top:40px}
+</style>
+</head>
+
+<body>
+<div class="app">
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+<h1>FELDER ADMIN</h1>
+
+<input id="suche" placeholder="Feld suchen..." oninput="anzeigen()">
+<div id="liste">Lade...</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+if(!USER_ID){ location.href="login.html"; }
+
+let users=[], hoefe=[], felder=[];
+
+async function api(t){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return await r.json();
+}
+
+async function post(t,d){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{
+    method:"POST",
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
+    body:JSON.stringify(d)
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function patch(t,id,d){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{
+    method:"PATCH",
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
+    body:JSON.stringify(d)
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+async function del(t,id){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{
+    method:"DELETE",
+    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,Prefer:"return=minimal"}
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+function text(v){return v===null||v===undefined||v===""?"-":v}
+function checked(v){return v===true?"checked":""}
+
+function hofSelect(id,aktuell){
+  let h=`<select id="hof_${id}"><option value="">Kein Hof</option>`;
+  hoefe.forEach(x=>{
+    h+=`<option value="${x.id}" ${String(x.id)===String(aktuell)?"selected":""}>${x.Name}</option>`;
+  });
+  return h+"</select>";
+}
+
+async function laden(){
+  const box=document.getElementById("liste");
+  try{
+    users=await api("Users");
+    hoefe=await api("Hoefe");
+    felder=await api("Felder");
+
+    const admin=users.find(u=>String(u.id)===String(USER_ID));
+    if(!admin||admin.Admin!==true){
+      box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+    anzeigen();
+  }catch(e){
+    box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>";
+  }
+}
+
+function anzeigen(){
+  const box=document.getElementById("liste");
+  const s=document.getElementById("suche").value.toLowerCase().trim();
+
+  let html=`
+  <div class="card">
+    <div class="titel">Neues Feld</div>
+    <input id="neu_nummer" placeholder="Feldnummer">
+    <input id="neu_groesse" placeholder="Feldgröße">
+    ${hofSelect("neu","")}
+    <input id="neu_frucht" placeholder="Fruchtart">
+    <button class="green" onclick="feldErstellen()">Feld erstellen</button>
+    <div id="msg_neu" class="msg"></div>
+  </div>`;
+
+  const gefiltert=felder.filter(f=>{
+    return [f.Feldnummer,f.Fruchtart,f.Besitzer,f.Feldgroesse,f.Letzte_Aktion]
+      .join(" ").toLowerCase().includes(s);
+  });
+
+  gefiltert.forEach(f=>{
+    html+=`
+    <div class="card">
+      <div class="titel">🌱 Feld ${text(f.Feldnummer)}</div>
+      <div class="info">
+        <span class="orange">ID:</span> ${f.id}<br>
+        <span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br>
+        <span class="orange">Größe:</span> ${text(f.Feldgroesse)}<br>
+        <span class="orange">Besitzer:</span> ${text(f.Besitzer)}<br>
+        <span class="orange">Wachstum:</span> ${text(f.Wachstumsstufe)}<br>
+        <span class="orange">Letzte Aktion:</span> ${text(f.Letzte_Aktion)}
+      </div>
+
+      <input id="nummer_${f.id}" value="${f.Feldnummer||""}" placeholder="Feldnummer">
+      <input id="groesse_${f.id}" value="${f.Feldgroesse||""}" placeholder="Feldgröße">
+      ${hofSelect(f.id,f.Hof_id)}
+      <input id="besitzer_${f.id}" value="${f.Besitzer||""}" placeholder="Besitzer">
+      <input id="frucht_${f.id}" value="${f.Fruchtart||""}" placeholder="Fruchtart">
+      <input id="wachstum_${f.id}" type="number" value="${f.Wachstumsstufe||0}" placeholder="Wachstumsstufe">
+      <input id="aktion_${f.id}" value="${f.Letzte_Aktion||""}" placeholder="Letzte Aktion">
+      <input id="gesaet_am_${f.id}" type="date" value="${f.Gesaet_am?String(f.Gesaet_am).substring(0,10):""}">
+
+      <div class="row">Gekalkt <input id="gekalkt_${f.id}" type="checkbox" ${checked(f.Gekalkt)}></div>
+      <div class="row">Gedüngt 1x <input id="ged1_${f.id}" type="checkbox" ${checked(f.Geduengt_1x)}></div>
+      <div class="row">Gedüngt 2x <input id="ged2_${f.id}" type="checkbox" ${checked(f.Geduengt_2x)}></div>
+      <div class="row">Gegrubbert <input id="gegrubbert_${f.id}" type="checkbox" ${checked(f.Gegrubbert)}></div>
+      <div class="row">Gepflügt <input id="gepfluegt_${f.id}" type="checkbox" ${checked(f.Gepfluegt)}></div>
+      <div class="row">Gesät <input id="gesaet_${f.id}" type="checkbox" ${checked(f.Gesaet)}></div>
+      <div class="row">Gewalzt <input id="gewalzt_${f.id}" type="checkbox" ${checked(f.Gewalzt)}></div>
+      <div class="row">Unkraut <input id="unkraut_${f.id}" type="checkbox" ${checked(f.Unkraut)}></div>
+      <div class="row">Erntebereit <input id="ernte_${f.id}" type="checkbox" ${checked(f.Erntebereit)}></div>
+      <div class="row">Düngen nötig <input id="duengen_${f.id}" type="checkbox" ${checked(f["Duengen_nötig"])}></div>
+      <div class="row">Ernte benachrichtigt <input id="ernteben_${f.id}" type="checkbox" ${checked(f.Ernte_Benachrichtigt)}></div>
+
+      <button class="green" onclick="feldSpeichern(${f.id})">Speichern</button>
+      <button class="dark" onclick="location.href='feld.html?id=${f.id}'">Feld öffnen</button>
+      <button class="red" onclick="feldLoeschen(${f.id})">Feld löschen</button>
+      <div id="msg_${f.id}" class="msg"></div>
+    </div>`;
+  });
+
+  if(gefiltert.length===0){
+    html+="<div class='leer'>Keine Felder gefunden.</div>";
+  }
+
+  box.innerHTML=html;
+}
+
+async function feldErstellen(){
+  const msg=document.getElementById("msg_neu");
+  const hofId=document.getElementById("hof_neu").value;
+  const hof=hoefe.find(h=>String(h.id)===String(hofId));
+  const nummer=document.getElementById("neu_nummer").value.trim();
+
+  if(!nummer){msg.innerText="Bitte Feldnummer eingeben.";return;}
+
+  try{
+    await post("Felder",{
+      Feldnummer:Number(nummer),
+      Feldgroesse:document.getElementById("neu_groesse").value.trim(),
+      Hof_id:hofId?Number(hofId):null,
+      Besitzer:hof?hof.Name:"",
+      Fruchtart:document.getElementById("neu_frucht").value.trim(),
+      Wachstumsstufe:0,
+      Gekalkt:false,
+      Geduengt_1x:false,
+      Geduengt_2x:false,
+      Gegrubbert:false,
+      Gepfluegt:false,
+      Gesaet:false,
+      Gewalzt:false,
+      Unkraut:false,
+      Erntebereit:false,
+      "Duengen_nötig":false,
+      Ernte_Benachrichtigt:false,
+      Letzte_Aktion:"Keine vorhanden"
+    });
+    await laden();
+  }catch(e){msg.innerText="Fehler:\n"+e.message;}
+}
+
+async function feldSpeichern(id){
+  const msg=document.getElementById("msg_"+id);
+  msg.innerText="Speichere...";
+
+  const hofId=document.getElementById("hof_"+id).value;
+  const hof=hoefe.find(h=>String(h.id)===String(hofId));
+  const datum=document.getElementById("gesaet_am_"+id).value;
+
+  try{
+    await patch("Felder",id,{
+      Feldnummer:Number(document.getElementById("nummer_"+id).value||0),
+      Feldgroesse:document.getElementById("groesse_"+id).value.trim(),
+      Hof_id:hofId?Number(hofId):null,
+      Besitzer:document.getElementById("besitzer_"+id).value.trim() || (hof?hof.Name:""),
+      Fruchtart:document.getElementById("frucht_"+id).value.trim(),
+      Wachstumsstufe:Number(document.getElementById("wachstum_"+id).value||0),
+      Letzte_Aktion:document.getElementById("aktion_"+id).value.trim(),
+      Gesaet_am:datum?new Date(datum).toISOString():null,
+      Gekalkt:document.getElementById("gekalkt_"+id).checked,
+      Geduengt_1x:document.getElementById("ged1_"+id).checked,
+      Geduengt_2x:document.getElementById("ged2_"+id).checked,
+      Gegrubbert:document.getElementById("gegrubbert_"+id).checked,
+      Gepfluegt:document.getElementById("gepfluegt_"+id).checked,
+      Gesaet:document.getElementById("gesaet_"+id).checked,
+      Gewalzt:document.getElementById("gewalzt_"+id).checked,
+      Unkraut:document.getElementById("unkraut_"+id).checked,
+      Erntebereit:document.getElementById("ernte_"+id).checked,
+      "Duengen_nötig":document.getElementById("duengen_"+id).checked,
+      Ernte_Benachrichtigt:document.getElementById("ernteben_"+id).checked
+    });
+
+    msg.innerText="Gespeichert.";
+    await laden();
+  }catch(e){msg.innerText="Fehler:\n"+e.message;}
+}
+
+async function feldLoeschen(id){
+  if(!confirm("Feld wirklich löschen?")) return;
+  try{
+    await del("Felder",id);
+    await laden();
+  }catch(e){alert("Fehler:\n"+e.message);}
+}
+
+laden();
+</script>
+</body>
+</html>
