@@ -56,12 +56,12 @@ jobs:
               f"{supabase_url}/rest/v1/Benachrichtigungen"
               "?select=*"
               "&Telegram_gesendet=eq.false"
-              "&Archiviert=neq.true"
               "&order=id.asc"
               "&limit=10"
           )
 
           rows = request_json(url)
+          rows = [r for r in rows if r.get("Archiviert") is not True]
 
           if not rows:
               print("Keine neuen Benachrichtigungen.")
