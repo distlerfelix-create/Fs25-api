@@ -74,18 +74,14 @@ jobs:
               typ = row.get("Typ") or "Benachrichtigung"
 
               queue_data = {
-                  "Titel": titel,
-                  "Nachricht": nachricht,
-                  "Typ": typ,
-                  "Chat_id": default_chat_id,
-                  "User_id": row.get("User_id"),
-                  "Hof_id": row.get("Hof_id"),
-                  "Organisation_id": row.get("Organisation_id"),
-                  "Auftrag_id": row.get("Auftrag_id"),
-                  "Gesendet": False,
-                  "Status": "Offen",
-                  "Fehler": None
-              }
+    "Titel": titel,
+    "Nachricht": nachricht,
+    "Typ": typ,
+    "Chat_id": int(default_chat_id),
+    "Gesendet": False,
+    "Status": "Offen",
+    "Fehler": None
+}
 
               request_json(
                   f"{supabase_url}/rest/v1/Telegram_queue",
