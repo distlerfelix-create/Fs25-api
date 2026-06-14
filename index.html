@@ -58,12 +58,42 @@ h1{
   font-weight:bold;
 }
 
+.servercard{
+  padding:10px;
+  margin:12px 0;
+  font-size:16px;
+  line-height:1.35;
+}
+
 .server-online{
   color:#00ff22!important;
 }
 
 .server-offline{
   color:red!important;
+}
+
+.einsatzbox{
+  border:2px solid red;
+  box-shadow:0 0 14px rgba(255,0,0,0.55);
+}
+
+.einsatzTitel{
+  color:red;
+  font-size:22px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+.einsatzItem{
+  color:white;
+  text-align:left;
+  border-top:1px solid #333;
+  padding:10px 0;
+}
+
+.einsatzItem b{
+  color:#00ff22;
 }
 
 .admin{
@@ -154,25 +184,21 @@ h1{
   <span id="hofname">...</span>
 </div>
 
-<div class="card stats">
-  🔔 Neue Benachrichtigungen: <span id="anzahlBenachrichtigungen">0</span><br>
-  🚨 Offene Einsätze: <span id="anzahlEinsaetze">0</span><br>
-  📋 Offene Aufträge: <span id="anzahlAuftraege">0</span><br>
-  🌾 Erntereife Felder: <span id="anzahlFelder">0</span><br>
-  🏪 Aktive Angebote: <span id="anzahlAngebote">0</span><br>
-  👥 Spieler: <span id="anzahlSpieler">0</span>
+<div class="card servercard stats">
+  <b>SERVER STATUS</b><br>
+  <span id="server">...</span> |
+  Spieler: <span id="spieler">...</span><br>
+  <span id="servername">...</span> |
+  <span id="map">...</span><br>
+  <span id="monat">...</span>,
+  Tag <span id="tag">...</span>,
+  <span id="zeit">...</span><br>
+  Update: <span id="githubupdate">...</span>
 </div>
 
-<div class="card stats">
-  <b>SERVER STATUS</b><br>
-  Server: <span id="servername">...</span><br>
-  Map: <span id="map">...</span><br>
-  Spieler Online: <span id="spieler">...</span><br>
-  Monat: <span id="monat">...</span><br>
-  Tag: <span id="tag">...</span><br>
-  Zeit: <span id="zeit">...</span><br>
-  Status: <span id="server">...</span><br>
-  Update: <span id="githubupdate">...</span>
+<div id="einsatzBox" class="card einsatzbox" style="display:none">
+  <div class="einsatzTitel">🚨 AKTIVE EINSÄTZE</div>
+  <div id="aktiveEinsaetze"></div>
 </div>
 
 <button id="adminButton" class="admin" onclick="location.href='admin.html'">🛡️ ADMIN</button>
@@ -204,6 +230,13 @@ const STATUS_URL = "https://raw.githubusercontent.com/distlerfelix-create/Fs25-a
 
 const USER_ID = localStorage.getItem("user_id");
 
+let letzterEinsatzCount = 0;
+let tonFreigeschaltet = false;
+
+document.addEventListener("click", () => {
+  tonFreigeschaltet = true;
+});
+
 if(!USER_ID){
   location.href = "login.html";
 }
@@ -224,6 +257,28 @@ async function api(tabelle){
   }
 
   return await res.json();
+}
+
+function sirene(){
+  if(!tonFreigeschaltet) return;
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+  osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.35);
+  osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.7);
+
+  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 1.2);
 }
 
 async function ladeServerstatus(){
@@ -267,8 +322,6 @@ async function ladeHome(){
     const users = await api("Users");
     const hoefe = await api("Hoefe");
     const benachrichtigungen = await api("Benachrichtigungen");
-    const felder = await api("Felder");
-    const angebote = await api("Angebote");
     const auftraege = await api("Auftraege");
     const organisationen = await api("Organisationen");
     const userOrgs = await api("User_organisationen");
@@ -291,8 +344,6 @@ async function ladeHome(){
       b.Archiviert !== true
     ).length;
 
-    document.getElementById("anzahlBenachrichtigungen").innerText = ungelesen;
-
     if(ungelesen > 0){
       document.getElementById("badge").style.display = "inline-block";
       document.getElementById("badge").innerText = ungelesen;
@@ -300,28 +351,44 @@ async function ladeHome(){
       document.getElementById("badge").style.display = "none";
     }
 
-    const offeneEinsaetze = auftraege.filter(a =>
+    const einsaetze = auftraege.filter(a =>
       (a.Auftragstyp === "Einsatz" || a.Typ === "Einsatz") &&
       a.Status !== "Erledigt"
-    ).length;
+    );
 
-    document.getElementById("anzahlEinsaetze").innerText = offeneEinsaetze;
+    const einsatzBox = document.getElementById("einsatzBox");
+    const aktiveEinsaetze = document.getElementById("aktiveEinsaetze");
 
-    const offeneAuftraege = auftraege.filter(a =>
-      !(a.Auftragstyp === "Einsatz" || a.Typ === "Einsatz") &&
-      a.Status !== "Erledigt"
-    ).length;
+    if(einsaetze.length > 0){
+      einsatzBox.style.display = "block";
+      aktiveEinsaetze.innerHTML = "";
 
-    document.getElementById("anzahlAuftraege").innerText = offeneAuftraege;
+      einsaetze.forEach(e => {
+        const div = document.createElement("div");
+        div.className = "einsatzItem";
+        div.onclick = function(){
+          location.href = "auftrag.html?id=" + e.id;
+        };
 
-    const erntereif = felder.filter(f => f.Erntebereit === true).length;
-    document.getElementById("anzahlFelder").innerText = erntereif;
+        div.innerHTML = `
+          <b>${e.Titel || "Einsatz"}</b><br>
+          ${e.Beschreibung || "-"}<br>
+          Status: ${e.Status || "-"}
+        `;
 
-    const aktiveAngebote = angebote.filter(a => a.Aktiv === true).length;
-    document.getElementById("anzahlAngebote").innerText = aktiveAngebote;
+        aktiveEinsaetze.appendChild(div);
+      });
 
-    const aktiveSpieler = users.filter(u => u.Aktiviert !== false).length;
-    document.getElementById("anzahlSpieler").innerText = aktiveSpieler;
+      if(letzterEinsatzCount > 0 && einsaetze.length > letzterEinsatzCount){
+        sirene();
+      }
+
+      letzterEinsatzCount = einsaetze.length;
+
+    }else{
+      einsatzBox.style.display = "none";
+      letzterEinsatzCount = 0;
+    }
 
     if(user.Admin === true){
       document.getElementById("adminButton").style.display = "block";
