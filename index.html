@@ -4,177 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FS25 RP Fix1701</title>
-
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  overflow-x:hidden;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-  text-align:center;
-}
-
-.app{
-  width:100%;
-  max-width:700px;
-  margin:auto;
-  padding:20px;
-}
-
-h1{
-  color:white;
-  font-family:Georgia,serif;
-  font-size:40px;
-  margin:20px 0 25px;
-}
-
-.welcome{
-  font-size:clamp(28px,5vw,44px);
-  font-weight:bold;
-  line-height:1.15;
-  margin-top:15px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:18px;
-  margin:18px 0;
-  box-shadow:0 0 10px rgba(0,255,0,0.18);
-}
-
-.stats{
-  color:white;
-  font-size:19px;
-  line-height:1.6;
-}
-
-.stats span{
-  color:#00ff22;
-  font-weight:bold;
-}
-
-.servercard{
-  padding:10px;
-  margin:12px 0;
-  font-size:16px;
-  line-height:1.35;
-}
-
-.server-online{
-  color:#00ff22!important;
-}
-
-.server-offline{
-  color:red!important;
-}
-
-.einsatzbox{
-  border:2px solid red;
-  box-shadow:0 0 14px rgba(255,0,0,0.55);
-}
-
-.einsatzTitel{
-  color:red;
-  font-size:22px;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-.einsatzItem{
-  color:white;
-  text-align:left;
-  border-top:1px solid #333;
-  padding:10px 0;
-}
-
-.einsatzItem b{
-  color:#00ff22;
-}
-
-.admin{
-  display:none;
-  width:100%;
-  background:#ff1111;
-  color:white;
-  border:none;
-  border-radius:14px;
-  padding:18px;
-  font-size:24px;
-  font-weight:bold;
-  margin:20px 0;
-  box-shadow:0 0 12px rgba(255,0,0,0.45);
-}
-
-.menu button{
-  width:100%;
-  background:#008800;
-  color:white;
-  border:none;
-  padding:18px;
-  font-size:clamp(20px,2.5vw,28px);
-  font-weight:bold;
-  margin:6px 0;
-  border-radius:14px;
-  letter-spacing:1px;
-  box-shadow:0 0 10px rgba(0,255,0,0.25);
-}
-
-.menu button:active{
-  background:#00aa00;
-}
-
-.badge{
-  background:red;
-  color:white;
-  border-radius:20px;
-  padding:2px 9px;
-  font-size:18px;
-  margin-left:8px;
-}
-
-.section-title{
-  color:red;
-  text-align:left;
-  margin-top:35px;
-  font-family:Georgia,serif;
-  font-size:18px;
-  font-weight:bold;
-}
-
-.org{
-  background:#111;
-  border:1px solid #006600;
-  border-radius:12px;
-  padding:12px;
-  margin:8px 0;
-  color:white;
-  text-align:left;
-}
-
-.org span{
-  color:#ffaa33;
-}
-
-.logout{
-  background:#333!important;
-}
-
-.notice{
-  margin-top:25px;
-  color:#ffaa33;
-  font-size:14px;
-}
+body{margin:0;overflow-x:hidden;background:#000;color:#00ff22;font-family:Arial,sans-serif;text-align:center;}
+.app{width:100%;max-width:700px;margin:auto;padding:20px;}
+h1{color:white;font-family:Georgia,serif;font-size:40px;margin:20px 0 25px;}
+.welcome{font-size:clamp(28px,5vw,44px);font-weight:bold;line-height:1.15;margin-top:15px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin:18px 0;box-shadow:0 0 10px rgba(0,255,0,0.18);}
+.servercard{padding:10px;margin:12px 0;color:white;font-size:16px;line-height:1.35;}
+.servercard span{color:#00ff22;font-weight:bold;}
+.server-online{color:#00ff22!important;}
+.server-offline{color:red!important;}
+.einsatzbox{border:2px solid red;box-shadow:0 0 14px rgba(255,0,0,0.55);}
+.einsatzTitel{color:red;font-size:22px;font-weight:bold;margin-bottom:10px;}
+.einsatzItem{color:white;text-align:left;border-top:1px solid #333;padding:12px 0;cursor:pointer;}
+.einsatzItem:first-of-type{border-top:none;}
+.einsatzItem b{color:#00ff22;font-size:20px;}
+.einsatzMeta{color:#ffaa33;font-size:15px;margin-top:5px;}
+.admin{display:none;width:100%;background:#ff1111;color:white;border:none;border-radius:14px;padding:18px;font-size:24px;font-weight:bold;margin:20px 0;box-shadow:0 0 12px rgba(255,0,0,0.45);}
+.menu button{width:100%;background:#008800;color:white;border:none;padding:18px;font-size:clamp(20px,2.5vw,28px);font-weight:bold;margin:6px 0;border-radius:14px;letter-spacing:1px;box-shadow:0 0 10px rgba(0,255,0,0.25);}
+.menu button:active{background:#00aa00;}
+.badge{background:red;color:white;border-radius:20px;padding:2px 9px;font-size:18px;margin-left:8px;}
+.section-title{color:red;text-align:left;margin-top:35px;font-family:Georgia,serif;font-size:18px;font-weight:bold;}
+.org{background:#111;border:1px solid #006600;border-radius:12px;padding:12px;margin:8px 0;color:white;text-align:left;cursor:pointer;}
+.org b{color:#00ff22;}
+.org span{color:#ffaa33;}
+.logout{background:#333!important;}
+.notice{margin-top:25px;color:#ffaa33;font-size:14px;}
+.loading{color:white;margin-top:25px;}
+.error{color:#ff5555;background:#111;border:1px solid red;border-radius:14px;padding:18px;margin:18px 0;white-space:pre-line;}
 </style>
 </head>
 
 <body>
 <div class="app">
-
 <h1>HOME</h1>
 
 <div class="welcome">
@@ -184,7 +47,7 @@ h1{
   <span id="hofname">...</span>
 </div>
 
-<div class="card servercard stats">
+<div class="card servercard">
   <b>SERVER STATUS</b><br>
   <span id="server">...</span> |
   Spieler: <span id="spieler">...</span><br>
@@ -217,10 +80,9 @@ h1{
 </div>
 
 <div class="section-title">DEINE ORGANISATIONEN:</div>
-<div id="organisationen">Lade...</div>
+<div id="organisationen" class="loading">Lade...</div>
 
 <div class="notice">FS25 RP SERVER</div>
-
 </div>
 
 <script>
@@ -241,15 +103,17 @@ if(!USER_ID){
   location.href = "login.html";
 }
 
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer " + SUPABASE_KEY
+  };
+}
+
 async function api(tabelle){
   const res = await fetch(
     SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
-    {
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY
-      }
-    }
+    {headers:headers()}
   );
 
   if(!res.ok){
@@ -259,10 +123,17 @@ async function api(tabelle){
   return await res.json();
 }
 
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
 function sirene(){
   if(!tonFreigeschaltet) return;
 
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if(!AudioContextClass) return;
+
+  const audioCtx = new AudioContextClass();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
 
@@ -283,9 +154,7 @@ function sirene(){
 
 async function ladeServerstatus(){
   try{
-    const res = await fetch(STATUS_URL + "?t=" + Date.now(), {
-      cache:"no-store"
-    });
+    const res = await fetch(STATUS_URL + "?t=" + Date.now(), {cache:"no-store"});
 
     if(!res.ok){
       throw new Error("status.json nicht erreichbar");
@@ -313,8 +182,47 @@ async function ladeServerstatus(){
 
   }catch(err){
     document.getElementById("server").innerText = "🔴 Fehler";
+    document.getElementById("server").className = "server-offline";
     document.getElementById("githubupdate").innerText = "Status konnte nicht geladen werden";
   }
+}
+
+function istBenachrichtigungFuerUser(b,user,meineOrgIds){
+  const global =
+    (b.User_id === null || b.User_id === "" || b.User_id === undefined) &&
+    (b.Hof_id === null || b.Hof_id === "" || b.Hof_id === undefined) &&
+    (b.Organisation_id === null || b.Organisation_id === "" || b.Organisation_id === undefined);
+
+  const fuerUser = String(b.User_id) === String(USER_ID);
+
+  const fuerHof =
+    b.Hof_id !== null &&
+    b.Hof_id !== "" &&
+    b.Hof_id !== undefined &&
+    String(b.Hof_id) === String(user.Hof_id);
+
+  const fuerOrg =
+    b.Organisation_id !== null &&
+    b.Organisation_id !== "" &&
+    b.Organisation_id !== undefined &&
+    meineOrgIds.includes(String(b.Organisation_id));
+
+  return global || fuerUser || fuerHof || fuerOrg;
+}
+
+function istEinsatzFuerUser(einsatz,meineOrgNamen){
+  const istEinsatz =
+    einsatz.Auftragstyp === "Einsatz" ||
+    einsatz.Typ === "Einsatz";
+
+  if(!istEinsatz) return false;
+  if(einsatz.Status === "Erledigt") return false;
+
+  if(!einsatz.Organisation || einsatz.Organisation === ""){
+    return true;
+  }
+
+  return meineOrgNamen.includes(String(einsatz.Organisation));
 }
 
 async function ladeHome(){
@@ -336,33 +244,37 @@ async function ladeHome(){
 
     const hof = hoefe.find(h => String(h.id) === String(user.Hof_id));
 
-    document.getElementById("vorname").innerText = user.Vorname || "-";
+    document.getElementById("vorname").innerText = user.Vorname || user["PSN-Username"] || "-";
     document.getElementById("hofname").innerText = user.Hof || (hof ? hof.Name : "-");
 
+    const meineOrgs = userOrgs.filter(o =>
+      String(o.User_id) === String(USER_ID) &&
+      o.Aktiv === true
+    );
+
+    const meineOrgIds = meineOrgs.map(o => String(o.Organisation_id));
+
+    const meineOrgNamen = meineOrgs
+      .map(e => organisationen.find(o => String(o.id) === String(e.Organisation_id)))
+      .filter(Boolean)
+      .map(o => String(o.Name));
+
     const ungelesen = benachrichtigungen.filter(b =>
-  b.Gelesen !== true &&
-  b.Archiviert !== true &&
-  (
-    String(b.User_id) === String(USER_ID) ||
-    String(b.Hof_id) === String(user.Hof_id) ||
-    b.User_id === null ||
-    b.User_id === "" ||
-    b.Hof_id === null ||
-    b.Hof_id === ""
-  )
-).length;
+      b.Gelesen !== true &&
+      b.Archiviert !== true &&
+      istBenachrichtigungFuerUser(b,user,meineOrgIds)
+    ).length;
+
+    const badge = document.getElementById("badge");
 
     if(ungelesen > 0){
-      document.getElementById("badge").style.display = "inline-block";
-      document.getElementById("badge").innerText = ungelesen;
+      badge.style.display = "inline-block";
+      badge.innerText = ungelesen;
     }else{
-      document.getElementById("badge").style.display = "none";
+      badge.style.display = "none";
     }
 
-    const einsaetze = auftraege.filter(a =>
-      (a.Auftragstyp === "Einsatz" || a.Typ === "Einsatz") &&
-      a.Status !== "Erledigt"
-    );
+    const einsaetze = auftraege.filter(e => istEinsatzFuerUser(e,meineOrgNamen));
 
     const einsatzBox = document.getElementById("einsatzBox");
     const aktiveEinsaetze = document.getElementById("aktiveEinsaetze");
@@ -374,14 +286,19 @@ async function ladeHome(){
       einsaetze.forEach(e => {
         const div = document.createElement("div");
         div.className = "einsatzItem";
+
         div.onclick = function(){
           location.href = "auftrag.html?id=" + e.id;
         };
 
         div.innerHTML = `
           <b>${e.Titel || "Einsatz"}</b><br>
-          ${e.Beschreibung || "-"}<br>
-          Status: ${e.Status || "-"}
+          ${e.Beschreibung || "-"}
+          <div class="einsatzMeta">
+            Status: ${text(e.Status)} |
+            Organisation: ${text(e.Organisation)} |
+            Hof: ${text(e.Hof)}
+          </div>
         `;
 
         aktiveEinsaetze.appendChild(div);
@@ -398,17 +315,16 @@ async function ladeHome(){
       letzterEinsatzCount = 0;
     }
 
+    const adminButton = document.getElementById("adminButton");
+
     if(user.Admin === true){
-      document.getElementById("adminButton").style.display = "block";
+      adminButton.style.display = "block";
+    }else{
+      adminButton.style.display = "none";
     }
 
     const orgBox = document.getElementById("organisationen");
     orgBox.innerHTML = "";
-
-    const meineOrgs = userOrgs.filter(o =>
-      String(o.User_id) === String(USER_ID) &&
-      o.Aktiv === true
-    );
 
     if(meineOrgs.length === 0){
       orgBox.innerHTML = "<div class='org'>Keine Organisationen.</div>";
@@ -434,7 +350,13 @@ async function ladeHome(){
     }
 
   }catch(err){
-    alert(err.message);
+    document.body.innerHTML = `
+      <div class="app">
+        <h1>Fehler</h1>
+        <div class="error">${err.message}</div>
+        <button class="admin" style="display:block;background:#333" onclick="logout()">Zurück zum Login</button>
+      </div>
+    `;
   }
 }
 
