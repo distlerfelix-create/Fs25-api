@@ -6,175 +6,42 @@
 <title>Nachrichten</title>
 
 <style>
-*{ box-sizing:border-box; }
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;overflow-x:hidden}
+.app{width:100%;max-width:700px;margin:auto;padding:20px}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:35px;font-size:18px}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:40px;margin:25px 0 30px}
 
-body{
-  margin:0;
-  overflow-x:hidden;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
+.neu-btn{
+  width:100%;background:#008800;color:white;border:none;border-radius:14px;
+  padding:18px;font-size:22px;font-weight:bold;margin-bottom:22px;
+  box-shadow:0 0 12px rgba(0,255,0,.35)
 }
 
-.app{
-  width:100%;
-  max-width:700px;
-  margin:auto;
-  padding:20px;
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}
+.titel{color:#00ff22;font-size:28px;font-weight:bold}
+.inhalt{color:white;margin-top:12px;font-size:20px;line-height:1.4;white-space:pre-line}
+.meta{color:#ffaa33;margin-top:14px;font-size:15px}
+.leer{color:white;text-align:center;margin-top:40px;font-size:18px}
+
+.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:10}
+.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300}
+.popup h2{color:#00ff22;margin-top:0;font-size:30px}
+
+input,textarea{
+  width:100%;background:#000;color:white;border:1px solid #008000;
+  border-radius:10px;padding:12px;font-size:17px;margin-top:10px
 }
+textarea{min-height:110px}
 
-.back{
-  background:#222;
-  color:white;
-  border:1px solid #555;
-  padding:14px 22px;
-  border-radius:12px;
-  margin-bottom:35px;
-  font-size:18px;
-}
+.popup button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}
+.send-btn{background:#008800;color:white}
+.close-btn{background:#333;color:white}
 
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:40px;
-  margin:25px 0 35px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:16px;
-  box-shadow:0 0 10px rgba(0,255,0,0.18);
-}
-
-.card:active{ background:#003300; }
-
-.titel{
-  color:#00ff22;
-  font-size:28px;
-  font-weight:bold;
-}
-
-.inhalt{
-  color:white;
-  margin-top:12px;
-  font-size:20px;
-  line-height:1.4;
-}
-
-.meta{
-  color:#ffaa33;
-  margin-top:14px;
-  font-size:15px;
-}
-
-.leer{
-  color:white;
-  text-align:center;
-  margin-top:40px;
-  font-size:18px;
-}
-
-.popup-bg{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.85);
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  z-index:10;
-}
-
-.popup{
-  background:#111;
-  border:2px solid #00aa22;
-  border-radius:18px;
-  padding:22px;
-  width:100%;
-  max-width:620px;
-  max-height:90vh;
-  overflow-y:auto;
-  color:white;
-  box-shadow:0 0 25px #003300;
-}
-
-.popup h2{
-  color:#00ff22;
-  margin-top:0;
-  font-size:30px;
-}
-
-.popup-text{
-  font-size:20px;
-  line-height:1.4;
-  margin-bottom:15px;
-}
-
-.popup-meta{
-  color:#ffaa33;
-  font-size:15px;
-  margin-bottom:20px;
-}
-
-.antwort-title{
-  color:#00ff22;
-  font-size:22px;
-  font-weight:bold;
-  margin-top:20px;
-  margin-bottom:10px;
-}
-
-.antwort{
-  background:#000;
-  border:1px solid #006600;
-  border-radius:10px;
-  padding:12px;
-  margin-bottom:10px;
-}
-
-.antwort-von{
-  color:#ffaa33;
-  font-weight:bold;
-  margin-bottom:5px;
-}
-
-.antwort-text{ color:white; }
-
-textarea{
-  width:100%;
-  min-height:90px;
-  background:#000;
-  color:white;
-  border:1px solid #008000;
-  border-radius:10px;
-  padding:12px;
-  font-size:17px;
-  margin-top:10px;
-}
-
-.popup button{
-  width:100%;
-  margin-top:12px;
-  padding:15px;
-  border:none;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:bold;
-}
-
-.send-btn{
-  background:#008800;
-  color:white;
-}
-
-.close-btn{
-  background:#333;
-  color:white;
-}
+.antwort-title{color:#00ff22;font-size:22px;font-weight:bold;margin-top:20px;margin-bottom:10px}
+.antwort{background:#000;border:1px solid #006600;border-radius:10px;padding:12px;margin-bottom:10px}
+.antwort-von{color:#ffaa33;font-weight:bold;margin-bottom:5px}
+.antwort-text{color:white}
 </style>
 </head>
 
@@ -185,6 +52,8 @@ textarea{
 
 <h1>NACHRICHTEN</h1>
 
+<button class="neu-btn" onclick="oeffneNeueNachricht()">➕ NEUE NACHRICHT</button>
+
 <div id="liste">Lade...</div>
 
 </div>
@@ -192,11 +61,11 @@ textarea{
 <div id="popupBg" class="popup-bg">
   <div class="popup">
     <h2 id="popupTitel"></h2>
-    <div class="popup-text" id="popupInhalt"></div>
-    <div class="popup-meta" id="popupMeta"></div>
+    <div class="inhalt" id="popupInhalt"></div>
+    <div class="meta" id="popupMeta"></div>
 
     <div class="antwort-title">Antworten</div>
-    <div id="antwortListe">Lade Antworten...</div>
+    <div id="antwortListe"></div>
 
     <textarea id="antwortText" placeholder="Antwort schreiben..."></textarea>
 
@@ -205,28 +74,50 @@ textarea{
   </div>
 </div>
 
+<div id="neuBg" class="popup-bg">
+  <div class="popup">
+    <h2>Neue Nachricht</h2>
+
+    <input id="neuTitel" placeholder="Titel">
+    <textarea id="neuInhalt" placeholder="Nachricht schreiben..."></textarea>
+
+    <button class="send-btn" onclick="sendeNeueNachricht()">Nachricht erstellen</button>
+    <button class="close-btn" onclick="schliesseNeueNachricht()">Abbrechen</button>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
-const AKTUELLER_USER_ID = 1;
-const AKTUELLER_HOF_ID = 1;
-const AKTUELLER_USERNAME = "Disti1701";
+const USER_ID = localStorage.getItem("user_id") || 1;
+const USERNAME = localStorage.getItem("username") || "Disti1701";
+const HOF_ID = localStorage.getItem("hof_id") || 1;
 
 let aktuelleNachrichtId = null;
 let aktuelleNachrichtTitel = "";
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer " + SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+function formatDatum(datum){
+  if(!datum) return "";
+  const d = new Date(datum);
+  return d.toLocaleDateString("de-DE") + " • " +
+         d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr";
+}
 
 async function ladeNachrichten(){
   const box = document.getElementById("liste");
 
   const res = await fetch(
     SUPABASE_URL + "/rest/v1/Nachrichten?select=*&order=id.desc",
-    {
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
-      }
-    }
+    {headers:headers()}
   );
 
   if(!res.ok){
@@ -243,13 +134,10 @@ async function ladeNachrichten(){
 
   box.innerHTML = "";
 
-  data.forEach(n => {
+  data.forEach(n=>{
     const div = document.createElement("div");
     div.className = "card";
-
-    div.onclick = function(){
-      oeffneNachricht(n);
-    };
+    div.onclick = ()=>oeffneNachricht(n);
 
     div.innerHTML = `
       <div class="titel">${n.Titel || "Nachricht"}</div>
@@ -261,11 +149,66 @@ async function ladeNachrichten(){
   });
 }
 
-function formatDatum(datum){
-  if(!datum) return "";
-  const d = new Date(datum);
-  return d.toLocaleDateString("de-DE") + " • " +
-         d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr";
+function oeffneNeueNachricht(){
+  document.getElementById("neuTitel").value = "";
+  document.getElementById("neuInhalt").value = "";
+  document.getElementById("neuBg").style.display = "flex";
+}
+
+function schliesseNeueNachricht(){
+  document.getElementById("neuBg").style.display = "none";
+}
+
+async function sendeNeueNachricht(){
+  const titel = document.getElementById("neuTitel").value.trim();
+  const inhalt = document.getElementById("neuInhalt").value.trim();
+
+  if(!titel || !inhalt){
+    alert("Bitte Titel und Nachricht eingeben.");
+    return;
+  }
+
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Nachrichten",
+    {
+      method:"POST",
+      headers:{...headers(),"Prefer":"return=minimal"},
+      body:JSON.stringify({
+        Titel:titel,
+        Inhalt:inhalt,
+        Erstellt_von:USERNAME,
+        Erstellt_am:new Date().toISOString(),
+        User_id:USER_ID,
+        Hof_id:HOF_ID
+      })
+    }
+  );
+
+  if(!res.ok){
+    alert(await res.text());
+    return;
+  }
+
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
+    {
+      method:"POST",
+      headers:{...headers(),"Prefer":"return:minimal"},
+      body:JSON.stringify({
+        Titel:"📩 Neue Nachricht: " + titel,
+        Nachricht:inhalt,
+        Typ:"Nachricht",
+        User_id:null,
+        Hof_id:HOF_ID,
+        Gelesen:false,
+        Archiviert:false,
+        Erstellt_am:new Date().toISOString()
+      })
+    }
+  );
+
+  schliesseNeueNachricht();
+  await ladeNachrichten();
 }
 
 async function oeffneNachricht(n){
@@ -291,13 +234,8 @@ async function ladeAntworten(){
   const box = document.getElementById("antwortListe");
 
   const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&Nachricht_id=eq." + aktuelleNachrichtId + "&order=Id.asc",
-    {
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
-      }
-    }
+    SUPABASE_URL + "/rest/v1/Nachrichten_antworten?select=*&Nachricht_id=eq." + aktuelleNachrichtId + "&order=id.asc",
+    {headers:headers()}
   );
 
   if(!res.ok){
@@ -314,47 +252,21 @@ async function ladeAntworten(){
 
   box.innerHTML = "";
 
-  data.forEach(a => {
+  data.forEach(a=>{
     const div = document.createElement("div");
     div.className = "antwort";
-
     div.innerHTML = `
       <div class="antwort-von">${a.Erstellt_von || "-"}</div>
       <div class="antwort-text">${a.Antwort || ""}</div>
     `;
-
     box.appendChild(div);
   });
-}
-
-async function erstelleBenachrichtigung(text){
-  await fetch(
-    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
-    {
-      method:"POST",
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify({
-        Titel:"Neue Antwort",
-        Nachricht: AKTUELLER_USERNAME + " hat auf \"" + aktuelleNachrichtTitel + "\" geantwortet: " + text,
-        Typ:"Antwort",
-        User_id:AKTUELLER_USER_ID,
-        Hof_id:AKTUELLER_HOF_ID,
-        Gelesen:false,
-        Erstellt_am:new Date().toISOString()
-      })
-    }
-  );
 }
 
 async function sendeAntwort(){
   const text = document.getElementById("antwortText").value.trim();
 
-  if(text === ""){
+  if(!text){
     alert("Bitte zuerst eine Antwort eingeben.");
     return;
   }
@@ -363,29 +275,39 @@ async function sendeAntwort(){
     SUPABASE_URL + "/rest/v1/Nachrichten_antworten",
     {
       method:"POST",
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
+      headers:{...headers(),"Prefer":"return=minimal"},
       body:JSON.stringify({
-        Nachricht_id: aktuelleNachrichtId,
-        Antwort: text,
-        Erstellt_von: AKTUELLER_USERNAME,
-        Erstellt_am: new Date().toISOString(),
-        User_id: AKTUELLER_USER_ID
+        Nachricht_id:aktuelleNachrichtId,
+        Antwort:text,
+        Erstellt_von:USERNAME,
+        Erstellt_am:new Date().toISOString(),
+        User_id:USER_ID
       })
     }
   );
 
   if(!res.ok){
-    const fehler = await res.text();
-    alert(fehler);
+    alert(await res.text());
     return;
   }
 
-  await erstelleBenachrichtigung(text);
+  await fetch(
+    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
+    {
+      method:"POST",
+      headers:{...headers(),"Prefer":"return=minimal"},
+      body:JSON.stringify({
+        Titel:"💬 Neue Antwort",
+        Nachricht:USERNAME + " hat auf \"" + aktuelleNachrichtTitel + "\" geantwortet:\n\n" + text,
+        Typ:"Antwort",
+        User_id:null,
+        Hof_id:HOF_ID,
+        Gelesen:false,
+        Archiviert:false,
+        Erstellt_am:new Date().toISOString()
+      })
+    }
+  );
 
   document.getElementById("antwortText").value = "";
   await ladeAntworten();
