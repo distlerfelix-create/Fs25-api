@@ -7,23 +7,115 @@
 
 <style>
 *{box-sizing:border-box;}
-body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
-.app{width:100%;max-width:520px;margin:auto;padding:35px 20px;text-align:center;}
-.card{background:#111;border:1px solid #008000;border-radius:16px;padding:22px;box-shadow:0 0 12px rgba(0,255,0,0.25);}
-h1{color:white;font-family:Georgia,serif;font-size:38px;margin-bottom:25px;}
-label{display:block;text-align:left;color:#ffaa33;margin-top:16px;font-size:18px;}
-input,select{width:100%;padding:16px;margin-top:8px;border-radius:12px;border:1px solid #008000;background:#000;color:white;font-size:18px;}
-button{width:100%;margin-top:22px;padding:18px;background:#008800;color:white;border:none;border-radius:14px;font-size:22px;font-weight:bold;}
-.back{background:#333;}
-.info{color:#ffaa33;font-size:14px;text-align:left;line-height:1.45;margin-top:18px;}
-.check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:white;text-align:left;font-size:14px;}
-.check input{width:auto;margin-top:2px;}
-.fehler{color:#ff4444;margin-top:18px;font-weight:bold;}
-.erfolg{color:#00ff22;margin-top:18px;font-weight:bold;}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:520px;
+  margin:auto;
+  padding:35px 20px;
+  text-align:center;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:16px;
+  padding:22px;
+  box-shadow:0 0 12px rgba(0,255,0,0.25);
+}
+
+h1{
+  color:white;
+  font-family:Georgia,serif;
+  font-size:38px;
+  margin-bottom:25px;
+}
+
+label{
+  display:block;
+  text-align:left;
+  color:#ffaa33;
+  margin-top:16px;
+  font-size:18px;
+}
+
+input,select{
+  width:100%;
+  padding:16px;
+  margin-top:8px;
+  border-radius:12px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:18px;
+}
+
+button{
+  width:100%;
+  margin-top:22px;
+  padding:18px;
+  background:#008800;
+  color:white;
+  border:none;
+  border-radius:14px;
+  font-size:22px;
+  font-weight:bold;
+}
+
+.back{
+  background:#333;
+}
+
+.info{
+  color:#ffaa33;
+  font-size:14px;
+  text-align:left;
+  line-height:1.45;
+  margin-top:18px;
+}
+
+.info a{
+  color:#00ff22;
+}
+
+.check{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin-top:16px;
+  color:white;
+  text-align:left;
+  font-size:14px;
+}
+
+.check input{
+  width:auto;
+  margin-top:2px;
+}
+
+.fehler{
+  color:#ff4444;
+  margin-top:18px;
+  font-weight:bold;
+}
+
+.erfolg{
+  color:#00ff22;
+  margin-top:18px;
+  font-weight:bold;
+}
 </style>
 </head>
 
 <body>
+
 <div class="app">
 
 <h1>REGISTRIEREN</h1>
@@ -82,6 +174,8 @@ button{width:100%;margin-top:22px;padding:18px;background:#008800;color:white;bo
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
+const ADMIN_CHAT_ID = 6694745579;
+
 async function ladeHoefe(){
   const res = await fetch(SUPABASE_URL + "/rest/v1/Hoefe?select=*", {
     headers:{
@@ -111,7 +205,9 @@ async function registrieren(){
   const passwort = document.getElementById("passwort").value.trim();
   const passwort2 = document.getElementById("passwort2").value.trim();
   const telegram = document.getElementById("telegram").value.trim();
-  const hofId = document.getElementById("hof").value;
+  const hofSelect = document.getElementById("hof");
+  const hofId = hofSelect.value;
+  const hofName = hofSelect.options[hofSelect.selectedIndex].text;
   const regeln = document.getElementById("regeln").checked;
   const dsgvo = document.getElementById("dsgvo").checked;
 
@@ -133,7 +229,7 @@ async function registrieren(){
     return;
   }
 
-  const daten = {
+  const registrierung = {
     Username: username,
     Passwort: passwort,
     Spielername: spielername,
@@ -144,19 +240,56 @@ async function registrieren(){
   };
 
   const res = await fetch(SUPABASE_URL + "/rest/v1/Registrierungen", {
-    method: "POST",
+    method:"POST",
     headers:{
       "apikey": SUPABASE_KEY,
       "Authorization": "Bearer " + SUPABASE_KEY,
       "Content-Type": "application/json",
       "Prefer": "return=minimal"
     },
-    body: JSON.stringify(daten)
+    body: JSON.stringify(registrierung)
   });
 
   if(!res.ok){
     meldung.className = "fehler";
-    meldung.innerText = "Fehler: " + await res.text();
+    meldung.innerText = "Fehler Registrierung: " + await res.text();
+    return;
+  }
+
+  const telegramQueue = {
+    Titel: "🆕 Neue Registrierung",
+    Nachricht:
+      "Neue Registrierungsanfrage:\\n\\n" +
+      "PSN: " + username + "\\n" +
+      "Spielername: " + spielername + "\\n" +
+      "Hof: " + hofName + "\\n" +
+      "Telegram: " + (telegram || "-") + "\\n\\n" +
+      "Bitte im Adminbereich prüfen.",
+    Typ: "Registrierung",
+    User_id: null,
+    Hof_id: null,
+    Organisation_id: null,
+    Chat_id: ADMIN_CHAT_ID,
+    Gesendet: false,
+    Erstellt_am: new Date().toISOString(),
+    Status: "Offen",
+    Fehler: null
+  };
+
+  const telegramRes = await fetch(SUPABASE_URL + "/rest/v1/Telegram_Queue", {
+    method:"POST",
+    headers:{
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify(telegramQueue)
+  });
+
+  if(!telegramRes.ok){
+    meldung.className = "fehler";
+    meldung.innerText = "Registrierung gespeichert, aber Telegram-Queue Fehler: " + await telegramRes.text();
     return;
   }
 
