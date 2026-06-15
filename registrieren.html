@@ -7,207 +7,168 @@
 
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  max-width:700px;
-  margin:auto;
-  padding:20px;
-}
-
-.back{
-  background:#222;
-  color:white;
-  border:1px solid #555;
-  padding:14px 22px;
-  border-radius:12px;
-  margin-bottom:35px;
-  font-size:18px;
-}
-
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:38px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:20px;
-  box-shadow:0 0 10px rgba(0,255,0,0.18);
-}
-
-label{
-  color:#ffaa33;
-  display:block;
-  margin-top:14px;
-  font-size:16px;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid #008000;
-  background:#000;
-  color:white;
-  font-size:18px;
-}
-
-button{
-  width:100%;
-  margin-top:20px;
-  padding:16px;
-  border:none;
-  border-radius:12px;
-  background:#008800;
-  color:white;
-  font-size:20px;
-  font-weight:bold;
-}
-
-.msg{
-  margin-top:18px;
-  color:#ffaa33;
-  text-align:center;
-  font-weight:bold;
-  white-space:pre-line;
-}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:520px;margin:auto;padding:35px 20px;text-align:center;}
+.card{background:#111;border:1px solid #008000;border-radius:16px;padding:22px;box-shadow:0 0 12px rgba(0,255,0,0.25);}
+h1{color:white;font-family:Georgia,serif;font-size:38px;margin-bottom:25px;}
+label{display:block;text-align:left;color:#ffaa33;margin-top:16px;font-size:18px;}
+input,select{width:100%;padding:16px;margin-top:8px;border-radius:12px;border:1px solid #008000;background:#000;color:white;font-size:18px;}
+button{width:100%;margin-top:22px;padding:18px;background:#008800;color:white;border:none;border-radius:14px;font-size:22px;font-weight:bold;}
+.back{background:#333;}
+.info{color:#ffaa33;font-size:14px;text-align:left;line-height:1.45;margin-top:18px;}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:white;text-align:left;font-size:14px;}
+.check input{width:auto;margin-top:2px;}
+.fehler{color:#ff4444;margin-top:18px;font-weight:bold;}
+.erfolg{color:#00ff22;margin-top:18px;font-weight:bold;}
 </style>
 </head>
 
 <body>
 <div class="app">
 
-<button class="back" onclick="location.href='login.html'">← Zurück</button>
-
 <h1>REGISTRIEREN</h1>
 
 <div class="card">
-  <label>PSN-Username</label>
-  <input id="username" placeholder="z.B. Disti1701">
 
-  <label>Vorname / Spielername</label>
-  <input id="spielername" placeholder="z.B. Felix">
+<label>PSN-Username</label>
+<input id="username" placeholder="z. B. Disti1701">
 
-  <label>Passwort</label>
-  <input id="passwort" type="password" placeholder="Passwort">
+<label>Vorname / Spielername</label>
+<input id="spielername" placeholder="z. B. Felix">
 
-  <label>Passwort wiederholen</label>
-  <input id="passwort2" type="password" placeholder="Passwort wiederholen">
+<label>Passwort</label>
+<input id="passwort" type="password">
 
-  <label>Discord Name</label>
-  <input id="discord" placeholder="optional">
+<label>Passwort wiederholen</label>
+<input id="passwort2" type="password">
 
-  <label>Telegram ID / Name</label>
-  <input id="telegram" placeholder="optional">
+<label>Telegram ID / Name</label>
+<input id="telegram" placeholder="optional">
 
-  <button onclick="registrieren()">Registrierung absenden</button>
+<label>Hof</label>
+<select id="hof">
+  <option value="">Bitte Hof auswählen</option>
+</select>
 
-  <div id="meldung" class="msg"></div>
+<div class="info">
+  <b>Serverregeln:</b><br>
+  Mit der Registrierung bestätigst du, dass du die Serverregeln gelesen hast und dich daran hältst.
 </div>
 
+<label class="check">
+  <input id="regeln" type="checkbox">
+  <span>Ich akzeptiere die Serverregeln.</span>
+</label>
+
+<div class="info">
+  <b>Datenschutz / DSGVO:</b><br>
+  Es werden nur Daten gespeichert, die für Login, Freischaltung, Hofzuordnung und Benachrichtigungen benötigt werden.
+</div>
+
+<label class="check">
+  <input id="dsgvo" type="checkbox">
+  <span>Ich bin mit der Speicherung meiner Registrierungsdaten einverstanden.</span>
+</label>
+
+<button onclick="registrieren()">Registrierung absenden</button>
+<button class="back" onclick="location.href='login.html'">Zurück zum Login</button>
+
+<div id="meldung"></div>
+
+</div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
+async function ladeHoefe(){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/Hoefe?select=*", {
+    headers:{
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY
+    }
+  });
+
+  const hoefe = await res.json();
+  const select = document.getElementById("hof");
+
+  hoefe.forEach(h => {
+    const opt = document.createElement("option");
+    opt.value = h.id;
+    opt.textContent = h.Name;
+    select.appendChild(opt);
+  });
+}
+
 async function registrieren(){
   const meldung = document.getElementById("meldung");
+  meldung.className = "";
+  meldung.innerText = "";
 
   const username = document.getElementById("username").value.trim();
   const spielername = document.getElementById("spielername").value.trim();
   const passwort = document.getElementById("passwort").value.trim();
   const passwort2 = document.getElementById("passwort2").value.trim();
-  const discord = document.getElementById("discord").value.trim();
   const telegram = document.getElementById("telegram").value.trim();
+  const hofId = document.getElementById("hof").value;
+  const regeln = document.getElementById("regeln").checked;
+  const dsgvo = document.getElementById("dsgvo").checked;
 
-  meldung.innerText = "";
-
-  if(!username || !spielername || !passwort){
-    meldung.innerText = "Bitte PSN-Username, Spielername und Passwort ausfüllen.";
+  if(!username || !spielername || !passwort || !passwort2 || !hofId){
+    meldung.className = "fehler";
+    meldung.innerText = "Bitte alle Pflichtfelder ausfüllen.";
     return;
   }
 
   if(passwort !== passwort2){
+    meldung.className = "fehler";
     meldung.innerText = "Die Passwörter stimmen nicht überein.";
     return;
   }
 
-  if(passwort.length < 4){
-    meldung.innerText = "Das Passwort muss mindestens 4 Zeichen haben.";
+  if(!regeln || !dsgvo){
+    meldung.className = "fehler";
+    meldung.innerText = "Bitte Serverregeln und Datenschutz bestätigen.";
     return;
   }
 
-  meldung.innerText = "Registrierung wird gesendet...";
+  const daten = {
+    Username: username,
+    Passwort: passwort,
+    Spielername: spielername,
+    Telegram: telegram,
+    Hof_id: Number(hofId),
+    Status: "Offen",
+    Bearbeitet_von: null
+  };
 
-  const pruefen = await fetch(
-    SUPABASE_URL +
-    "/rest/v1/Registrierungen?Username=eq." +
-    encodeURIComponent(username) +
-    "&select=*",
-    {
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY
-      }
-    }
-  );
-
-  const vorhanden = await pruefen.json();
-
-  if(vorhanden && vorhanden.length > 0){
-    meldung.innerText = "Für diesen Username gibt es bereits eine Registrierung.";
-    return;
-  }
-
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Registrierungen",
-    {
-      method:"POST",
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify({
-        Username:username,
-        Passwort:passwort,
-        Spielername:spielername,
-        Discord:discord,
-        Telegram:telegram,
-        Status:"Offen"
-      })
-    }
-  );
+  const res = await fetch(SUPABASE_URL + "/rest/v1/Registrierungen", {
+    method: "POST",
+    headers:{
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify(daten)
+  });
 
   if(!res.ok){
-    meldung.innerText = "Fehler:\n" + await res.text();
+    meldung.className = "fehler";
+    meldung.innerText = "Fehler: " + await res.text();
     return;
   }
 
-  meldung.innerText =
-    "Registrierung gesendet.\nEin Admin muss dich noch freischalten.";
+  meldung.className = "erfolg";
+  meldung.innerText = "Registrierung wurde abgesendet. Bitte auf Freischaltung warten.";
 
-  document.getElementById("username").value = "";
-  document.getElementById("spielername").value = "";
-  document.getElementById("passwort").value = "";
-  document.getElementById("passwort2").value = "";
-  document.getElementById("discord").value = "";
-  document.getElementById("telegram").value = "";
+  setTimeout(() => {
+    location.href = "login.html";
+  }, 2500);
 }
+
+ladeHoefe();
 </script>
 
 </body>
