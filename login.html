@@ -7,64 +7,14 @@
 
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  width:100%;
-  max-width:430px;
-  margin:auto;
-  padding:60px 20px;
-  text-align:center;
-}
-
-h1{
-  color:white;
-  font-family:Georgia,serif;
-  font-size:42px;
-  margin-bottom:40px;
-}
-
-input{
-  width:100%;
-  padding:16px;
-  margin:10px 0;
-  border-radius:12px;
-  border:1px solid #008000;
-  background:#111;
-  color:white;
-  font-size:18px;
-}
-
-button{
-  width:100%;
-  margin-top:20px;
-  padding:18px;
-  background:#008800;
-  color:white;
-  border:none;
-  border-radius:14px;
-  font-size:22px;
-  font-weight:bold;
-  box-shadow:0 0 12px rgba(0,255,0,0.35);
-}
-
-.fehler{
-  color:red;
-  margin-top:20px;
-  font-weight:bold;
-}
-
-.hinweis{
-  color:#ffaa33;
-  margin-top:25px;
-  font-size:14px;
-}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:430px;margin:auto;padding:60px 20px;text-align:center;}
+h1{color:white;font-family:Georgia,serif;font-size:42px;margin-bottom:40px;}
+input{width:100%;padding:16px;margin:10px 0;border-radius:12px;border:1px solid #008000;background:#111;color:white;font-size:18px;}
+button{width:100%;margin-top:20px;padding:18px;background:#008800;color:white;border:none;border-radius:14px;font-size:22px;font-weight:bold;box-shadow:0 0 12px rgba(0,255,0,0.35);}
+.linkbtn{background:#333;}
+.fehler{color:red;margin-top:20px;font-weight:bold;}
+.hinweis{color:#ffaa33;margin-top:25px;font-size:14px;line-height:1.5;}
 </style>
 </head>
 
@@ -77,11 +27,13 @@ button{
 <input id="passwort" type="password" placeholder="Passwort">
 
 <button onclick="login()">Einloggen</button>
+<button class="linkbtn" onclick="location.href='registrieren.html'">Neu registrieren</button>
 
 <div id="fehler" class="fehler"></div>
 
 <div class="hinweis">
-  Zugang nur für freigeschaltete Spieler.
+  Zugang nur für freigeschaltete Spieler.<br>
+  Noch kein Account? Registrierung absenden und auf Freischaltung warten.
 </div>
 
 </div>
