@@ -3,156 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Strafregister V2</title>
+<title>Strafregister</title>
 
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  width:100%;
-  max-width:800px;
-  margin:auto;
-  padding:20px 15px 70px;
-}
-
-.back{
-  background:#222;
-  color:white;
-  border:1px solid #555;
-  padding:13px 20px;
-  border-radius:12px;
-  margin-bottom:25px;
-  font-size:18px;
-}
-
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:38px;
-  margin:20px 0 25px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:18px;
-  margin-bottom:16px;
-  box-shadow:0 0 10px rgba(0,255,0,.18);
-}
-
-.titel{
-  color:#00ff22;
-  font-size:24px;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-.info{
-  color:white;
-  font-size:17px;
-  line-height:1.45;
-  white-space:pre-line;
-}
-
-.meta{
-  color:#ffaa33;
-  font-size:15px;
-  line-height:1.45;
-  margin-top:10px;
-  white-space:pre-line;
-}
-
-.section-title{
-  color:red;
-  font-family:Georgia,serif;
-  font-size:20px;
-  font-weight:bold;
-  margin:28px 0 12px;
-}
-
-label{
-  display:block;
-  margin-top:14px;
-  margin-bottom:6px;
-  color:#ffaa33;
-  font-weight:bold;
-  font-size:16px;
-  text-align:left;
-}
-
-input,select,textarea{
-  width:100%;
-  padding:14px;
-  margin-top:4px;
-  border-radius:10px;
-  border:1px solid #008000;
-  background:#000;
-  color:white;
-  font-size:17px;
-}
-
-textarea{
-  min-height:95px;
-  resize:vertical;
-}
-
-button{
-  width:100%;
-  margin-top:12px;
-  padding:15px;
-  border:none;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:bold;
-}
-
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:800px;margin:auto;padding:20px 15px 70px;}
+.back{background:#222;color:white;border:1px solid #555;padding:13px 20px;border-radius:12px;margin-bottom:25px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18);}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px;}
+.info{color:white;font-size:17px;line-height:1.45;white-space:pre-line;}
+.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line;}
+.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px;}
+label{display:block;margin-top:14px;margin-bottom:6px;color:#ffaa33;font-weight:bold;font-size:16px;text-align:left;}
+input,select,textarea{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+textarea{min-height:95px;resize:vertical;}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
 .green{background:#008800;color:white;}
 .dark{background:#333;color:white;}
 .red{background:#aa0000;color:white;}
-.orange{background:#cc7700;color:white;}
 .blue{background:#004488;color:white;}
-
-.leer{
-  color:white;
-  text-align:center;
-  margin-top:25px;
-  font-size:18px;
-}
-
-.msg{
-  color:#ffaa33;
-  text-align:center;
-  margin-top:12px;
-  font-weight:bold;
-  white-space:pre-line;
-}
-
-.hidden{
-  display:none!important;
-}
-
-.form-block{
-  margin-top:10px;
-}
-
-.badge{
-  display:inline-block;
-  color:white;
-  border-radius:20px;
-  padding:4px 10px;
-  font-size:14px;
-  margin-bottom:8px;
-}
-
+.leer{color:white;text-align:center;margin-top:25px;font-size:18px;}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line;}
+.hidden{display:none!important;}
+.form-block{margin-top:10px;}
+.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:14px;margin-bottom:8px;}
 .badge-fahrverbot{background:#cc0000;}
 .badge-geldstrafe{background:#cc7700;}
 .badge-verwarnung{background:#cc9900;}
@@ -160,82 +36,18 @@ button{
 .badge-ausschluss{background:#111;border:1px solid red;}
 .badge-erledigt{background:#008800;}
 .badge-sonstiges{background:#555;}
-
-.item{
-  background:#090909;
-  border:1px solid #006600;
-  border-radius:12px;
-  padding:14px;
-  margin-bottom:12px;
-}
-
-.item.fahrverbot{
-  border:2px solid red;
-  box-shadow:0 0 14px rgba(255,0,0,.35);
-}
-
-.item.geldstrafe{
-  border:2px solid #ffaa33;
-  box-shadow:0 0 14px rgba(255,170,0,.25);
-}
-
-.item.verwarnung{
-  border:2px solid #cc9900;
-}
-
-.item.haft{
-  border:2px solid #660000;
-  box-shadow:0 0 14px rgba(255,0,0,.25);
-}
-
-.item.erledigt{
-  opacity:.72;
-  border:1px solid #008800;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:10px;
-}
-
-.stat{
-  background:#090909;
-  border:1px solid #006600;
-  border-radius:12px;
-  padding:12px;
-  text-align:center;
-  color:white;
-}
-
-.stat b{
-  color:#00ff22;
-  font-size:24px;
-}
-
-.popup-bg{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  z-index:20;
-}
-
-.popup{
-  background:#111;
-  border:2px solid #00aa22;
-  border-radius:18px;
-  padding:22px;
-  width:100%;
-  max-width:620px;
-  max-height:90vh;
-  overflow-y:auto;
-  color:white;
-  box-shadow:0 0 25px #003300;
-}
+.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px;}
+.item.fahrverbot{border:2px solid red;box-shadow:0 0 14px rgba(255,0,0,.35);}
+.item.geldstrafe{border:2px solid #ffaa33;box-shadow:0 0 14px rgba(255,170,0,.25);}
+.item.verwarnung{border:2px solid #cc9900;}
+.item.haft{border:2px solid #660000;box-shadow:0 0 14px rgba(255,0,0,.25);}
+.item.erledigt{opacity:.72;border:1px solid #008800;}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;text-align:center;color:white;}
+.stat b{color:#00ff22;font-size:24px;}
+.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:20;}
+.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300;}
+.auto-box{background:#000;border:1px dashed #ffaa33;border-radius:10px;padding:12px;margin-top:10px;color:#ffaa33;text-align:left;}
 </style>
 </head>
 
@@ -264,13 +76,15 @@ button{
 <div id="formularBox" class="card hidden">
   <div class="titel">🚔 Neuer Eintrag</div>
 
+  <div class="auto-box">
+    Aktenzeichen wird automatisch fortlaufend erstellt.<br>
+    Beispiel: POL-2026-0001
+  </div>
+
   <label for="userSelect">Spieler</label>
   <select id="userSelect">
     <option value="">Spieler auswählen</option>
   </select>
-
-  <label for="aktenzeichen">Aktenzeichen</label>
-  <input id="aktenzeichen" placeholder="z. B. POL-2026-001">
 
   <label for="typ">Strafart</label>
   <select id="typ" onchange="updateStrafart()">
@@ -322,8 +136,10 @@ button{
   <div class="popup">
     <div class="titel">Eintrag bearbeiten</div>
 
-    <label for="editAktenzeichen">Aktenzeichen</label>
-    <input id="editAktenzeichen" placeholder="Aktenzeichen">
+    <div class="auto-box">
+      Aktenzeichen wird automatisch vergeben und kann nicht geändert werden.<br>
+      <b id="editAktenzeichenText">-</b>
+    </div>
 
     <label for="editTyp">Strafart</label>
     <select id="editTyp" onchange="updateEditStrafart()">
@@ -403,11 +219,7 @@ async function api(tabelle){
   const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
     headers:headers()
   });
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
-
+  if(!res.ok) throw new Error(await res.text());
   return await res.json();
 }
 
@@ -417,10 +229,7 @@ async function post(tabelle,daten){
     headers:{...headers(),"Prefer":"return=minimal"},
     body:JSON.stringify(daten)
   });
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
+  if(!res.ok) throw new Error(await res.text());
 }
 
 async function patch(tabelle,id,daten){
@@ -429,15 +238,24 @@ async function patch(tabelle,id,daten){
     headers:{...headers(),"Prefer":"return=minimal"},
     body:JSON.stringify(daten)
   });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+async function holeNaechstesAktenzeichen(){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/naechstes_aktenzeichen", {
+    method:"POST",
+    headers:headers(),
+    body:JSON.stringify({})
+  });
 
   if(!res.ok){
     throw new Error(await res.text());
   }
+
+  return await res.json();
 }
 
-function text(w){
-  return w === null || w === undefined || w === "" ? "-" : w;
-}
+function text(w){ return w === null || w === undefined || w === "" ? "-" : w; }
 
 function userName(u){
   if(!u) return "-";
@@ -446,50 +264,31 @@ function userName(u){
 
 function datum(d){
   if(!d) return "-";
-
   const x = new Date(d);
-
-  if(isNaN(x.getTime())){
-    return "-";
-  }
-
+  if(isNaN(x.getTime())) return "-";
   return x.toLocaleDateString("de-DE") + " " +
          x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
 }
 
 function toDatetimeLocal(d){
   if(!d) return "";
-
   const x = new Date(d);
-
-  if(isNaN(x.getTime())){
-    return "";
-  }
-
+  if(isNaN(x.getTime())) return "";
   x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
-
   return x.toISOString().slice(0,16);
 }
 
-function typWert(e){
-  return e.typ || "Sonstiges";
-}
-
-function statusWert(e){
-  return e.bearbeitungsstatus || "Offen";
-}
+function typWert(e){ return e.typ || "Sonstiges"; }
+function statusWert(e){ return e.bearbeitungsstatus || "Offen"; }
 
 function istAbgelaufen(e){
   if(!e.gueltig_bis) return false;
-
   const bis = new Date(e.gueltig_bis);
-
   return !isNaN(bis.getTime()) && bis < new Date();
 }
 
 function istErledigt(e){
   const status = statusWert(e);
-
   return e.erledigt === true ||
          e.aktiv === false ||
          istAbgelaufen(e) ||
@@ -522,13 +321,8 @@ function userVonEintrag(e){
 
 function darfEintragSehen(e){
   if(darfAllesSehen) return true;
-
   const zielUser = userVonEintrag(e);
-
-  if(!aktuellerUser || !zielUser){
-    return String(e.user_id) === String(USER_ID);
-  }
-
+  if(!aktuellerUser || !zielUser) return String(e.user_id) === String(USER_ID);
   return String(zielUser.Hof_id) === String(aktuellerUser.Hof_id);
 }
 
@@ -589,13 +383,8 @@ function updateStrafart(){
   setBlock("dauerBlock", typ === "Fahrverbot" || typ === "Haftstrafe" || typ === "Ausschluss" || typ === "Platzverweis");
   setBlock("gueltigBlock", typ === "Fahrverbot" || typ === "Haftstrafe" || typ === "Ausschluss" || typ === "Platzverweis");
 
-  if(typ !== "Geldstrafe"){
-    document.getElementById("betrag").value = "0";
-  }
-
-  if(!(typ === "Verwarnung" || typ === "Sonstiges")){
-    document.getElementById("verwarnpunkte").value = "0";
-  }
+  if(typ !== "Geldstrafe") document.getElementById("betrag").value = "0";
+  if(!(typ === "Verwarnung" || typ === "Sonstiges")) document.getElementById("verwarnpunkte").value = "0";
 
   berechneGueltigBisAusDauer();
 }
@@ -612,15 +401,10 @@ function berechneGueltigBisAusDauer(){
   const typ = document.getElementById("typ").value;
   const brauchtDauer = typ === "Fahrverbot" || typ === "Haftstrafe" || typ === "Ausschluss" || typ === "Platzverweis";
 
-  if(!brauchtDauer){
-    return;
-  }
+  if(!brauchtDauer) return;
 
   const dauer = Number(document.getElementById("dauer").value || 0);
-
-  if(dauer <= 0){
-    return;
-  }
+  if(dauer <= 0) return;
 
   const bis = new Date();
   bis.setDate(bis.getDate() + dauer);
@@ -761,17 +545,9 @@ async function eintragErstellen(){
   const betrag = Number(document.getElementById("betrag").value || 0);
   const verwarnpunkte = Number(document.getElementById("verwarnpunkte").value || 0);
   const gueltigBis = document.getElementById("gueltigBis").value;
-  let aktenzeichen = document.getElementById("aktenzeichen").value.trim();
 
-  if(!userId){
-    msg.innerText = "Bitte Spieler auswählen.";
-    return;
-  }
-
-  if(!grund){
-    msg.innerText = "Bitte Grund eingeben.";
-    return;
-  }
+  if(!userId){ msg.innerText = "Bitte Spieler auswählen."; return; }
+  if(!grund){ msg.innerText = "Bitte Grund eingeben."; return; }
 
   if(typ === "Geldstrafe" && betrag <= 0){
     msg.innerText = "Bitte Geldstrafe in € eintragen.";
@@ -786,11 +562,11 @@ async function eintragErstellen(){
   const user = users.find(u => String(u.id) === String(userId));
   const username = userName(user);
 
-  if(!aktenzeichen){
-    aktenzeichen = "POL-" + new Date().getFullYear() + "-" + Date.now().toString().slice(-6);
-  }
-
   try{
+    msg.innerText = "Aktenzeichen wird erstellt...";
+
+    const aktenzeichen = await holeNaechstesAktenzeichen();
+
     await post("strafregister", {
       user_id:Number(userId),
       username:username,
@@ -812,14 +588,14 @@ async function eintragErstellen(){
     await post("Telegram_queue", {
       Titel:"🚔 Neuer Strafregister-Eintrag",
       Nachricht:
-        "Neuer Eintrag im Strafregister:\\n\\n" +
-        "Aktenzeichen: " + aktenzeichen + "\\n" +
-        "Spieler: " + username + "\\n" +
-        "Typ: " + typ + "\\n" +
-        "Betrag: " + betrag + " €\\n" +
-        "Verwarnpunkte: " + verwarnpunkte + "\\n" +
-        "Gültig bis: " + (gueltigBis || "-") + "\\n" +
-        "Grund: " + grund + "\\n" +
+        "Neuer Eintrag im Strafregister:\n\n" +
+        "Aktenzeichen: " + aktenzeichen + "\n" +
+        "Spieler: " + username + "\n" +
+        "Typ: " + typ + "\n" +
+        "Betrag: " + betrag + " €\n" +
+        "Verwarnpunkte: " + verwarnpunkte + "\n" +
+        "Gültig bis: " + (gueltigBis || "-") + "\n" +
+        "Grund: " + grund + "\n" +
         "Erstellt von: " + USERNAME,
       Typ:"Strafregister",
       User_id:Number(userId),
@@ -832,9 +608,8 @@ async function eintragErstellen(){
       Fehler:null
     });
 
-    msg.innerText = "Eintrag wurde erstellt.";
+    msg.innerText = "Eintrag wurde erstellt.\nAktenzeichen: " + aktenzeichen;
 
-    document.getElementById("aktenzeichen").value = "";
     document.getElementById("grund").value = "";
     document.getElementById("betrag").value = "0";
     document.getElementById("verwarnpunkte").value = "0";
@@ -844,20 +619,17 @@ async function eintragErstellen(){
     await ladeAlles();
 
   }catch(err){
-    msg.innerText = "Fehler:\\n" + err.message;
+    msg.innerText = "Fehler:\n" + err.message;
   }
 }
 
 function oeffneEdit(id){
   const e = eintraege.find(x => Number(x.id) === Number(id));
-
-  if(!e){
-    return;
-  }
+  if(!e) return;
 
   editId = id;
 
-  document.getElementById("editAktenzeichen").value = e.aktenzeichen || "";
+  document.getElementById("editAktenzeichenText").innerText = e.aktenzeichen || "-";
   document.getElementById("editTyp").value = e.typ || "Sonstiges";
   document.getElementById("editStatus").value = e.bearbeitungsstatus || "Offen";
   document.getElementById("editBetrag").value = e.betrag ?? 0;
@@ -880,16 +652,13 @@ async function speichereBearbeitung(){
   const msg = document.getElementById("editMsg");
   msg.innerText = "";
 
-  if(!editId){
-    return;
-  }
+  if(!editId) return;
 
   const status = document.getElementById("editStatus").value;
   const typ = document.getElementById("editTyp").value;
 
   try{
     await patch("strafregister", editId, {
-      aktenzeichen:document.getElementById("editAktenzeichen").value.trim(),
       typ:typ,
       grund:document.getElementById("editGrund").value.trim(),
       betrag:Number(document.getElementById("editBetrag").value || 0),
@@ -902,20 +671,16 @@ async function speichereBearbeitung(){
     });
 
     msg.innerText = "Gespeichert.";
-
     await ladeAlles();
-
     setTimeout(schliesseEdit,800);
 
   }catch(err){
-    msg.innerText = "Fehler:\\n" + err.message;
+    msg.innerText = "Fehler:\n" + err.message;
   }
 }
 
 async function eintragErledigen(id){
-  if(!confirm("Eintrag wirklich als erledigt markieren?")){
-    return;
-  }
+  if(!confirm("Eintrag wirklich als erledigt markieren?")) return;
 
   try{
     await patch("strafregister", id, {
@@ -933,9 +698,7 @@ async function eintragErledigen(id){
 }
 
 async function eintragDeaktivieren(id){
-  if(!confirm("Eintrag wirklich deaktivieren?")){
-    return;
-  }
+  if(!confirm("Eintrag wirklich deaktivieren?")) return;
 
   try{
     await patch("strafregister", id, {
