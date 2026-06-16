@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strafregister</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{width:100%;max-width:750px;margin:auto;padding:20px 15px 70px}.back{background:#222;color:white;border:1px solid #555;padding:13px 20px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}.info{color:white;font-size:17px;line-height:1.45}.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px}.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px}input,select,textarea{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}textarea{min-height:100px;resize:vertical}button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.leer{color:white;text-align:center;margin-top:25px;font-size:18px}.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:14px;margin-bottom:8px}.badge-fahrverbot{background:#cc0000}.badge-geldstrafe{background:#cc7700}.badge-verwarnung{background:#cc9900}.badge-ausschluss{background:#111;border:1px solid red}.badge-sonstiges{background:#555}.badge-erledigt{background:#008800}.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px}.item.fahrverbot{border:2px solid red;box-shadow:0 0 14px rgba(255,0,0,.35)}.item.geldstrafe{border:2px solid #ffaa33;box-shadow:0 0 14px rgba(255,170,0,.25)}.item.verwarnung{border:2px solid #cc9900}.item.erledigt{opacity:.72;border:1px solid #008800}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
+<h1>STRAFREGISTER</h1>
+<div id="zugriff" class="card hidden"><div class="titel">Zugriff verweigert</div><div class="info">Du hast keine Berechtigung für das Strafregister.</div></div>
+<div id="formularBox" class="card hidden">
+  <div class="titel">🚔 Neuer Eintrag</div>
+  <select id="userSelect"><option value="">Spieler auswählen</option></select>
+  <select id="typ">
+    <option value="Verwarnung">Verwarnung</option><option value="Geldstrafe">Geldstrafe</option><option value="Fahrverbot">Fahrverbot</option><option value="Platzverweis">Platzverweis</option><option value="Ausschluss">Ausschluss</option><option value="Sonstiges">Sonstiges</option>
+  </select>
+  <input id="betrag" type="number" value="0" placeholder="Betrag / Geldstrafe">
+  <input id="gueltigBis" type="datetime-local">
+  <textarea id="grund" placeholder="Grund / Beschreibung"></textarea>
+  <button class="green" onclick="eintragErstellen()">Eintrag erstellen</button>
+  <div id="formularMsg" class="msg"></div>
+</div>
+<div class="section-title">AKTIVE EINTRÄGE</div><div id="aktiveListe">Lade...</div>
+<div class="section-title">ARCHIV / ERLEDIGT</div><div id="archivListe">Lade...</div>
+</div>
+<script>
+const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const ADMIN_CHAT_ID=6694745579;
+const USER_ID=localStorage.getItem("user_id");
+const USERNAME=localStorage.getItem("username")||"Unbekannt";
+const IST_ADMIN=localStorage.getItem("admin")==="true";
+if(!USER_ID){location.href="login.html";}
+let users=[],organisationen=[],userOrgs=[],eintraege=[];
+let darfAllesSehen=false,darfErstellen=false,istPolizei=false;
+function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
+async function api(tabelle){const r=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json();}
+async function post(tabelle,daten){const r=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(daten)});if(!r.ok)throw new Error(await r.text());}
+async function patch(tabelle,id,daten){const r=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(daten)});if(!r.ok)throw new Error(await r.text());}
+function text(v){return v===null||v===undefined||v===""?"-":v;}
+function userName(u){if(!u)return "-";return u["PSN-Username"]||u.Vorname||("User "+u.id);}
+function datum(d){if(!d)return "-";const x=new Date(d);if(isNaN(x.getTime()))return "-";return x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});}
+function typWert(e){return e.typ||e.Typ||"Sonstiges";}
+function istAbgelaufen(e){const d=e.gueltig_bis||e.Gueltig_bis;if(!d)return false;const bis=new Date(d);return !isNaN(bis.getTime())&&bis<new Date();}
+function istErledigt(e){return e.erledigt===true||e.Erledigt===true||e.aktiv===false||e.Aktiv===false||istAbgelaufen(e);}
+function klasseFuerTyp(t,er){if(er)return "item erledigt";if(t==="Fahrverbot")return "item fahrverbot";if(t==="Geldstrafe")return "item geldstrafe";if(t==="Verwarnung")return "item verwarnung";return "item";}
+function badgeFuerTyp(t,er){if(er)return "<span class='badge badge-erledigt'>ERLEDIGT / ABGELAUFEN</span>";if(t==="Fahrverbot")return "<span class='badge badge-fahrverbot'>FAHRVERBOT</span>";if(t==="Geldstrafe")return "<span class='badge badge-geldstrafe'>GELDSTRAFE</span>";if(t==="Verwarnung")return "<span class='badge badge-verwarnung'>VERWARNUNG</span>";if(t==="Ausschluss")return "<span class='badge badge-ausschluss'>AUSSCHLUSS</span>";return "<span class='badge badge-sonstiges'>"+t.toUpperCase()+"</span>";}
+function darfEintragSehen(e){if(darfAllesSehen)return true;return String(e.user_id||e.User_id)===String(USER_ID);}
+function pruefeRechte(){const polizei=organisationen.find(o=>String(o.Name).toLowerCase()==="polizei");istPolizei=false;if(polizei){istPolizei=userOrgs.some(o=>String(o.User_id)===String(USER_ID)&&String(o.Organisation_id)===String(polizei.id)&&o.Aktiv===true);}darfAllesSehen=IST_ADMIN||istPolizei;darfErstellen=IST_ADMIN||istPolizei;}
+function fuelleUserSelect(){const s=document.getElementById("userSelect");s.innerHTML="<option value=''>Spieler auswählen</option>";users.filter(u=>u.Aktiviert!==false).forEach(u=>{const opt=document.createElement("option");opt.value=u.id;opt.textContent=userName(u)+" | "+text(u.Hof);s.appendChild(opt);});}
+async function ladeAlles(){try{users=await api("Users");organisationen=await api("Organisationen");userOrgs=await api("User_organisationen");eintraege=await api("Strafregister");pruefeRechte();if(!darfAllesSehen&&!users.find(u=>String(u.id)===String(USER_ID))){document.getElementById("zugriff").classList.remove("hidden");document.getElementById("aktiveListe").innerHTML="";document.getElementById("archivListe").innerHTML="";return;}if(darfErstellen){document.getElementById("formularBox").classList.remove("hidden");fuelleUserSelect();}renderListen();}catch(err){document.getElementById("aktiveListe").innerHTML="<div class='card'><div class='info'>Fehler:<br><br>"+err.message+"</div></div>";}}
+function renderListen(){const aBox=document.getElementById("aktiveListe"),rBox=document.getElementById("archivListe");let sichtbar=eintraege.filter(e=>darfEintragSehen(e));sichtbar.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));const aktive=sichtbar.filter(e=>!istErledigt(e));const archiv=sichtbar.filter(e=>istErledigt(e));aBox.innerHTML="";rBox.innerHTML="";if(aktive.length===0)aBox.innerHTML="<div class='leer'>Keine aktiven Einträge.</div>";else aktive.forEach(e=>aBox.appendChild(erstelleKarte(e,false)));if(archiv.length===0)rBox.innerHTML="<div class='leer'>Keine archivierten Einträge.</div>";else archiv.forEach(e=>rBox.appendChild(erstelleKarte(e,true)));}
+function erstelleKarte(e,erledigt){const t=typWert(e),div=document.createElement("div");div.className=klasseFuerTyp(t,erledigt);const username=e.username||e.Username||"-",grund=e.grund||e.Grund||"-",betrag=e.betrag??e.Betrag??0,org=e.organisation||e.Organisation||"-",erstellt=e.erstellt_von||e.Erstellt_von||"-",bis=e.gueltig_bis||e.Gueltig_bis||null;let buttons="";if(darfErstellen&&!erledigt){buttons+=`<button class="green" onclick="eintragErledigen(${e.id})">Als erledigt markieren</button>`;buttons+=`<button class="red" onclick="eintragDeaktivieren(${e.id})">Deaktivieren</button>`;}div.innerHTML=`${badgeFuerTyp(t,erledigt)}<div class="titel">${username}</div><div class="info"><b>Grund:</b><br>${grund}<br><br><b>Betrag:</b> ${betrag} €</div><div class="meta">Organisation: ${org}<br>Erstellt von: ${erstellt}<br>Erstellt am: ${datum(e.created_at)}<br>Gültig bis: ${datum(bis)}</div>${buttons}`;return div;}
+async function eintragErstellen(){const msg=document.getElementById("formularMsg");msg.innerText="";const userId=document.getElementById("userSelect").value,typ=document.getElementById("typ").value,grund=document.getElementById("grund").value.trim(),betrag=Number(document.getElementById("betrag").value||0),gueltigBis=document.getElementById("gueltigBis").value;if(!userId){msg.innerText="Bitte Spieler auswählen.";return;}if(!grund){msg.innerText="Bitte Grund eingeben.";return;}const user=users.find(u=>String(u.id)===String(userId));const username=userName(user);try{await post("Strafregister",{user_id:Number(userId),username:username,organisation:"Polizei",typ:typ,grund:grund,betrag:betrag,gueltig_bis:gueltigBis?new Date(gueltigBis).toISOString():null,erstellt_von:USERNAME,aktiv:true,telegram_gesendet:false,erledigt:false});await post("Telegram_queue",{Titel:"🚔 Neuer Strafregister-Eintrag",Nachricht:"Neuer Eintrag im Strafregister:\n\nSpieler: "+username+"\nTyp: "+typ+"\nBetrag: "+betrag+" €\nGrund: "+grund+"\nErstellt von: "+USERNAME,Typ:"Strafregister",User_id:Number(userId),Hof_id:user&&user.Hof_id?Number(user.Hof_id):null,Organisation_id:1,Chat_id:ADMIN_CHAT_ID,Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});msg.innerText="Eintrag wurde erstellt.";document.getElementById("grund").value="";document.getElementById("betrag").value="0";document.getElementById("gueltigBis").value="";await ladeAlles();}catch(err){msg.innerText="Fehler:\n"+err.message;}}
+async function eintragErledigen(id){if(!confirm("Eintrag wirklich als erledigt markieren?"))return;try{await patch("Strafregister",id,{erledigt:true,aktiv:false});await ladeAlles();}catch(err){alert(err.message);}}
+async function eintragDeaktivieren(id){if(!confirm("Eintrag wirklich deaktivieren?"))return;try{await patch("Strafregister",id,{aktiv:false});await ladeAlles();}catch(err){alert(err.message);}}
+ladeAlles();
+</script>
+</body>
+</html>
