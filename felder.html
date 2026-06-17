@@ -104,6 +104,17 @@ h1{
   line-height:1.5;
 }
 
+.fruchtbox{
+  background:#000;
+  border:1px dashed #ffaa33;
+  border-radius:12px;
+  padding:12px;
+  margin-top:12px;
+  color:white;
+  font-size:16px;
+  line-height:1.45;
+}
+
 .warnung{
   margin-top:14px;
   font-size:20px;
@@ -147,6 +158,7 @@ const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
 let felder = [];
 let hoefe = [];
+let fruchtarten = [];
 
 async function ladeFelder(){
   const box = document.getElementById("liste");
@@ -171,13 +183,24 @@ async function ladeFelder(){
     }
   );
 
-  if(!felderRes.ok || !hoefeRes.ok){
+  const fruchtRes = await fetch(
+    SUPABASE_URL + "/rest/v1/Fruchtarten?select=*",
+    {
+      headers:{
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY
+      }
+    }
+  );
+
+  if(!felderRes.ok || !hoefeRes.ok || !fruchtRes.ok){
     box.innerHTML = "<div class='leer'>Felder konnten nicht geladen werden.</div>";
     return;
   }
 
   felder = await felderRes.json();
   hoefe = await hoefeRes.json();
+  fruchtarten = await fruchtRes.json();
 
   zeigeFelder();
 }
@@ -190,9 +213,116 @@ function text(wert){
   return wert === null || wert === undefined || wert === "" ? "-" : wert;
 }
 
+function zahl(wert){
+  const n = Number(String(wert || "0").replace(",","."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function datumDeutsch(d){
+  if(!d) return "-";
+
+  const x = new Date(d);
+
+  if(isNaN(x.getTime())){
+    return "-";
+  }
+
+  return x.toLocaleDateString("de-DE");
+}
+
 function hofName(hofId){
   const hof = hoefe.find(h => String(h.id) === String(hofId));
   return hof ? hof.Name : "-";
+}
+
+function fruchtObj(name){
+  return fruchtarten.find(f =>
+    String(f.Name).toLowerCase() === String(name || "").toLowerCase()
+  );
+}
+
+function ernteDatum(gesaetAm, fruchtName){
+  const frucht = fruchtObj(fruchtName);
+
+  if(!gesaetAm || !frucht || !frucht.Wachstumsdauer_Tage){
+    return "-";
+  }
+
+  const d = new Date(gesaetAm);
+
+  if(isNaN(d.getTime())){
+    return "-";
+  }
+
+  d.setDate(d.getDate() + Number(frucht.Wachstumsdauer_Tage || 0));
+
+  return datumDeutsch(d);
+}
+
+function erwarteterErtrag(groesse, fruchtName){
+  const frucht = fruchtObj(fruchtName);
+
+  if(!frucht){
+    return "-";
+  }
+
+  const ha = zahl(groesse);
+  const ertrag = Number(frucht.Ertrag_pro_Hektar || 0);
+
+  if(!ha || !ertrag){
+    return "-";
+  }
+
+  return Math.round(ha * ertrag).toLocaleString("de-DE");
+}
+
+function erwarteterWert(groesse, fruchtName){
+  const frucht = fruchtObj(fruchtName);
+
+  if(!frucht){
+    return "-";
+  }
+
+  const ha = zahl(groesse);
+  const ertrag = Number(frucht.Ertrag_pro_Hektar || 0);
+  const preis = Number(frucht.Verkaufspreis || 0);
+
+  if(!ha || !ertrag || !preis){
+    return "-";
+  }
+
+  return Math.round(ha * ertrag * preis).toLocaleString("de-DE");
+}
+
+function fruchtInfo(f){
+  const frucht = fruchtObj(f.Fruchtart);
+
+  if(!frucht){
+    return `
+      <div class="fruchtbox">
+        <span class="orange">Fruchtinfo:</span><br>
+        Keine Detaildaten zur Fruchtart vorhanden.
+      </div>
+    `;
+  }
+
+  return `
+    <div class="fruchtbox">
+      <span class="orange">Fruchtinfo:</span><br>
+      Anpflanzzeit: ${text(frucht.Anpflanzzeit)}<br>
+      Erntezeit: ${text(frucht.Erntezeit)}<br>
+      Wachstumsdauer: ${text(frucht.Wachstumsdauer_Tage)} Tage<br>
+      Ertrag pro Hektar: ${text(frucht.Ertrag_pro_Hektar)}<br>
+      Verkaufspreis: ${text(frucht.Verkaufspreis)}<br>
+      Erwarteter Ertrag: ${erwarteterErtrag(f.Feldgroesse, f.Fruchtart)}<br>
+      Erwarteter Wert: ${erwarteterWert(f.Feldgroesse, f.Fruchtart)}<br>
+      Ernte ab ca.: ${erneDatumSicher(f)}
+    </div>
+  `;
+}
+
+function erneDatumSicher(f){
+  return ernteDatum(f.Gesaet_am, f.Fruchtart);
 }
 
 function duengenNoetig(f){
@@ -274,8 +404,12 @@ function zeigeFelder(){
         <span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br>
         <span class="orange">Größe:</span> ${text(f.Feldgroesse)} ha<br>
         <span class="orange">Besitzer:</span> ${text(besitzerName)}<br>
-        <span class="orange">Wachstum:</span> ${text(f.Wachstumsstufe)}
+        <span class="orange">Wachstum:</span> ${text(f.Wachstumsstufe)}<br>
+        <span class="orange">Gesät am:</span> ${datumDeutsch(f.Gesaet_am)}<br>
+        <span class="orange">Ernte ab ca.:</span> ${erneDatumSicher(f)}
       </div>
+
+      ${fruchtInfo(f)}
 
       <div class="status">
         Gekalkt: ${jaNein(f.Gekalkt)} |
