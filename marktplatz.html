@@ -169,6 +169,14 @@ input{
   background:#333;
   color:white;
 }
+
+.msg{
+  color:#ffaa33;
+  text-align:center;
+  margin-top:10px;
+  font-weight:bold;
+  white-space:pre-line;
+}
 </style>
 </head>
 
@@ -198,6 +206,7 @@ input{
 
     <button class="buy-btn" onclick="bestellen()">Bestellen</button>
     <button class="close-btn" onclick="schliessePopup()">Schließen</button>
+    <div id="popupMsg" class="msg"></div>
   </div>
 </div>
 
@@ -208,6 +217,14 @@ const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 let angebote = [];
 let ausgewaehltesAngebot = null;
 let filter = "alle";
+
+function headers(){
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization":"Bearer " + SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
 
 function aktuellerUser(){
   return localStorage.getItem("username") || "Disti1701";
@@ -223,6 +240,44 @@ function aktuellerUserId(){
 
 function aktuellerHofId(){
   return Number(localStorage.getItem("hof_id") || 1);
+}
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function formatZahl(n){
+  return Number(n || 0).toLocaleString("de-DE");
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle,
+    {
+      method:"POST",
+      headers:{...headers(),"Prefer":"return=minimal"},
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id,
+    {
+      method:"PATCH",
+      headers:{...headers(),"Prefer":"return=minimal"},
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
 }
 
 function setFilter(neuerFilter){
@@ -244,10 +299,7 @@ async function ladeAngebote(){
   const res = await fetch(
     SUPABASE_URL + "/rest/v1/Angebote?select=*&Aktiv=eq.true&order=id.desc",
     {
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY
-      }
+      headers:headers()
     }
   );
 
@@ -286,12 +338,12 @@ async function ladeAngebote(){
     div.innerHTML = `
       <div class="titel">${a.Titel || "Angebot"}</div>
       <div class="info">
-        Kategorie: ${a.Kategorie || "-"}<br>
-        Inhalt: ${a.Inhalt || "-"} ${a.Einheit || ""}<br>
-        Bestand: ${a.Bestand || 0}<br>
-        Hof-ID: ${a.Hof_id || "-"}
+        Kategorie: ${text(a.Kategorie)}<br>
+        Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
+        Bestand: ${formatZahl(a.Bestand)}<br>
+        Hof-ID: ${text(a.Hof_id)}
       </div>
-      <div class="preis">${a.Preis || 0} €</div>
+      <div class="preis">${formatZahl(a.Preis)} €</div>
     `;
 
     box.appendChild(div);
@@ -304,14 +356,15 @@ function oeffneAngebot(a){
   document.getElementById("popupTitel").innerText = a.Titel || "Angebot";
 
   document.getElementById("popupInfo").innerHTML = `
-    Kategorie: ${a.Kategorie || "-"}<br>
-    Inhalt: ${a.Inhalt || "-"} ${a.Einheit || ""}<br>
-    Preis: ${a.Preis || 0} €<br>
-    Bestand: ${a.Bestand || 0}<br>
-    Hof-ID: ${a.Hof_id || "-"}
+    Kategorie: ${text(a.Kategorie)}<br>
+    Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
+    Preis: ${formatZahl(a.Preis)} €<br>
+    Bestand: ${formatZahl(a.Bestand)}<br>
+    Hof-ID: ${text(a.Hof_id)}
   `;
 
   document.getElementById("menge").value = 1;
+  document.getElementById("popupMsg").innerText = "";
   document.getElementById("popupBg").style.display = "flex";
 }
 
@@ -319,31 +372,42 @@ function schliessePopup(){
   document.getElementById("popupBg").style.display = "none";
 }
 
-async function erstelleBenachrichtigung(titel, nachricht){
-  await fetch(
-    SUPABASE_URL + "/rest/v1/Benachrichtigungen",
-    {
-      method:"POST",
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify({
-        Titel:titel,
-        Nachricht:nachricht,
-        Typ:"Marktplatz",
-        User_id:aktuellerUserId(),
-        Hof_id:aktuellerHofId(),
-        Gelesen:false,
-        Erstellt_am:new Date().toISOString()
-      })
-    }
-  );
+async function erstelleBenachrichtigung(titel, nachricht, zielHofId){
+  await post("Benachrichtigungen", {
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Marktplatz",
+    User_id:null,
+    Hof_id:zielHofId || null,
+    Organisation_id:null,
+    Gelesen:false,
+    Erledigt:false,
+    Archiviert:false,
+    Telegram_gesendet:false,
+    Erstellt_am:new Date().toISOString()
+  });
+}
+
+async function erstelleTelegramQueue(titel, nachricht, zielHofId){
+  await post("Telegram_queue", {
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Bestellung",
+    User_id:null,
+    Hof_id:zielHofId || null,
+    Organisation_id:null,
+    Chat_id:null,
+    Gesendet:false,
+    Erstellt_am:new Date().toISOString(),
+    Status:"Offen",
+    Fehler:null
+  });
 }
 
 async function bestellen(){
+  const msg = document.getElementById("popupMsg");
+  msg.innerText = "";
+
   if(!ausgewaehltesAngebot){
     return;
   }
@@ -351,64 +415,95 @@ async function bestellen(){
   const menge = Number(document.getElementById("menge").value);
 
   if(!menge || menge <= 0){
-    alert("Bitte eine gültige Menge eingeben.");
+    msg.innerText = "Bitte eine gültige Menge eingeben.";
     return;
   }
 
   const bestand = Number(ausgewaehltesAngebot.Bestand || 0);
 
   if(menge > bestand){
-    alert("Nicht genug Bestand vorhanden.");
+    msg.innerText = "Nicht genug Bestand vorhanden.";
     return;
   }
 
-  const gesamtpreis = menge * Number(ausgewaehltesAngebot.Preis || 0);
+  const preis = Number(ausgewaehltesAngebot.Preis || 0);
+  const gesamtpreis = menge * preis;
+
+  const titel = "🛒 Neue Bestellung";
+  const produkt = ausgewaehltesAngebot.Titel || "Angebot";
+  const kategorie = ausgewaehltesAngebot.Kategorie || "-";
+  const einheit = ausgewaehltesAngebot.Einheit || "";
+  const zielHofId = ausgewaehltesAngebot.Hof_id || null;
 
   const beschreibung =
-    "Bestellung über Marktplatz:\n" +
-    "Angebot: " + (ausgewaehltesAngebot.Titel || "-") + "\n" +
-    "Kategorie: " + (ausgewaehltesAngebot.Kategorie || "-") + "\n" +
-    "Menge: " + menge + " x " + (ausgewaehltesAngebot.Inhalt || "") + " " + (ausgewaehltesAngebot.Einheit || "") + "\n" +
-    "Gesamtpreis: " + gesamtpreis + " €";
+    "Bestellung über Marktplatz:\\n" +
+    "Angebot: " + produkt + "\\n" +
+    "Kategorie: " + kategorie + "\\n" +
+    "Menge: " + menge + " x " + text(ausgewaehltesAngebot.Inhalt) + " " + einheit + "\\n" +
+    "Gesamtpreis: " + formatZahl(gesamtpreis) + " €\\n" +
+    "Bestellt von: " + aktuellerUser() + "\\n" +
+    "Besteller-Hof: " + aktuellerHof();
 
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Auftraege",
-    {
-      method:"POST",
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify({
-        Vorlage_id: ausgewaehltesAngebot.id,
-        Titel: "Bestellung: " + (ausgewaehltesAngebot.Titel || "Angebot"),
-        Beschreibung: beschreibung,
-        Typ: "Marktplatz",
-        Hof: aktuellerHof(),
-        Organisation: "",
-        Status: "Offen",
-        Erstellt_von: aktuellerUser(),
-        Belohnung: gesamtpreis,
-        Erstellt_am: new Date().toISOString()
-      })
-    }
-  );
+  const telegramNachricht =
+    "🛒 Neue Bestellung\\n\\n" +
+    "Produkt: " + produkt + "\\n" +
+    "Kategorie: " + kategorie + "\\n" +
+    "Menge: " + menge + " x " + text(ausgewaehltesAngebot.Inhalt) + " " + einheit + "\\n" +
+    "Gesamtpreis: " + formatZahl(gesamtpreis) + " €\\n" +
+    "Bestellt von: " + aktuellerUser() + "\\n" +
+    "Besteller-Hof: " + aktuellerHof();
 
-  if(!res.ok){
-    const fehler = await res.text();
-    alert(fehler);
-    return;
+  try{
+    msg.innerText = "Bestellung wird erstellt...";
+
+    await post("Auftraege", {
+      Vorlage_id: ausgewaehltesAngebot.id,
+      Titel: "Bestellung: " + produkt,
+      Beschreibung: beschreibung,
+      Typ: "Marktplatz",
+      Hof: aktuellerHof(),
+      Organisation: "",
+      Status: "Offen",
+      Erstellt_von: aktuellerUser(),
+      Belohnung: gesamtpreis,
+      Erstellt_am: new Date().toISOString(),
+      Auftragstyp:"Bestellung",
+      Ziel_id:ausgewaehltesAngebot.id
+    });
+
+    await patch("Angebote", ausgewaehltesAngebot.id, {
+      Bestand:bestand - menge,
+      Aktiv:(bestand - menge) > 0
+    });
+
+    await erstelleBenachrichtigung(
+      "🛒 Neue Bestellung: " + produkt,
+      telegramNachricht,
+      zielHofId
+    );
+
+    await erstelleTelegramQueue(
+      "🛒 Neue Bestellung: " + produkt,
+      telegramNachricht,
+      zielHofId
+    );
+
+    await erstelleBenachrichtigung(
+      "🛒 Bestellung gesendet: " + produkt,
+      telegramNachricht,
+      aktuellerHofId()
+    );
+
+    msg.innerText = "Bestellung wurde erstellt und in Telegram_queue eingetragen.";
+
+    setTimeout(() => {
+      schliessePopup();
+      ladeAngebote();
+    }, 1000);
+
+  }catch(err){
+    msg.innerText = "Fehler:\\n" + err.message;
   }
-
-  await erstelleBenachrichtigung(
-    "Neue Marktplatz-Bestellung",
-    aktuellerUser() + " hat bestellt: " + menge + " x " + (ausgewaehltesAngebot.Titel || "Angebot")
-  );
-
-  alert("Bestellung wurde als Auftrag erstellt.");
-  schliessePopup();
 }
 
 ladeAngebote();
