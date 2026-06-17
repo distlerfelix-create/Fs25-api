@@ -4,37 +4,440 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hofverwaltung</title>
+
 <style>
-*{box-sizing:border-box;}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}.info{color:white;font-size:17px;line-height:1.5}.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px}label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px}input,select,textarea{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}textarea{min-height:80px;resize:vertical}button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.leer{color:white;text-align:center;margin-top:25px;font-size:18px}.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px}.badge{display:inline-block;background:#008800;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-bottom:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:#000;
+  color:#00ff22;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:780px;
+  margin:auto;
+  padding:20px 15px 70px;
+}
+
+.back{
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:25px;
+  font-size:18px;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:38px;
+  margin:20px 0 25px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #008000;
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:16px;
+  box-shadow:0 0 10px rgba(0,255,0,.18);
+}
+
+.titel{
+  color:#00ff22;
+  font-size:24px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+.info{
+  color:white;
+  font-size:17px;
+  line-height:1.5;
+}
+
+.meta{
+  color:#ffaa33;
+  font-size:15px;
+  line-height:1.45;
+  margin-top:10px;
+}
+
+label{
+  display:block;
+  text-align:left;
+  color:#ffaa33;
+  font-weight:bold;
+  margin-top:14px;
+  margin-bottom:6px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:14px;
+  margin-top:4px;
+  border-radius:10px;
+  border:1px solid #008000;
+  background:#000;
+  color:white;
+  font-size:17px;
+}
+
+textarea{
+  min-height:80px;
+  resize:vertical;
+}
+
+button{
+  width:100%;
+  margin-top:12px;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.blue{background:#004488;color:white;}
+.orangeBtn{background:#cc7700;color:white;}
+
+.msg{
+  color:#ffaa33;
+  text-align:center;
+  margin-top:12px;
+  font-weight:bold;
+  white-space:pre-line;
+}
+
+.leer{
+  color:white;
+  text-align:center;
+  margin-top:25px;
+  font-size:18px;
+}
+
+.item{
+  background:#090909;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.item.warn{
+  border:1px solid #ffaa33;
+}
+
+.badge{
+  display:inline-block;
+  background:#008800;
+  color:white;
+  border-radius:20px;
+  padding:4px 10px;
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.badge-offen{
+  background:#cc7700;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+
+.stat{
+  background:#090909;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:12px;
+  text-align:center;
+  color:white;
+}
+
+.stat b{
+  color:#00ff22;
+  font-size:22px;
+}
+
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.tabs button{
+  margin:0;
+  background:#333;
+  font-size:16px;
+  padding:12px;
+}
+
+.tabs button.active{
+  background:#008800;
+}
+
+.section{
+  display:none;
+}
+
+.section.active{
+  display:block;
+}
+
+@media(max-width:560px){
+  .grid,.stats,.tabs{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 </head>
+
 <body>
 <div class="app">
+
 <button class="back" onclick="location.href='index.html'">← Zurück</button>
+
 <h1>HOFVERWALTUNG</h1>
-<div id="kopf" class="card"><div class="info">Lade Hofdaten...</div></div>
+
+<div id="kopf" class="card">
+  <div class="info">Lade Hofdaten...</div>
+</div>
+
 <div id="inhalt" style="display:none">
-<div class="card"><div class="titel">📦 Lagerbestand</div><div id="lagerListe">Lade...</div></div>
-<div class="card"><div class="titel">➕ Lager aktualisieren</div><label>Produkt</label><input id="lagerProdukt" placeholder="z. B. Weizen"><div class="grid"><div><label>Menge</label><input id="lagerMenge" type="number" min="0" value="0"></div><div><label>Einheit</label><input id="lagerEinheit" value="Liter"></div></div><label>Aktion</label><select id="lagerAktion"><option value="Hinzufügen">Bestand hinzufügen</option><option value="Abziehen">Bestand abziehen</option><option value="Setzen">Bestand exakt setzen</option></select><label>Bemerkung</label><textarea id="lagerBemerkung" placeholder="z. B. Ernte Feld 21, Verkauf, Korrektur"></textarea><button class="green" onclick="lagerSpeichern()">Lager speichern</button><div id="lagerMsg" class="msg"></div></div>
-<div class="card"><div class="titel">🛒 Angebot für Marktplatz</div><label>Produkt aus Lager</label><select id="angebotProdukt" onchange="angebotProduktGewechselt()"></select><div class="grid"><div><label>Menge</label><input id="angebotMenge" type="number" min="0" value="0"></div><div><label>Einheit</label><input id="angebotEinheit" value="Liter"></div></div><label>Preis</label><input id="angebotPreis" type="number" min="0" value="0"><label>Titel</label><input id="angebotTitel" placeholder="z. B. Weizen Verkauf"><button class="green" onclick="angebotErstellen()">Angebot erstellen</button><div id="angebotMsg" class="msg"></div></div>
-<div class="card"><div class="titel">🧾 Rechnung erstellen</div><div class="meta">Rechnungsnummer wird automatisch fortlaufend erstellt.<br>Beispiel: RE-2026-0001</div><label>Empfänger-Hof</label><select id="rechnungHof"></select><label>Produkt</label><select id="rechnungProdukt" onchange="rechnungProduktGewechselt()"></select><div class="grid"><div><label>Menge</label><input id="rechnungMenge" type="number" min="0" value="0" oninput="rechnungBerechnen()"></div><div><label>Einheit</label><input id="rechnungEinheit" value="Liter"></div></div><label>Einzelpreis</label><input id="rechnungPreis" type="number" min="0" value="0" oninput="rechnungBerechnen()"><div class="meta">Gesamtpreis: <b id="rechnungGesamt">0</b></div><button class="green" onclick="rechnungErstellen()">Rechnung speichern</button><div id="rechnungMsg" class="msg"></div></div>
-<div class="card"><div class="titel">📜 Letzte Lagerbewegungen</div><div id="bewegungenListe">Lade...</div></div>
-<div class="card"><button class="dark" onclick="location.href='rechnungen.html'">Zu den Rechnungen</button><button class="dark" onclick="location.href='marktplatz.html'">Zum Marktplatz</button></div>
-</div></div>
+
+<div class="card">
+  <div class="titel">Übersicht</div>
+  <div class="stats">
+    <div class="stat"><b id="statProdukte">0</b><br>Produkte</div>
+    <div class="stat"><b id="statMitglieder">0</b><br>Mitglieder</div>
+    <div class="stat"><b id="statRechnungen">0</b><br>Offene Rechnungen</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button id="tabLager" class="active" onclick="tabWechseln('lager')">📦 Lager</button>
+  <button id="tabMarkt" onclick="tabWechseln('markt')">🛒 Markt</button>
+  <button id="tabRechnung" onclick="tabWechseln('rechnung')">🧾 Rechnung</button>
+</div>
+
+<div id="sectionLager" class="section active">
+
+  <div class="card">
+    <div class="titel">🏡 Hofmitglieder</div>
+    <div id="mitgliederListe">Lade...</div>
+  </div>
+
+  <div class="card">
+    <div class="titel">📦 Lagerbestand</div>
+    <div id="lagerListe">Lade...</div>
+  </div>
+
+  <div class="card">
+    <div class="titel">➕ Lager aktualisieren</div>
+
+    <label>Produkt</label>
+    <input id="lagerProdukt" placeholder="z. B. Weizen">
+
+    <div class="grid">
+      <div>
+        <label>Menge</label>
+        <input id="lagerMenge" type="number" min="0" value="0">
+      </div>
+      <div>
+        <label>Einheit</label>
+        <input id="lagerEinheit" value="Liter">
+      </div>
+    </div>
+
+    <label>Aktion</label>
+    <select id="lagerAktion">
+      <option value="Hinzufügen">Bestand hinzufügen</option>
+      <option value="Abziehen">Bestand abziehen</option>
+      <option value="Setzen">Bestand exakt setzen</option>
+    </select>
+
+    <label>Bemerkung</label>
+    <textarea id="lagerBemerkung" placeholder="z. B. Ernte Feld 21, Verkauf, Korrektur"></textarea>
+
+    <button class="green" onclick="lagerSpeichern()">Lager speichern</button>
+    <div id="lagerMsg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="titel">📜 Letzte Lagerbewegungen</div>
+    <div id="bewegungenListe">Lade...</div>
+  </div>
+
+</div>
+
+<div id="sectionMarkt" class="section">
+
+  <div class="card">
+    <div class="titel">🛒 Angebot für Marktplatz</div>
+
+    <label>Produkt aus Lager</label>
+    <select id="angebotProdukt" onchange="angebotProduktGewechselt()"></select>
+
+    <div class="grid">
+      <div>
+        <label>Menge</label>
+        <input id="angebotMenge" type="number" min="0" value="0">
+      </div>
+      <div>
+        <label>Einheit</label>
+        <input id="angebotEinheit" value="Liter">
+      </div>
+    </div>
+
+    <label>Preis</label>
+    <input id="angebotPreis" type="number" min="0" value="0">
+
+    <label>Titel</label>
+    <input id="angebotTitel" placeholder="z. B. Weizen Verkauf">
+
+    <button class="green" onclick="angebotErstellen()">Angebot erstellen</button>
+    <button class="dark" onclick="location.href='marktplatz.html'">Zum Marktplatz</button>
+    <div id="angebotMsg" class="msg"></div>
+  </div>
+
+</div>
+
+<div id="sectionRechnung" class="section">
+
+  <div class="card">
+    <div class="titel">🧾 Rechnung erstellen</div>
+    <div class="meta">
+      Rechnungsnummer wird automatisch fortlaufend erstellt.<br>
+      Beispiel: RE-2026-0001
+    </div>
+
+    <label>Empfänger-Hof</label>
+    <select id="rechnungHof"></select>
+
+    <label>Produkt</label>
+    <select id="rechnungProdukt" onchange="rechnungProduktGewechselt()"></select>
+
+    <div class="grid">
+      <div>
+        <label>Menge</label>
+        <input id="rechnungMenge" type="number" min="0" value="0" oninput="rechnungBerechnen()">
+      </div>
+      <div>
+        <label>Einheit</label>
+        <input id="rechnungEinheit" value="Liter">
+      </div>
+    </div>
+
+    <label>Einzelpreis</label>
+    <input id="rechnungPreis" type="number" min="0" value="0" oninput="rechnungBerechnen()">
+
+    <div class="meta">Gesamtpreis: <b id="rechnungGesamt">0</b></div>
+
+    <button class="green" onclick="rechnungErstellen()">Rechnung speichern</button>
+    <button class="dark" onclick="location.href='rechnungen.html'">Zu den Rechnungen</button>
+    <div id="rechnungMsg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="titel">Offene Rechnungen</div>
+    <div id="offeneRechnungenListe">Lade...</div>
+  </div>
+
+</div>
+
+<div class="card">
+  <button class="dark" onclick="location.href='felder.html'">Zur Feldverwaltung</button>
+  <button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button>
+</div>
+
+</div>
+</div>
+
 <script>
 const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
 const USER_ID=localStorage.getItem("user_id");
 const USERNAME=localStorage.getItem("username")||"Unbekannt";
-if(!USER_ID){location.href="login.html";}
-let user=null,hof=null,hoefe=[],lager=[],bewegungen=[];
-function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
-async function api(tabelle){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{headers:headers()});if(!res.ok)throw new Error(await res.text());return await res.json();}
-async function post(tabelle,daten){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(daten)});if(!res.ok)throw new Error(await res.text());}
-async function patch(tabelle,id,daten){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(daten)});if(!res.ok)throw new Error(await res.text());}
+
+if(!USER_ID){
+  location.href="login.html";
+}
+
+let user=null;
+let hof=null;
+let hoefe=[];
+let users=[];
+let lager=[];
+let bewegungen=[];
+let rechnungen=[];
+let hofRechnungen=[];
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer "+SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+async function api(tabelle){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{
+    headers:headers()
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function post(tabelle,daten){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle,{
+    method:"POST",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function patch(tabelle,id,daten){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?id=eq."+id,{
+    method:"PATCH",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
 
 async function naechsteRechnungsnummer(){
-  const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/naechste_rechnungsnummer", {
+  const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/naechste_rechnungsnummer",{
     method:"POST",
     headers:headers(),
     body:JSON.stringify({})
@@ -47,19 +450,563 @@ async function naechsteRechnungsnummer(){
   return await res.json();
 }
 
-function text(w){return w===null||w===undefined||w===""?"-":w;}function zahl(w){const n=Number(String(w||"0").replace(",","."));return Number.isFinite(n)?n:0;}function formatZahl(n){return Number(n||0).toLocaleString("de-DE");}function datum(d){if(!d)return"-";const x=new Date(d);if(isNaN(x.getTime()))return"-";return x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});}
-function lagerEintrag(produkt){return lager.find(l=>String(l.Produkt).toLowerCase()===String(produkt||"").toLowerCase()&&l.Aktiv!==false);}
-async function laden(){const kopf=document.getElementById("kopf");try{const users=await api("Users");hoefe=await api("Hoefe");const alleLager=await api("Hof_Lager");const alleBewegungen=await api("Lagerbewegungen");user=users.find(u=>String(u.id)===String(USER_ID));if(!user){localStorage.clear();location.href="login.html";return;}hof=hoefe.find(h=>String(h.id)===String(user.Hof_id));if(!hof){kopf.innerHTML="<div class='info'>Du bist keinem Hof zugeordnet.</div>";return;}lager=alleLager.filter(l=>String(l.Hof_id)===String(user.Hof_id)).sort((a,b)=>String(a.Produkt||"").localeCompare(String(b.Produkt||"")));bewegungen=alleBewegungen.filter(b=>String(b.Hof_id)===String(user.Hof_id)).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,10);kopf.innerHTML=`<div class="titel">${hof.Name}</div><div class="info">Angemeldet als: <b>${text(user.Vorname||user["PSN-Username"])}</b><br>Zugriff: Hofmitglied</div>`;document.getElementById("inhalt").style.display="block";renderLager();renderListen();renderBewegungen();}catch(err){kopf.innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";}}
-function renderLager(){const box=document.getElementById("lagerListe");if(lager.length===0){box.innerHTML="<div class='leer'>Noch kein Lagerbestand vorhanden.</div>";return;}box.innerHTML="";lager.forEach(l=>{const div=document.createElement("div");div.className="item";div.innerHTML=`<span class="badge">${l.Aktiv===false?"INAKTIV":"AKTIV"}</span><div class="titel">${text(l.Produkt)}</div><div class="info">Bestand: <b>${formatZahl(l.Menge)}</b> ${text(l.Einheit)}<br>Letzte Änderung: ${datum(l.created_at)}</div><button class="blue" onclick="lagerInFormular('${String(l.Produkt).replaceAll("'","\\'")}')">Bearbeiten</button>`;box.appendChild(div);});}
-function renderListen(){const angebot=document.getElementById("angebotProdukt"),rechnung=document.getElementById("rechnungProdukt"),rechnungHof=document.getElementById("rechnungHof");angebot.innerHTML="<option value=''>Produkt auswählen</option>";rechnung.innerHTML="<option value=''>Produkt auswählen</option>";rechnungHof.innerHTML="<option value=''>Empfänger auswählen</option>";lager.filter(l=>l.Aktiv!==false).forEach(l=>{const o1=document.createElement("option");o1.value=l.Produkt;o1.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);angebot.appendChild(o1);const o2=document.createElement("option");o2.value=l.Produkt;o2.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);rechnung.appendChild(o2);});hoefe.filter(h=>String(h.id)!==String(user.Hof_id)).forEach(h=>{const o=document.createElement("option");o.value=h.id;o.textContent=h.Name;rechnungHof.appendChild(o);});}
-function renderBewegungen(){const box=document.getElementById("bewegungenListe");if(bewegungen.length===0){box.innerHTML="<div class='leer'>Keine Lagerbewegungen vorhanden.</div>";return;}box.innerHTML="";bewegungen.forEach(b=>{const div=document.createElement("div");div.className="item";div.innerHTML=`<div class="titel">${text(b.Produkt)}</div><div class="info">Aktion: ${text(b.Aktion)}<br>Menge: ${formatZahl(b.Menge)}<br>Benutzer: ${text(b.Benutzer)}<br>Bemerkung: ${text(b.Bemerkung)}</div><div class="meta">${datum(b.created_at)}</div>`;box.appendChild(div);});}
-function lagerInFormular(produkt){const l=lagerEintrag(produkt);if(!l)return;document.getElementById("lagerProdukt").value=l.Produkt||"";document.getElementById("lagerMenge").value=l.Menge||0;document.getElementById("lagerEinheit").value=l.Einheit||"Liter";document.getElementById("lagerAktion").value="Setzen";document.getElementById("lagerBemerkung").value="Bestand korrigiert";window.scrollTo({top:0,behavior:"smooth"});}
-async function lagerSpeichern(){const msg=document.getElementById("lagerMsg");msg.innerText="";const produkt=document.getElementById("lagerProdukt").value.trim();const menge=zahl(document.getElementById("lagerMenge").value);const einheit=document.getElementById("lagerEinheit").value.trim()||"Liter";const aktion=document.getElementById("lagerAktion").value;const bemerkung=document.getElementById("lagerBemerkung").value.trim();if(!produkt){msg.innerText="Bitte Produkt eingeben.";return;}if(menge<0){msg.innerText="Menge darf nicht negativ sein.";return;}try{const vorhanden=lagerEintrag(produkt);let neueMenge=menge;if(vorhanden){if(aktion==="Hinzufügen")neueMenge=Number(vorhanden.Menge||0)+menge;if(aktion==="Abziehen"){neueMenge=Number(vorhanden.Menge||0)-menge;if(neueMenge<0){msg.innerText="Nicht genug Bestand vorhanden.";return;}}await patch("Hof_Lager",vorhanden.id,{Produkt:produkt,Menge:neueMenge,Einheit:einheit,Aktiv:true});}else{if(aktion==="Abziehen"){msg.innerText="Produkt existiert noch nicht im Lager.";return;}await post("Hof_Lager",{Hof_id:Number(user.Hof_id),Produkt:produkt,Menge:neueMenge,Einheit:einheit,Aktiv:true});}const bewegungsMenge=aktion==="Abziehen"?-menge:aktion==="Setzen"?neueMenge:menge;await post("Lagerbewegungen",{Hof_id:Number(user.Hof_id),Produkt:produkt,Menge:bewegungsMenge,Aktion:aktion,Benutzer:USERNAME,Bemerkung:bemerkung});msg.innerText="Lager wurde aktualisiert.";await laden();}catch(err){msg.innerText="Fehler:\n"+err.message;}}
-function angebotProduktGewechselt(){const produkt=document.getElementById("angebotProdukt").value;const l=lagerEintrag(produkt);if(!l)return;document.getElementById("angebotEinheit").value=l.Einheit||"Liter";document.getElementById("angebotTitel").value=produkt+" Verkauf";}
-async function angebotErstellen(){const msg=document.getElementById("angebotMsg");msg.innerText="";const produkt=document.getElementById("angebotProdukt").value;const menge=zahl(document.getElementById("angebotMenge").value);const einheit=document.getElementById("angebotEinheit").value.trim()||"Liter";const preis=zahl(document.getElementById("angebotPreis").value);const titel=document.getElementById("angebotTitel").value.trim()||produkt+" Verkauf";if(!produkt){msg.innerText="Bitte Produkt auswählen.";return;}if(menge<=0){msg.innerText="Bitte Menge eintragen.";return;}const l=lagerEintrag(produkt);if(!l||Number(l.Menge||0)<menge){msg.innerText="Nicht genug Lagerbestand vorhanden.";return;}try{await post("Angebote",{Titel:titel,Kategorie:produkt,Inhalt:menge,Einheit:einheit,Preis:preis,Bestand:menge,Hof_id:Number(user.Hof_id),Aktiv:true});msg.innerText="Angebot wurde erstellt.";}catch(err){msg.innerText="Fehler:\n"+err.message;}}
-function rechnungProduktGewechselt(){const produkt=document.getElementById("rechnungProdukt").value;const l=lagerEintrag(produkt);if(!l)return;document.getElementById("rechnungEinheit").value=l.Einheit||"Liter";rechnungBerechnen();}
-function rechnungBerechnen(){const menge=zahl(document.getElementById("rechnungMenge").value);const preis=zahl(document.getElementById("rechnungPreis").value);document.getElementById("rechnungGesamt").innerText=formatZahl(menge*preis);}
-async function rechnungErstellen(){const msg=document.getElementById("rechnungMsg");msg.innerText="";const anHofId=document.getElementById("rechnungHof").value;const produkt=document.getElementById("rechnungProdukt").value;const menge=zahl(document.getElementById("rechnungMenge").value);const einheit=document.getElementById("rechnungEinheit").value.trim()||"Liter";const einzelpreis=zahl(document.getElementById("rechnungPreis").value);const gesamt=menge*einzelpreis;if(!anHofId){msg.innerText="Bitte Empfänger-Hof auswählen.";return;}if(!produkt){msg.innerText="Bitte Produkt auswählen.";return;}if(menge<=0||einzelpreis<=0){msg.innerText="Bitte Menge und Preis eintragen.";return;}const l=lagerEintrag(produkt);if(!l||Number(l.Menge||0)<menge){msg.innerText="Nicht genug Lagerbestand vorhanden.";return;}try{msg.innerText="Rechnungsnummer wird erstellt...";const nr=await naechsteRechnungsnummer();await post("Rechnungen",{Rechnung_nr:nr,Von_Hof_id:Number(user.Hof_id),An_Hof_id:Number(anHofId),Produkt:produkt,Menge:menge,Einheit:einheit,Einzelpreis:einzelpreis,Gesamtpreis:gesamt,Status:"Offen",Erstellt_von:USERNAME,Bezahlt:false});await patch("Hof_Lager",l.id,{Menge:Number(l.Menge||0)-menge});await post("Lagerbewegungen",{Hof_id:Number(user.Hof_id),Produkt:produkt,Menge:-menge,Aktion:"Rechnung erstellt",Benutzer:USERNAME,Bemerkung:"Rechnung "+nr});await post("Benachrichtigungen",{Titel:"🧾 Neue Rechnung: "+nr,Nachricht:"Neue Rechnung von "+hof.Name+"\n\nProdukt: "+produkt+"\nMenge: "+formatZahl(menge)+" "+einheit+"\nGesamtpreis: "+formatZahl(gesamt),Typ:"Rechnung",User_id:null,Hof_id:Number(anHofId),Gelesen:false,Archiviert:false,Erledigt:false,Telegram_gesendet:false,Erstellt_am:new Date().toISOString()});await post("Telegram_queue",{Titel:"🧾 Neue Rechnung: "+nr,Nachricht:"Neue Rechnung von "+hof.Name+"\n\nProdukt: "+produkt+"\nMenge: "+formatZahl(menge)+" "+einheit+"\nGesamtpreis: "+formatZahl(gesamt),Typ:"Rechnung",User_id:null,Hof_id:Number(anHofId),Organisation_id:null,Chat_id:null,Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});msg.innerText="Rechnung wurde erstellt.\n"+nr;await laden();}catch(err){msg.innerText="Fehler:\n"+err.message;}}
+function text(w){
+  return w===null||w===undefined||w===""?"-":w;
+}
+
+function zahl(w){
+  const n=Number(String(w||"0").replace(",","."));
+  return Number.isFinite(n)?n:0;
+}
+
+function formatZahl(n){
+  return Number(n||0).toLocaleString("de-DE");
+}
+
+function datum(d){
+  if(!d)return"-";
+
+  const x=new Date(d);
+
+  if(isNaN(x.getTime()))return"-";
+
+  return x.toLocaleDateString("de-DE")+" "+
+         x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
+
+function userName(u){
+  if(!u) return "-";
+  return u.Vorname || u["PSN-Username"] || u.Username || ("User " + u.id);
+}
+
+function hofName(id){
+  const h=hoefe.find(x=>String(x.id)===String(id));
+  return h ? h.Name : "-";
+}
+
+function lagerEintrag(produkt){
+  return lager.find(l=>
+    String(l.Produkt).toLowerCase()===String(produkt||"").toLowerCase() &&
+    l.Aktiv!==false
+  );
+}
+
+function tabWechseln(name){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+
+  document.getElementById("section"+name.charAt(0).toUpperCase()+name.slice(1)).classList.add("active");
+  document.getElementById("tab"+name.charAt(0).toUpperCase()+name.slice(1)).classList.add("active");
+}
+
+async function laden(){
+  const kopf=document.getElementById("kopf");
+
+  try{
+    users=await api("Users");
+    hoefe=await api("Hoefe");
+    const alleLager=await api("Hof_Lager");
+    const alleBewegungen=await api("Lagerbewegungen");
+    rechnungen=await api("Rechnungen");
+
+    user=users.find(u=>String(u.id)===String(USER_ID));
+
+    if(!user){
+      localStorage.clear();
+      location.href="login.html";
+      return;
+    }
+
+    hof=hoefe.find(h=>String(h.id)===String(user.Hof_id));
+
+    if(!hof){
+      kopf.innerHTML="<div class='info'>Du bist keinem Hof zugeordnet.</div>";
+      return;
+    }
+
+    lager=alleLager
+      .filter(l=>String(l.Hof_id)===String(user.Hof_id))
+      .sort((a,b)=>String(a.Produkt||"").localeCompare(String(b.Produkt||"")));
+
+    bewegungen=alleBewegungen
+      .filter(b=>String(b.Hof_id)===String(user.Hof_id))
+      .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))
+      .slice(0,12);
+
+    hofRechnungen=rechnungen
+      .filter(r=>
+        String(r.Von_Hof_id)===String(user.Hof_id) ||
+        String(r.An_Hof_id)===String(user.Hof_id)
+      )
+      .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+
+    kopf.innerHTML=`
+      <div class="titel">${hof.Name}</div>
+      <div class="info">
+        Angemeldet als: <b>${text(userName(user))}</b><br>
+        Zugriff: Hofmitglied
+      </div>
+    `;
+
+    document.getElementById("inhalt").style.display="block";
+
+    renderStats();
+    renderMitglieder();
+    renderLager();
+    renderListen();
+    renderBewegungen();
+    renderOffeneRechnungen();
+
+  }catch(err){
+    kopf.innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";
+  }
+}
+
+function renderStats(){
+  const mitglieder=users.filter(u=>String(u.Hof_id)===String(user.Hof_id));
+  const offene=hofRechnungen.filter(r=>
+    r.Bezahlt!==true &&
+    r.Storniert!==true &&
+    r.Status!=="Bezahlt" &&
+    r.Status!=="Storniert"
+  );
+
+  document.getElementById("statProdukte").innerText=lager.filter(l=>l.Aktiv!==false).length;
+  document.getElementById("statMitglieder").innerText=mitglieder.length;
+  document.getElementById("statRechnungen").innerText=offene.length;
+}
+
+function renderMitglieder(){
+  const box=document.getElementById("mitgliederListe");
+  const mitglieder=users
+    .filter(u=>String(u.Hof_id)===String(user.Hof_id))
+    .sort((a,b)=>String(userName(a)).localeCompare(String(userName(b))));
+
+  if(mitglieder.length===0){
+    box.innerHTML="<div class='leer'>Keine Hofmitglieder gefunden.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+
+  mitglieder.forEach(m=>{
+    const div=document.createElement("div");
+    div.className="item";
+
+    div.innerHTML=`
+      <div class="titel">${userName(m)}</div>
+      <div class="info">
+        PSN: ${text(m["PSN-Username"] || m.Username)}<br>
+        Admin: ${m.Admin === true ? "Ja" : "Nein"}<br>
+        Aktiviert: ${m.Aktiviert === false ? "Nein" : "Ja"}
+      </div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function renderLager(){
+  const box=document.getElementById("lagerListe");
+
+  if(lager.length===0){
+    box.innerHTML="<div class='leer'>Noch kein Lagerbestand vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+
+  lager.forEach(l=>{
+    const div=document.createElement("div");
+    div.className="item";
+
+    div.innerHTML=`
+      <span class="badge">${l.Aktiv===false?"INAKTIV":"AKTIV"}</span>
+      <div class="titel">${text(l.Produkt)}</div>
+      <div class="info">
+        Bestand: <b>${formatZahl(l.Menge)}</b> ${text(l.Einheit)}<br>
+        Letzte Änderung: ${datum(l.created_at)}
+      </div>
+      <button class="blue" onclick="lagerInFormular('${String(l.Produkt).replaceAll("'","\\'")}')">Bearbeiten</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function renderListen(){
+  const angebot=document.getElementById("angebotProdukt");
+  const rechnung=document.getElementById("rechnungProdukt");
+  const rechnungHof=document.getElementById("rechnungHof");
+
+  angebot.innerHTML="<option value=''>Produkt auswählen</option>";
+  rechnung.innerHTML="<option value=''>Produkt auswählen</option>";
+  rechnungHof.innerHTML="<option value=''>Empfänger auswählen</option>";
+
+  lager.filter(l=>l.Aktiv!==false).forEach(l=>{
+    const o1=document.createElement("option");
+    o1.value=l.Produkt;
+    o1.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);
+    angebot.appendChild(o1);
+
+    const o2=document.createElement("option");
+    o2.value=l.Produkt;
+    o2.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);
+    rechnung.appendChild(o2);
+  });
+
+  hoefe.filter(h=>String(h.id)!==String(user.Hof_id)).forEach(h=>{
+    const o=document.createElement("option");
+    o.value=h.id;
+    o.textContent=h.Name;
+    rechnungHof.appendChild(o);
+  });
+}
+
+function renderBewegungen(){
+  const box=document.getElementById("bewegungenListe");
+
+  if(bewegungen.length===0){
+    box.innerHTML="<div class='leer'>Keine Lagerbewegungen vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+
+  bewegungen.forEach(b=>{
+    const div=document.createElement("div");
+    div.className="item";
+
+    div.innerHTML=`
+      <div class="titel">${text(b.Produkt)}</div>
+      <div class="info">
+        Aktion: ${text(b.Aktion)}<br>
+        Menge: ${formatZahl(b.Menge)}<br>
+        Benutzer: ${text(b.Benutzer)}<br>
+        Bemerkung: ${text(b.Bemerkung)}
+      </div>
+      <div class="meta">${datum(b.created_at)}</div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function renderOffeneRechnungen(){
+  const box=document.getElementById("offeneRechnungenListe");
+
+  const offene=hofRechnungen.filter(r=>
+    r.Bezahlt!==true &&
+    r.Storniert!==true &&
+    r.Status!=="Bezahlt" &&
+    r.Status!=="Storniert"
+  ).slice(0,6);
+
+  if(offene.length===0){
+    box.innerHTML="<div class='leer'>Keine offenen Rechnungen.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+
+  offene.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="item warn";
+
+    div.innerHTML=`
+      <span class="badge badge-offen">OFFEN</span>
+      <div class="titel">${text(r.Rechnung_nr)}</div>
+      <div class="info">
+        Von: ${hofName(r.Von_Hof_id)}<br>
+        An: ${hofName(r.An_Hof_id)}<br>
+        Produkt: ${text(r.Produkt)}<br>
+        Menge: ${formatZahl(r.Menge)} ${text(r.Einheit)}<br>
+        Gesamtpreis: <b>${formatZahl(r.Gesamtpreis)}</b>
+      </div>
+      <button class="dark" onclick="location.href='rechnungen.html'">Rechnung öffnen</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function lagerInFormular(produkt){
+  const l=lagerEintrag(produkt);
+  if(!l)return;
+
+  tabWechseln("lager");
+
+  document.getElementById("lagerProdukt").value=l.Produkt||"";
+  document.getElementById("lagerMenge").value=l.Menge||0;
+  document.getElementById("lagerEinheit").value=l.Einheit||"Liter";
+  document.getElementById("lagerAktion").value="Setzen";
+  document.getElementById("lagerBemerkung").value="Bestand korrigiert";
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function lagerSpeichern(){
+  const msg=document.getElementById("lagerMsg");
+  msg.innerText="";
+
+  const produkt=document.getElementById("lagerProdukt").value.trim();
+  const menge=zahl(document.getElementById("lagerMenge").value);
+  const einheit=document.getElementById("lagerEinheit").value.trim()||"Liter";
+  const aktion=document.getElementById("lagerAktion").value;
+  const bemerkung=document.getElementById("lagerBemerkung").value.trim();
+
+  if(!produkt){
+    msg.innerText="Bitte Produkt eingeben.";
+    return;
+  }
+
+  if(menge<0){
+    msg.innerText="Menge darf nicht negativ sein.";
+    return;
+  }
+
+  try{
+    const vorhanden=lagerEintrag(produkt);
+    let neueMenge=menge;
+
+    if(vorhanden){
+      if(aktion==="Hinzufügen"){
+        neueMenge=Number(vorhanden.Menge||0)+menge;
+      }
+
+      if(aktion==="Abziehen"){
+        neueMenge=Number(vorhanden.Menge||0)-menge;
+
+        if(neueMenge<0){
+          msg.innerText="Nicht genug Bestand vorhanden.";
+          return;
+        }
+      }
+
+      await patch("Hof_Lager",vorhanden.id,{
+        Produkt:produkt,
+        Menge:neueMenge,
+        Einheit:einheit,
+        Aktiv:true
+      });
+
+    }else{
+      if(aktion==="Abziehen"){
+        msg.innerText="Produkt existiert noch nicht im Lager.";
+        return;
+      }
+
+      await post("Hof_Lager",{
+        Hof_id:Number(user.Hof_id),
+        Produkt:produkt,
+        Menge:neueMenge,
+        Einheit:einheit,
+        Aktiv:true
+      });
+    }
+
+    const bewegungsMenge=
+      aktion==="Abziehen" ? -menge :
+      aktion==="Setzen" ? neueMenge :
+      menge;
+
+    await post("Lagerbewegungen",{
+      Hof_id:Number(user.Hof_id),
+      Produkt:produkt,
+      Menge:bewegungsMenge,
+      Aktion:aktion,
+      Benutzer:USERNAME,
+      Bemerkung:bemerkung
+    });
+
+    msg.innerText="Lager wurde aktualisiert.";
+    await laden();
+
+  }catch(err){
+    msg.innerText="Fehler:\\n"+err.message;
+  }
+}
+
+function angebotProduktGewechselt(){
+  const produkt=document.getElementById("angebotProdukt").value;
+  const l=lagerEintrag(produkt);
+
+  if(!l)return;
+
+  document.getElementById("angebotEinheit").value=l.Einheit||"Liter";
+  document.getElementById("angebotTitel").value=produkt+" Verkauf";
+}
+
+async function angebotErstellen(){
+  const msg=document.getElementById("angebotMsg");
+  msg.innerText="";
+
+  const produkt=document.getElementById("angebotProdukt").value;
+  const menge=zahl(document.getElementById("angebotMenge").value);
+  const einheit=document.getElementById("angebotEinheit").value.trim()||"Liter";
+  const preis=zahl(document.getElementById("angebotPreis").value);
+  const titel=document.getElementById("angebotTitel").value.trim()||produkt+" Verkauf";
+
+  if(!produkt){
+    msg.innerText="Bitte Produkt auswählen.";
+    return;
+  }
+
+  if(menge<=0){
+    msg.innerText="Bitte Menge eintragen.";
+    return;
+  }
+
+  const l=lagerEintrag(produkt);
+
+  if(!l||Number(l.Menge||0)<menge){
+    msg.innerText="Nicht genug Lagerbestand vorhanden.";
+    return;
+  }
+
+  try{
+    await post("Angebote",{
+      Titel:titel,
+      Kategorie:produkt,
+      Inhalt:menge,
+      Einheit:einheit,
+      Preis:preis,
+      Bestand:menge,
+      Hof_id:Number(user.Hof_id),
+      Aktiv:true
+    });
+
+    msg.innerText="Angebot wurde erstellt.";
+
+  }catch(err){
+    msg.innerText="Fehler:\\n"+err.message;
+  }
+}
+
+function rechnungProduktGewechselt(){
+  const produkt=document.getElementById("rechnungProdukt").value;
+  const l=lagerEintrag(produkt);
+
+  if(!l)return;
+
+  document.getElementById("rechnungEinheit").value=l.Einheit||"Liter";
+  rechnungBerechnen();
+}
+
+function rechnungBerechnen(){
+  const menge=zahl(document.getElementById("rechnungMenge").value);
+  const preis=zahl(document.getElementById("rechnungPreis").value);
+  document.getElementById("rechnungGesamt").innerText=formatZahl(menge*preis);
+}
+
+async function rechnungErstellen(){
+  const msg=document.getElementById("rechnungMsg");
+  msg.innerText="";
+
+  const anHofId=document.getElementById("rechnungHof").value;
+  const produkt=document.getElementById("rechnungProdukt").value;
+  const menge=zahl(document.getElementById("rechnungMenge").value);
+  const einheit=document.getElementById("rechnungEinheit").value.trim()||"Liter";
+  const einzelpreis=zahl(document.getElementById("rechnungPreis").value);
+  const gesamt=menge*einzelpreis;
+
+  if(!anHofId){
+    msg.innerText="Bitte Empfänger-Hof auswählen.";
+    return;
+  }
+
+  if(!produkt){
+    msg.innerText="Bitte Produkt auswählen.";
+    return;
+  }
+
+  if(menge<=0||einzelpreis<=0){
+    msg.innerText="Bitte Menge und Preis eintragen.";
+    return;
+  }
+
+  const l=lagerEintrag(produkt);
+
+  if(!l||Number(l.Menge||0)<menge){
+    msg.innerText="Nicht genug Lagerbestand vorhanden.";
+    return;
+  }
+
+  try{
+    msg.innerText="Rechnungsnummer wird erstellt...";
+
+    const nr=await naechsteRechnungsnummer();
+
+    await post("Rechnungen",{
+      Rechnung_nr:nr,
+      Von_Hof_id:Number(user.Hof_id),
+      An_Hof_id:Number(anHofId),
+      Produkt:produkt,
+      Menge:menge,
+      Einheit:einheit,
+      Einzelpreis:einzelpreis,
+      Gesamtpreis:gesamt,
+      Status:"Offen",
+      Erstellt_von:USERNAME,
+      Bezahlt:false
+    });
+
+    await patch("Hof_Lager",l.id,{
+      Menge:Number(l.Menge||0)-menge
+    });
+
+    await post("Lagerbewegungen",{
+      Hof_id:Number(user.Hof_id),
+      Produkt:produkt,
+      Menge:-menge,
+      Aktion:"Rechnung erstellt",
+      Benutzer:USERNAME,
+      Bemerkung:"Rechnung "+nr
+    });
+
+    await post("Benachrichtigungen",{
+      Titel:"🧾 Neue Rechnung: "+nr,
+      Nachricht:
+        "Neue Rechnung von "+hof.Name+"\\n\\n"+
+        "Produkt: "+produkt+"\\n"+
+        "Menge: "+formatZahl(menge)+" "+einheit+"\\n"+
+        "Gesamtpreis: "+formatZahl(gesamt),
+      Typ:"Rechnung",
+      User_id:null,
+      Hof_id:Number(anHofId),
+      Gelesen:false,
+      Archiviert:false,
+      Erledigt:false,
+      Telegram_gesendet:false,
+      Erstellt_am:new Date().toISOString()
+    });
+
+    await post("Telegram_queue",{
+      Titel:"🧾 Neue Rechnung: "+nr,
+      Nachricht:
+        "Neue Rechnung von "+hof.Name+"\\n\\n"+
+        "Produkt: "+produkt+"\\n"+
+        "Menge: "+formatZahl(menge)+" "+einheit+"\\n"+
+        "Gesamtpreis: "+formatZahl(gesamt),
+      Typ:"Rechnung",
+      User_id:null,
+      Hof_id:Number(anHofId),
+      Organisation_id:null,
+      Chat_id:null,
+      Gesendet:false,
+      Erstellt_am:new Date().toISOString(),
+      Status:"Offen",
+      Fehler:null
+    });
+
+    msg.innerText="Rechnung wurde erstellt.\\n"+nr;
+    await laden();
+
+  }catch(err){
+    msg.innerText="Fehler:\\n"+err.message;
+  }
+}
+
 laden();
 </script>
 </body>
