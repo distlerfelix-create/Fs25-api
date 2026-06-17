@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechnungen</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18);}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px;}
+.info{color:white;font-size:17px;line-height:1.5;white-space:pre-line;}
+.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line;}
+.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px;}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.dark{background:#333;color:white;}
+.blue{background:#004488;color:white;}
+.orangeBtn{background:#cc7700;color:white;}
+.leer{color:white;text-align:center;margin-top:25px;font-size:18px;}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line;}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;text-align:center;color:white;}
+.stat b{color:#00ff22;font-size:24px;}
+.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px;}
+.item.offen{border:2px solid #ffaa33;box-shadow:0 0 12px rgba(255,170,0,.22);}
+.item.bezahlt{border:1px solid #008800;opacity:.86;}
+.item.storniert{border:1px solid #aa0000;opacity:.72;}
+.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-bottom:8px;}
+.badge-offen{background:#cc7700;}
+.badge-bezahlt{background:#008800;}
+.badge-storno{background:#aa0000;}
+.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:20;}
+.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300;}
+textarea,input{width:100%;padding:14px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+textarea{min-height:90px;resize:vertical;}
+label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px;}
+@media(max-width:560px){.grid{grid-template-columns:1fr;}}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='hofverwaltung.html'">← Zurück</button>
+
+<h1>RECHNUNGEN</h1>
+
+<div id="kopf" class="card">
+  <div class="info">Lade Rechnungen...</div>
+</div>
+
+<div id="inhalt" style="display:none">
+
+<div class="card">
+  <div class="titel">Übersicht</div>
+  <div class="grid">
+    <div class="stat"><b id="statOffen">0</b><br>Offen</div>
+    <div class="stat"><b id="statBetrag">0</b><br>Offener Betrag</div>
+    <div class="stat"><b id="statBezahlt">0</b><br>Bezahlt</div>
+  </div>
+</div>
+
+<div class="section-title">OFFENE RECHNUNGEN</div>
+<div id="offenListe">Lade...</div>
+
+<div class="section-title">BEZAHLTE RECHNUNGEN</div>
+<div id="bezahltListe">Lade...</div>
+
+<div class="section-title">STORNIERTE RECHNUNGEN</div>
+<div id="stornoListe">Lade...</div>
+
+<div class="card">
+  <button class="dark" onclick="location.href='hofverwaltung.html'">Zur Hofverwaltung</button>
+  <button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button>
+</div>
+
+</div>
+</div>
+
+<div id="detailBg" class="popup-bg">
+  <div class="popup">
+    <div class="titel" id="detailTitel">Rechnung</div>
+    <div id="detailInhalt" class="info"></div>
+
+    <label>Bemerkung</label>
+    <textarea id="bemerkungText" placeholder="Bemerkung zur Rechnung"></textarea>
+
+    <button class="green" onclick="bemerkungSpeichern()">Bemerkung speichern</button>
+    <button class="dark" onclick="schliesseDetails()">Schließen</button>
+    <div id="detailMsg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Unbekannt";
+
+if(!USER_ID){
+  location.href="login.html";
+}
+
+let user=null;
+let userHof=null;
+let istAdmin=false;
+let hoefe=[];
+let rechnungen=[];
+let sichtbareRechnungen=[];
+let aktuelleRechnung=null;
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer " + SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
+    headers:headers()
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function patch(tabelle,id,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"PATCH",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+function text(w){
+  return w === null || w === undefined || w === "" ? "-" : w;
+}
+
+function formatZahl(n){
+  return Number(n || 0).toLocaleString("de-DE");
+}
+
+function datum(d){
+  if(!d) return "-";
+  const x = new Date(d);
+  if(isNaN(x.getTime())) return "-";
+  return x.toLocaleDateString("de-DE") + " " +
+         x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
+
+function hofName(id){
+  const h = hoefe.find(x => String(x.id) === String(id));
+  return h ? h.Name : "-";
+}
+
+function istStorniert(r){
+  return r.Storniert === true || r.storniert === true;
+}
+
+function istBezahlt(r){
+  return r.Bezahlt === true || r.bezahlt === true;
+}
+
+function statusText(r){
+  if(istStorniert(r)) return "Storniert";
+  if(istBezahlt(r)) return "Bezahlt";
+  return r.Status || "Offen";
+}
+
+function darfAktion(r){
+  if(istAdmin) return true;
+  return String(r.Von_Hof_id) === String(user.Hof_id) ||
+         String(r.An_Hof_id) === String(user.Hof_id);
+}
+
+async function laden(){
+  const kopf=document.getElementById("kopf");
+
+  try{
+    const users = await api("Users");
+    hoefe = await api("Hoefe");
+    rechnungen = await api("Rechnungen");
+
+    user = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!user){
+      localStorage.clear();
+      location.href="login.html";
+      return;
+    }
+
+    istAdmin = user.Admin === true;
+    userHof = hoefe.find(h => String(h.id) === String(user.Hof_id));
+
+    if(!userHof && !istAdmin){
+      kopf.innerHTML="<div class='info'>Du bist keinem Hof zugeordnet.</div>";
+      return;
+    }
+
+    sichtbareRechnungen = rechnungen.filter(r => {
+      if(istAdmin) return true;
+      return String(r.Von_Hof_id) === String(user.Hof_id) ||
+             String(r.An_Hof_id) === String(user.Hof_id);
+    });
+
+    sichtbareRechnungen.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    kopf.innerHTML = `
+      <div class="titel">${istAdmin ? "Admin-Ansicht" : userHof.Name}</div>
+      <div class="info">
+        Angemeldet als: <b>${text(user.Vorname || user["PSN-Username"])}</b><br>
+        Sichtbar: ${istAdmin ? "Alle Rechnungen" : "Rechnungen deines Hofes"}
+      </div>
+    `;
+
+    document.getElementById("inhalt").style.display="block";
+
+    render();
+
+  }catch(err){
+    kopf.innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";
+  }
+}
+
+function render(){
+  const offen = sichtbareRechnungen.filter(r => !istBezahlt(r) && !istStorniert(r));
+  const bezahlt = sichtbareRechnungen.filter(r => istBezahlt(r) && !istStorniert(r));
+  const storno = sichtbareRechnungen.filter(r => istStorniert(r));
+
+  const offenerBetrag = offen.reduce((sum,r) => sum + Number(r.Gesamtpreis || 0), 0);
+
+  document.getElementById("statOffen").innerText = offen.length;
+  document.getElementById("statBetrag").innerText = formatZahl(offenerBetrag);
+  document.getElementById("statBezahlt").innerText = bezahlt.length;
+
+  renderListe("offenListe", offen, "offen");
+  renderListe("bezahltListe", bezahlt, "bezahlt");
+  renderListe("stornoListe", storno, "storniert");
+}
+
+function renderListe(id,liste,typ){
+  const box=document.getElementById(id);
+
+  if(liste.length===0){
+    box.innerHTML="<div class='leer'>Keine Einträge.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+
+  liste.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="item " + typ;
+
+    const badgeClass = typ === "offen" ? "badge-offen" :
+                       typ === "bezahlt" ? "badge-bezahlt" :
+                       "badge-storno";
+
+    let buttons = `<button class="blue" onclick="detailsOeffnen(${r.id})">Details</button>`;
+
+    if(!istBezahlt(r) && !istStorniert(r) && darfAktion(r)){
+      buttons += `<button class="green" onclick="rechnungBezahlt(${r.id})">Als bezahlt markieren</button>`;
+      buttons += `<button class="red" onclick="rechnungStornieren(${r.id})">Stornieren</button>`;
+    }
+
+    div.innerHTML = `
+      <span class="badge ${badgeClass}">${statusText(r)}</span>
+      <div class="titel">${text(r.Rechnung_nr)}</div>
+      <div class="info">
+        Von: ${hofName(r.Von_Hof_id)}<br>
+        An: ${hofName(r.An_Hof_id)}<br><br>
+        Produkt: ${text(r.Produkt)}<br>
+        Menge: ${formatZahl(r.Menge)} ${text(r.Einheit)}<br>
+        Einzelpreis: ${formatZahl(r.Einzelpreis)}<br>
+        Gesamtpreis: <b>${formatZahl(r.Gesamtpreis)}</b>
+      </div>
+      <div class="meta">
+        Erstellt: ${datum(r.created_at)}<br>
+        Bezahlt am: ${datum(r.Bezahlt_am)}<br>
+        Erstellt von: ${text(r.Erstellt_von)}
+      </div>
+      ${buttons}
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+async function telegramUndBenachrichtigung(r,titel,nachricht,hofId){
+  await post("Benachrichtigungen", {
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Rechnung",
+    User_id:null,
+    Hof_id:Number(hofId),
+    Gelesen:false,
+    Archiviert:false,
+    Erledigt:false,
+    Telegram_gesendet:false,
+    Erstellt_am:new Date().toISOString()
+  });
+
+  await post("Telegram_queue", {
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Rechnung",
+    User_id:null,
+    Hof_id:Number(hofId),
+    Organisation_id:null,
+    Chat_id:null,
+    Gesendet:false,
+    Erstellt_am:new Date().toISOString(),
+    Status:"Offen",
+    Fehler:null
+  });
+}
+
+async function rechnungBezahlt(id){
+  const r = sichtbareRechnungen.find(x => Number(x.id) === Number(id));
+  if(!r) return;
+
+  if(!confirm("Rechnung wirklich als bezahlt markieren?")){
+    return;
+  }
+
+  try{
+    await patch("Rechnungen", id, {
+      Bezahlt:true,
+      Bezahlt_am:new Date().toISOString(),
+      Status:"Bezahlt"
+    });
+
+    const titel = "✅ Rechnung bezahlt: " + text(r.Rechnung_nr);
+    const nachricht =
+      "Rechnung wurde bezahlt.\\n\\n" +
+      "Rechnung: " + text(r.Rechnung_nr) + "\\n" +
+      "Von: " + hofName(r.Von_Hof_id) + "\\n" +
+      "An: " + hofName(r.An_Hof_id) + "\\n" +
+      "Betrag: " + formatZahl(r.Gesamtpreis);
+
+    await telegramUndBenachrichtigung(r,titel,nachricht,r.Von_Hof_id);
+    await telegramUndBenachrichtigung(r,titel,nachricht,r.An_Hof_id);
+
+    await laden();
+
+  }catch(err){
+    alert("Fehler:\\n"+err.message);
+  }
+}
+
+async function rechnungStornieren(id){
+  const r = sichtbareRechnungen.find(x => Number(x.id) === Number(id));
+  if(!r) return;
+
+  if(!confirm("Rechnung wirklich stornieren?")){
+    return;
+  }
+
+  try{
+    await patch("Rechnungen", id, {
+      Storniert:true,
+      Status:"Storniert"
+    });
+
+    const titel = "❌ Rechnung storniert: " + text(r.Rechnung_nr);
+    const nachricht =
+      "Rechnung wurde storniert.\\n\\n" +
+      "Rechnung: " + text(r.Rechnung_nr) + "\\n" +
+      "Von: " + hofName(r.Von_Hof_id) + "\\n" +
+      "An: " + hofName(r.An_Hof_id) + "\\n" +
+      "Betrag: " + formatZahl(r.Gesamtpreis);
+
+    await telegramUndBenachrichtigung(r,titel,nachricht,r.Von_Hof_id);
+    await telegramUndBenachrichtigung(r,titel,nachricht,r.An_Hof_id);
+
+    await laden();
+
+  }catch(err){
+    alert("Fehler:\\n"+err.message);
+  }
+}
+
+function detailsOeffnen(id){
+  const r = sichtbareRechnungen.find(x => Number(x.id) === Number(id));
+  if(!r) return;
+
+  aktuelleRechnung = r;
+
+  document.getElementById("detailTitel").innerText = text(r.Rechnung_nr);
+
+  document.getElementById("detailInhalt").innerText =
+    "Status: " + statusText(r) + "\\n" +
+    "Von: " + hofName(r.Von_Hof_id) + "\\n" +
+    "An: " + hofName(r.An_Hof_id) + "\\n\\n" +
+    "Produkt: " + text(r.Produkt) + "\\n" +
+    "Menge: " + formatZahl(r.Menge) + " " + text(r.Einheit) + "\\n" +
+    "Einzelpreis: " + formatZahl(r.Einzelpreis) + "\\n" +
+    "Gesamtpreis: " + formatZahl(r.Gesamtpreis) + "\\n\\n" +
+    "Erstellt: " + datum(r.created_at) + "\\n" +
+    "Bezahlt am: " + datum(r.Bezahlt_am) + "\\n" +
+    "Erstellt von: " + text(r.Erstellt_von);
+
+  document.getElementById("bemerkungText").value = r.Bemerkung || "";
+  document.getElementById("detailMsg").innerText = "";
+  document.getElementById("detailBg").style.display="flex";
+}
+
+function schliesseDetails(){
+  document.getElementById("detailBg").style.display="none";
+  aktuelleRechnung=null;
+}
+
+async function bemerkungSpeichern(){
+  const msg=document.getElementById("detailMsg");
+  msg.innerText="";
+
+  if(!aktuelleRechnung) return;
+
+  try{
+    await patch("Rechnungen", aktuelleRechnung.id, {
+      Bemerkung:document.getElementById("bemerkungText").value.trim()
+    });
+
+    msg.innerText="Bemerkung gespeichert.";
+    await laden();
+
+  }catch(err){
+    msg.innerText="Fehler:\\n"+err.message;
+  }
+}
+
+laden();
+</script>
+</body>
+</html>
