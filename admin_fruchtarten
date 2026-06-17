@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fruchtarten verwalten</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18);}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px;}
+.info{color:white;font-size:17px;line-height:1.45;}
+label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px;}
+input,select{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.blue{background:#004488;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:25px;font-size:18px;}
+.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px;}
+.item.inaktiv{opacity:.6;border-color:#555;}
+.badge{display:inline-block;background:#008800;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-bottom:8px;}
+.badge-off{background:#555;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:520px){.grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+<h1>FRUCHTARTEN</h1>
+<div id="zugriff" class="card"><div class="info">Prüfe Adminrechte...</div></div>
+<div id="inhalt" style="display:none">
+<div class="card">
+  <div class="titel">🌾 Neue Fruchtart</div>
+  <label>Name</label><input id="name" placeholder="z. B. Weizen">
+  <label>Anpflanzzeit</label><input id="anpflanzzeit" placeholder="z. B. März - April">
+  <label>Erntezeit</label><input id="erntezeit" placeholder="z. B. Juli - August">
+  <div class="grid">
+    <div><label>Wachstumsdauer in Tagen</label><input id="wachstumsdauer" type="number" min="0" value="0"></div>
+    <div><label>Ertrag pro Hektar</label><input id="ertrag" type="number" min="0" value="0"></div>
+  </div>
+  <label>Verkaufspreis</label><input id="verkaufspreis" type="number" min="0" value="0">
+  <label>Status</label><select id="aktiv"><option value="true">Aktiv</option><option value="false">Inaktiv</option></select>
+  <button class="green" onclick="speichern()">Fruchtart speichern</button>
+  <div id="msg" class="msg"></div>
+</div>
+<div class="card"><div class="titel">Vorhandene Fruchtarten</div><div id="liste">Lade...</div></div>
+</div>
+</div>
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID = localStorage.getItem("user_id");
+if(!USER_ID){location.href="login.html";}
+let fruchtarten=[]; let editId=null;
+function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer " + SUPABASE_KEY,"Content-Type":"application/json"};}
+async function api(tabelle){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{headers:headers()});if(!res.ok){throw new Error(await res.text());}return await res.json();}
+async function post(tabelle,daten){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(daten)});if(!res.ok){throw new Error(await res.text());}}
+async function patch(tabelle,id,daten){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(daten)});if(!res.ok){throw new Error(await res.text());}}
+function text(w){return w===null||w===undefined||w===""?"-":w;}
+async function pruefen(){
+  try{
+    const users=await fetch(SUPABASE_URL+"/rest/v1/Users?select=*&id=eq."+USER_ID,{headers:headers()});
+    const data=await users.json(); const user=data[0];
+    if(!user||user.Admin!==true){document.getElementById("zugriff").innerHTML="<div class='info'>Kein Admin-Zugriff.</div>";return;}
+    document.getElementById("zugriff").style.display="none";
+    document.getElementById("inhalt").style.display="block";
+    await laden();
+  }catch(err){document.getElementById("zugriff").innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";}
+}
+async function laden(){
+  const box=document.getElementById("liste");
+  try{
+    fruchtarten=await api("Fruchtarten");
+    fruchtarten.sort((a,b)=>String(a.Name||"").localeCompare(String(b.Name||"")));
+    if(fruchtarten.length===0){box.innerHTML="<div class='leer'>Keine Fruchtarten vorhanden.</div>";return;}
+    box.innerHTML="";
+    fruchtarten.forEach(f=>{
+      const div=document.createElement("div");
+      div.className="item"+(f.Aktiv===false?" inaktiv":"");
+      div.innerHTML=`
+        <span class="badge ${f.Aktiv===false?"badge-off":""}">${f.Aktiv===false?"INAKTIV":"AKTIV"}</span>
+        <div class="titel">${f.Name||"-"}</div>
+        <div class="info">
+          Anpflanzzeit: ${text(f.Anpflanzzeit)}<br>
+          Erntezeit: ${text(f.Erntezeit)}<br>
+          Wachstumsdauer: ${text(f.Wachstumsdauer_Tage)} Tage<br>
+          Ertrag: ${text(f.Ertrag_pro_Hektar)} pro Hektar<br>
+          Verkaufspreis: ${text(f.Verkaufspreis)}
+        </div>
+        <button class="blue" onclick="inFormularLaden(${f.id})">Bearbeiten</button>
+        <button class="${f.Aktiv===false?"green":"red"}" onclick="aktivWechseln(${f.id}, ${f.Aktiv===false?"true":"false"})">${f.Aktiv===false?"Aktivieren":"Deaktivieren"}</button>`;
+      box.appendChild(div);
+    });
+  }catch(err){box.innerHTML="<div class='leer'>Fehler:<br><br>"+err.message+"</div>";}
+}
+function inFormularLaden(id){
+  const f=fruchtarten.find(x=>Number(x.id)===Number(id)); if(!f)return; editId=id;
+  document.getElementById("name").value=f.Name||"";
+  document.getElementById("anpflanzzeit").value=f.Anpflanzzeit||"";
+  document.getElementById("erntezeit").value=f.Erntezeit||"";
+  document.getElementById("wachstumsdauer").value=f.Wachstumsdauer_Tage||0;
+  document.getElementById("ertrag").value=f.Ertrag_pro_Hektar||0;
+  document.getElementById("verkaufspreis").value=f.Verkaufspreis||0;
+  document.getElementById("aktiv").value=f.Aktiv===false?"false":"true";
+  document.getElementById("msg").innerText="Bearbeite: "+(f.Name||"");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+async function speichern(){
+  const msg=document.getElementById("msg"); msg.innerText="";
+  const name=document.getElementById("name").value.trim();
+  if(!name){msg.innerText="Bitte Namen eingeben.";return;}
+  const doppelt=fruchtarten.some(f=>String(f.Name||"").toLowerCase()===name.toLowerCase()&&Number(f.id)!==Number(editId));
+  if(doppelt){msg.innerText="Diese Fruchtart existiert bereits.";return;}
+  const daten={
+    Name:name,
+    Anpflanzzeit:document.getElementById("anpflanzzeit").value.trim(),
+    Erntezeit:document.getElementById("erntezeit").value.trim(),
+    Wachstumsdauer_Tage:Number(document.getElementById("wachstumsdauer").value||0),
+    Ertrag_pro_Hektar:Number(document.getElementById("ertrag").value||0),
+    Verkaufspreis:Number(document.getElementById("verkaufspreis").value||0),
+    Aktiv:document.getElementById("aktiv").value==="true"
+  };
+  try{
+    if(editId){await patch("Fruchtarten",editId,daten);msg.innerText="Fruchtart wurde aktualisiert.";}
+    else{await post("Fruchtarten",daten);msg.innerText="Fruchtart wurde angelegt.";}
+    editId=null; formularLeeren(); await laden();
+  }catch(err){msg.innerText="Fehler:\n"+err.message;}
+}
+function formularLeeren(){
+  document.getElementById("name").value="";
+  document.getElementById("anpflanzzeit").value="";
+  document.getElementById("erntezeit").value="";
+  document.getElementById("wachstumsdauer").value="0";
+  document.getElementById("ertrag").value="0";
+  document.getElementById("verkaufspreis").value="0";
+  document.getElementById("aktiv").value="true";
+}
+async function aktivWechseln(id,wert){
+  try{await patch("Fruchtarten",id,{Aktiv:wert});await laden();}
+  catch(err){alert(err.message);}
+}
+pruefen();
+</script>
+</body>
+</html>
