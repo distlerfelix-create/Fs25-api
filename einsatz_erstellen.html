@@ -4,285 +4,339 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Einsatz erstellen</title>
-
 <style>
-*{box-sizing:border-box;}
-
-body{
-  margin:0;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  width:100%;
-  max-width:700px;
-  margin:auto;
-  padding:20px;
-}
-
-.back{
-  background:#222;
-  color:white;
-  border:1px solid #555;
-  padding:14px 22px;
-  border-radius:12px;
-  margin-bottom:35px;
-  font-size:18px;
-}
-
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:38px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:18px;
-}
-
-input, textarea{
-  width:100%;
-  padding:14px;
-  margin-top:12px;
-  border-radius:10px;
-  border:1px solid #008000;
-  background:#000;
-  color:white;
-  font-size:17px;
-}
-
-textarea{
-  min-height:120px;
-}
-
-.org{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  margin-top:10px;
-  padding:12px 15px;
-  background:#000;
-  border:1px solid #006600;
-  border-radius:10px;
-  color:white;
-  font-size:18px;
-}
-
-.org input{
-  width:auto;
-  margin:0;
-}
-
-button{
-  width:100%;
-  margin-top:14px;
-  padding:16px;
-  border:none;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:bold;
-}
-
-.green{
-  background:#008800;
-  color:white;
-}
-
-.msg{
-  color:#ffaa33;
-  text-align:center;
-  margin-top:15px;
-  font-weight:bold;
-}
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}
+.app{width:100%;max-width:700px;margin:auto;padding:20px 15px 70px}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}
+.info{color:white;font-size:17px;line-height:1.5}
+label{display:block;margin-top:14px;margin-bottom:6px;color:#ffaa33;font-weight:bold;font-size:16px}
+input,select,textarea{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}
+textarea{min-height:120px;resize:vertical}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}
+.green{background:#008800;color:white}.dark{background:#333;color:white}.red{background:#aa0000;color:white}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}
+.hidden{display:none!important}
+.row{display:flex;align-items:center;justify-content:space-between;color:white;margin-top:12px;font-size:17px}
+.row input{width:26px;height:26px}
+.orgbox{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;margin-top:8px}
 </style>
 </head>
-
 <body>
 <div class="app">
-
-<button class="back" onclick="history.back()">← Zurück</button>
-
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
 <h1>EINSATZ ERSTELLEN</h1>
 
-<div class="card">
-  <input id="titel" placeholder="Titel, z.B. Verkehrsunfall">
-  <textarea id="beschreibung" placeholder="Beschreibung des Einsatzes"></textarea>
-  <input id="belohnung" type="number" placeholder="Belohnung / Vergütung">
-
-  <h2>Organisationen</h2>
-  <div id="orgListe">Lade Organisationen...</div>
-
-  <button class="green" onclick="einsatzErstellen()">Einsatz erstellen</button>
-
-  <div id="meldung" class="msg"></div>
+<div id="zugriff" class="card hidden">
+  <div class="titel">Zugriff verweigert</div>
+  <div class="info">Du hast keine Berechtigung, Einsätze zu erstellen.</div>
 </div>
 
+<div id="formular" class="card hidden">
+  <div class="titel">🚨 Neuer Einsatz</div>
+
+  <label>Titel</label>
+  <input id="titel" placeholder="z. B. Verkehrsunfall">
+
+  <label>Beschreibung</label>
+  <textarea id="beschreibung" placeholder="Beschreibung, Ort, beteiligte Fahrzeuge, benötigte Hilfe..."></textarea>
+
+  <label>Einsatzart</label>
+  <select id="typ">
+    <option value="Einsatz">Einsatz</option>
+    <option value="Verkehrsunfall">Verkehrsunfall</option>
+    <option value="Brand">Brand</option>
+    <option value="Rettung">Rettung</option>
+    <option value="Polizei">Polizei</option>
+    <option value="Bauhof">Bauhof</option>
+    <option value="Sonstiges">Sonstiges</option>
+  </select>
+
+  <label>Belohnung / Vergütung</label>
+  <input id="belohnung" type="number" min="0" value="0">
+
+  <label>Sichtbarkeit</label>
+  <select id="sichtbarkeit">
+    <option value="Alle">Alle</option>
+    <option value="Organisation">Nur ausgewählte Organisationen</option>
+  </select>
+
+  <label>Organisationen benachrichtigen</label>
+  <div id="orgListe" class="orgbox">Lade Organisationen...</div>
+
+  <button class="green" onclick="einsatzErstellen()">Einsatz erstellen</button>
+  <button class="dark" onclick="location.href='auftraege.html'">Zu den Aufträgen</button>
+  <div id="msg" class="msg"></div>
+</div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
-const USERNAME = localStorage.getItem("username") || "Disti1701";
-const HOF = localStorage.getItem("hof") || "BGA F&M";
-const USER_ID = Number(localStorage.getItem("user_id") || 1);
-const HOF_ID = Number(localStorage.getItem("hof_id") || 1);
+const USER_ID = localStorage.getItem("user_id");
+const USERNAME = localStorage.getItem("username") || "Unbekannt";
 
-if(!localStorage.getItem("user_id")){
-  location.href = "login.html";
+if(!USER_ID){ location.href = "login.html"; }
+
+let users = [];
+let organisationen = [];
+let userOrgs = [];
+let aktuellerUser = null;
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer " + SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
 }
 
-let organisationen = [];
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
+    headers:headers()
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
 
-async function ladeOrganisationen(){
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Organisationen?select=*&order=id.asc",
-    {
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY
-      }
+async function postReturn(tabelle,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST",
+    headers:{...headers(),"Prefer":"return=representation"},
+    body:JSON.stringify(daten)
+  });
+  if(!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data[0];
+}
+
+async function post(tabelle,daten){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+function text(w){
+  return w === null || w === undefined || w === "" ? "-" : w;
+}
+
+async function laden(){
+  const msg = document.getElementById("msg");
+  try{
+    users = await api("Users");
+    organisationen = await api("Organisationen");
+
+    try{
+      userOrgs = await api("User_Organisationen");
+    }catch(e){
+      userOrgs = await api("User_organisationen");
     }
-  );
 
-  organisationen = await res.json();
+    aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
 
+    if(!aktuellerUser){
+      localStorage.clear();
+      location.href = "login.html";
+      return;
+    }
+
+    const istAdmin = aktuellerUser.Admin === true || localStorage.getItem("admin") === "true";
+    const istOrgMitglied = userOrgs.some(o =>
+      String(o.User_id) === String(USER_ID) &&
+      o.Aktiv === true
+    );
+
+    if(!istAdmin && !istOrgMitglied){
+      document.getElementById("zugriff").classList.remove("hidden");
+      document.getElementById("formular").classList.add("hidden");
+      return;
+    }
+
+    document.getElementById("zugriff").classList.add("hidden");
+    document.getElementById("formular").classList.remove("hidden");
+
+    renderOrganisationen();
+  }catch(err){
+    msg.innerText = "Fehler beim Laden:\n" + err.message;
+  }
+}
+
+function renderOrganisationen(){
   const box = document.getElementById("orgListe");
   box.innerHTML = "";
 
+  if(organisationen.length === 0){
+    box.innerHTML = "<div class='info'>Keine Organisationen gefunden.</div>";
+    return;
+  }
+
   organisationen.forEach(org => {
-    const div = document.createElement("label");
-    div.className = "org";
-
+    const div = document.createElement("div");
+    div.className = "row";
     div.innerHTML = `
-      <input type="checkbox" value="${org.id}">
-      <span>${org.Name}</span>
+      <span>${text(org.Name)}</span>
+      <input type="checkbox" class="orgCheck" value="${org.id}">
     `;
-
     box.appendChild(div);
   });
 }
 
-async function einsatzErstellen(){
-  const titel = document.getElementById("titel").value.trim();
-  const beschreibung = document.getElementById("beschreibung").value.trim();
-  const belohnung = Number(document.getElementById("belohnung").value || 0);
-  const meldung = document.getElementById("meldung");
-
-  meldung.innerText = "";
-
-  const ausgewaehlt = Array.from(
-    document.querySelectorAll("#orgListe input:checked")
-  ).map(x => Number(x.value));
-
-  if(!titel || !beschreibung){
-    meldung.innerText = "Bitte Titel und Beschreibung ausfüllen.";
-    return;
-  }
-
-  if(ausgewaehlt.length === 0){
-    meldung.innerText = "Bitte mindestens eine Organisation auswählen.";
-    return;
-  }
-
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Auftraege",
-    {
-      method:"POST",
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"return=representation"
-      },
-      body:JSON.stringify({
-        Titel:titel,
-        Beschreibung:beschreibung,
-        Typ:"Einsatz",
-        Auftragstyp:"Einsatz",
-        Sichtbarkeit:"organisation",
-        Ziel_id:null,
-        Hof:HOF,
-        Organisation:"Mehrere",
-        Status:"Offen",
-        Erstellt_von:USERNAME,
-        Belohnung:belohnung,
-        Erstellt_am:new Date().toISOString()
-      })
-    }
-  );
-
-  if(!res.ok){
-    meldung.innerText = await res.text();
-    return;
-  }
-
-  const auftrag = (await res.json())[0];
-
-  for(const orgId of ausgewaehlt){
-    await fetch(
-      SUPABASE_URL + "/rest/v1/Einsatz_Organisationen",
-      {
-        method:"POST",
-        headers:{
-          "apikey":SUPABASE_KEY,
-          "Authorization":"Bearer " + SUPABASE_KEY,
-          "Content-Type":"application/json",
-          "Prefer":"return=minimal"
-        },
-        body:JSON.stringify({
-          Auftrag_id:auftrag.id,
-          Organisation_id:orgId
-        })
-      }
-    );
-
-    const org = organisationen.find(o => Number(o.id) === Number(orgId));
-
-    await fetch(
-      SUPABASE_URL + "/rest/v1/Benachrichtigungen",
-      {
-        method:"POST",
-        headers:{
-          "apikey":SUPABASE_KEY,
-          "Authorization":"Bearer " + SUPABASE_KEY,
-          "Content-Type":"application/json",
-          "Prefer":"return=minimal"
-        },
-        body:JSON.stringify({
-          Titel:"🚨 Neuer Einsatz: " + titel,
-          Nachricht:"Organisation: " + (org ? org.Name : "-") + "\n\n" + beschreibung,
-          Typ:"Einsatz",
-          User_id:null,
-          Hof_id:null,
-          Organisation_id:orgId,
-          Auftrag_id:auftrag.id,
-          Gelesen:false,
-          Erledigt:false,
-          Erstellt_am:new Date().toISOString()
-        })
-      }
-    );
-  }
-
-  meldung.innerText = "Einsatz wurde erstellt und die Organisationen wurden verständigt.";
-
-  document.getElementById("titel").value = "";
-  document.getElementById("beschreibung").value = "";
-  document.getElementById("belohnung").value = "";
-  document.querySelectorAll("#orgListe input").forEach(x => x.checked = false);
+function gewaehlteOrganisationen(){
+  return Array.from(document.querySelectorAll(".orgCheck"))
+    .filter(c => c.checked)
+    .map(c => Number(c.value));
 }
 
-ladeOrganisationen();
-</script>
+async function einsatzErstellen(){
+  const msg = document.getElementById("msg");
+  msg.innerText = "";
 
+  const titel = document.getElementById("titel").value.trim();
+  const beschreibung = document.getElementById("beschreibung").value.trim();
+  const typ = document.getElementById("typ").value;
+  const belohnung = Number(document.getElementById("belohnung").value || 0);
+  const sichtbarkeit = document.getElementById("sichtbarkeit").value;
+  const orgIds = gewaehlteOrganisationen();
+
+  if(!titel){
+    msg.innerText = "Bitte Titel eingeben.";
+    return;
+  }
+
+  if(!beschreibung){
+    msg.innerText = "Bitte Beschreibung eingeben.";
+    return;
+  }
+
+  if(sichtbarkeit === "Organisation" && orgIds.length === 0){
+    msg.innerText = "Bitte mindestens eine Organisation auswählen.";
+    return;
+  }
+
+  try{
+    msg.innerText = "Einsatz wird erstellt...";
+
+    const einsatz = await postReturn("Auftraege", {
+      Erstellt_am:new Date().toISOString(),
+      Vorlage_id:null,
+      Titel:titel,
+      Beschreibung:beschreibung,
+      Typ:"Einsatz",
+      Status:"Offen",
+      Erstellt_von:USERNAME,
+      Angenommen_von:null,
+      Belohnung:belohnung,
+      Erledigt_am:null,
+      Sichtbarkeit:sichtbarkeit,
+      Hof:null,
+      Organisation:sichtbarkeit === "Organisation" ? "Ausgewählte Organisationen" : "Alle",
+      Auftragstyp:"Einsatz",
+      Ziel_id:null
+    });
+
+    const auftragId = einsatz && einsatz.id ? einsatz.id : null;
+
+    for(const orgId of orgIds){
+      await post("Einsatz_Organisationen", {
+        Auftrag_id:auftragId,
+        Organisation_id:orgId
+      });
+    }
+
+    const orgText = orgIds.length > 0
+      ? orgIds.map(id => {
+          const o = organisationen.find(x => Number(x.id) === Number(id));
+          return o ? o.Name : id;
+        }).join(", ")
+      : "Alle";
+
+    const nachricht =
+      "🚨 Neuer Einsatz\n\n" +
+      "Titel: " + titel + "\n" +
+      "Beschreibung: " + beschreibung + "\n" +
+      "Einsatzart: " + typ + "\n" +
+      "Organisationen: " + orgText + "\n" +
+      "Erstellt von: " + USERNAME;
+
+    await post("Benachrichtigungen", {
+      Titel:"🚨 Neuer Einsatz: " + titel,
+      Nachricht:nachricht,
+      Typ:"Einsatz",
+      User_id:null,
+      Hof_id:null,
+      Organisation_id:null,
+      Auftrag_id:auftragId,
+      Gelesen:false,
+      Erledigt:false,
+      Archiviert:false,
+      Telegram_gesendet:false,
+      Erstellt_am:new Date().toISOString()
+    });
+
+    await post("Telegram_queue", {
+      Titel:"🚨 Neuer Einsatz: " + titel,
+      Nachricht:nachricht,
+      Typ:"Einsatz",
+      User_id:null,
+      Hof_id:null,
+      Organisation_id:null,
+      Chat_id:null,
+      Gesendet:false,
+      Erstellt_am:new Date().toISOString(),
+      Status:"Offen",
+      Fehler:null
+    });
+
+    for(const orgId of orgIds){
+      await post("Benachrichtigungen", {
+        Titel:"🚨 Neuer Einsatz: " + titel,
+        Nachricht:nachricht,
+        Typ:"Einsatz",
+        User_id:null,
+        Hof_id:null,
+        Organisation_id:orgId,
+        Auftrag_id:auftragId,
+        Gelesen:false,
+        Erledigt:false,
+        Archiviert:false,
+        Telegram_gesendet:false,
+        Erstellt_am:new Date().toISOString()
+      });
+
+      await post("Telegram_queue", {
+        Titel:"🚨 Neuer Einsatz: " + titel,
+        Nachricht:nachricht,
+        Typ:"Einsatz",
+        User_id:null,
+        Hof_id:null,
+        Organisation_id:orgId,
+        Chat_id:null,
+        Gesendet:false,
+        Erstellt_am:new Date().toISOString(),
+        Status:"Offen",
+        Fehler:null
+      });
+    }
+
+    msg.innerText = "Einsatz wurde erstellt und in Telegram_queue eingetragen.";
+
+    document.getElementById("titel").value = "";
+    document.getElementById("beschreibung").value = "";
+    document.getElementById("belohnung").value = "0";
+    document.querySelectorAll(".orgCheck").forEach(c => c.checked = false);
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+laden();
+</script>
 </body>
 </html>
