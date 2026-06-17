@@ -434,7 +434,7 @@ async function ladeHome(){
     const organisationen = await api("Organisationen");
     const userOrgs = await api("User_Organisationen").catch(async () => await api("User_organisationen"));
     const felder = await api("Felder");
-    const rechnungen = await api("Rechnungen");
+    const rechnungen = await api("rechnungen");
 
     const user = users.find(u => String(u.id) === String(USER_ID));
 
