@@ -7,159 +7,34 @@
 
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  overflow-x:hidden;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  width:100%;
-  max-width:700px;
-  margin:auto;
-  padding:20px;
-}
-
-.back{
-  background:#222;
-  color:white;
-  border:1px solid #555;
-  padding:14px 22px;
-  border-radius:12px;
-  margin-bottom:30px;
-  font-size:18px;
-}
-
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:38px;
-  margin:20px 0 30px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:18px;
-  box-shadow:0 0 10px rgba(0,255,0,0.18);
-}
-
-.card.erntereif{
-  border:2px solid #00cc44;
-  box-shadow:0 0 18px rgba(0,255,80,0.55);
-}
-
-.card.warnung{
-  border:2px solid #ffaa00;
-  box-shadow:0 0 18px rgba(255,170,0,0.45);
-}
-
-h2{
-  color:#00ff22;
-  margin-top:0;
-}
-
-.label{
-  color:#ffaa33;
-  font-size:15px;
-  margin-top:12px;
-}
-
-.value{
-  color:white;
-  font-size:21px;
-  margin-top:4px;
-}
-
-.status{
-  color:white;
-  font-size:18px;
-  line-height:1.6;
-  margin-top:12px;
-}
-
-.badge{
-  display:inline-block;
-  padding:6px 12px;
-  border-radius:20px;
-  margin:6px 4px 6px 0;
-  font-weight:bold;
-}
-
+body{margin:0;overflow-x:hidden;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 30px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 0 10px rgba(0,255,0,0.18);}
+.card.erntereif{border:2px solid #00cc44;box-shadow:0 0 18px rgba(0,255,80,0.55);}
+.card.warnung{border:2px solid #ffaa00;box-shadow:0 0 18px rgba(255,170,0,0.45);}
+h2{color:#00ff22;margin-top:0;}
+.label{color:#ffaa33;font-size:15px;margin-top:12px;}
+.value{color:white;font-size:21px;margin-top:4px;}
+.status{color:white;font-size:18px;line-height:1.6;margin-top:12px;}
+.fruchtbox{background:#000;border:1px dashed #ffaa33;border-radius:12px;padding:14px;margin-top:12px;color:white;line-height:1.55;font-size:17px;}
+.progress-bg{width:100%;height:18px;background:#000;border:1px solid #008000;border-radius:18px;overflow:hidden;margin-top:8px;}
+.progress-fill{height:100%;background:#00aa22;width:0%;}
+.badge{display:inline-block;padding:6px 12px;border-radius:20px;margin:6px 4px 6px 0;font-weight:bold;}
 .green{background:#008800;color:white;}
 .orange{background:#cc7700;color:white;}
 .red{background:#aa0000;color:white;}
 .gray{background:#333;color:white;}
-
-input, select{
-  width:100%;
-  padding:14px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid #008000;
-  background:#000;
-  color:white;
-  font-size:18px;
-}
-
-.row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  color:white;
-  font-size:19px;
-  margin-top:14px;
-}
-
-.row input{
-  width:28px;
-  height:28px;
-}
-
-button{
-  width:100%;
-  margin-top:14px;
-  padding:16px;
-  border:none;
-  border-radius:12px;
-  font-size:19px;
-  font-weight:bold;
-}
-
-.btn-green{
-  background:#008800;
-  color:white;
-}
-
-.btn-red{
-  background:#aa0000;
-  color:white;
-}
-
-.btn-dark{
-  background:#333;
-  color:white;
-}
-
-.msg{
-  color:#ffaa33;
-  text-align:center;
-  margin-top:14px;
-  font-weight:bold;
-}
-
-.leer{
-  color:white;
-  text-align:center;
-  margin-top:40px;
-  font-size:18px;
-}
+input,select{width:100%;padding:14px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:18px;}
+.row{display:flex;align-items:center;justify-content:space-between;color:white;font-size:19px;margin-top:14px;}
+.row input{width:28px;height:28px;}
+button{width:100%;margin-top:14px;padding:16px;border:none;border-radius:12px;font-size:19px;font-weight:bold;}
+.btn-green{background:#008800;color:white;}
+.btn-red{background:#aa0000;color:white;}
+.btn-dark{background:#333;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:14px;font-weight:bold;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:40px;font-size:18px;}
 </style>
 </head>
 
@@ -195,31 +70,7 @@ let hof = null;
 let istAdmin = false;
 let darfBearbeiten = false;
 let bearbeitenOffen = false;
-
-const fruchtStufen = {
-  "Gras":4,
-  "Weizen":8,
-  "Gerste":8,
-  "Hafer":8,
-  "Raps":8,
-  "Sorghum":8,
-  "Mais":8,
-  "Silomais":8,
-  "Silagemais":8,
-  "Sonnenblumen":8,
-  "Sojabohnen":8,
-  "Kartoffeln":6,
-  "Zuckerrüben":6,
-  "Zuckerrueben":6,
-  "Baumwolle":8,
-  "Pappel":12,
-  "Ölrettich":3,
-  "Oelrettich":3,
-  "Senf":3,
-  "Humusaktiv":3,
-  "Klee":4,
-  "Luzerne":4
-};
+let fruchtarten = [];
 
 function text(wert){
   return wert === null || wert === undefined || wert === "" ? "-" : wert;
@@ -233,6 +84,24 @@ function jaNein(wert){
   return wert === true ? "✅ Ja" : "❌ Nein";
 }
 
+function zahl(wert){
+  const n = Number(String(wert || "0").replace(",","."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function datumDeutsch(d){
+  if(!d) return "-";
+  const x = new Date(d);
+  if(isNaN(x.getTime())) return "-";
+  return x.toLocaleDateString("de-DE");
+}
+
+function fruchtObj(name){
+  return fruchtarten.find(f =>
+    String(f.Name).toLowerCase() === String(name || "").toLowerCase()
+  );
+}
+
 function duengenNoetig(){
   return feld["Duengen_nötig"] === true || feld.Duengen_noetig === true;
 }
@@ -241,32 +110,87 @@ function tageSeit(datum){
   if(!datum) return null;
   const start = new Date(datum);
   const heute = new Date();
+  if(isNaN(start.getTime())) return null;
   return Math.floor((heute - start) / (1000 * 60 * 60 * 24));
 }
 
+function ernteDatum(){
+  const frucht = fruchtObj(feld.Fruchtart);
+  if(!feld.Gesaet_am || !frucht || !frucht.Wachstumsdauer_Tage) return "-";
+  const d = new Date(feld.Gesaet_am);
+  if(isNaN(d.getTime())) return "-";
+  d.setDate(d.getDate() + Number(frucht.Wachstumsdauer_Tage || 0));
+  return datumDeutsch(d);
+}
+
+function erwarteterErtrag(){
+  const frucht = fruchtObj(feld.Fruchtart);
+  if(!frucht) return "-";
+  const ha = zahl(feld.Feldgroesse);
+  const ertrag = Number(frucht.Ertrag_pro_Hektar || 0);
+  if(!ha || !ertrag) return "-";
+  return Math.round(ha * ertrag).toLocaleString("de-DE");
+}
+
+function erwarteterWert(){
+  const frucht = fruchtObj(feld.Fruchtart);
+  if(!frucht) return "-";
+  const ha = zahl(feld.Feldgroesse);
+  const ertrag = Number(frucht.Ertrag_pro_Hektar || 0);
+  const preis = Number(frucht.Verkaufspreis || 0);
+  if(!ha || !ertrag || !preis) return "-";
+  return Math.round(ha * ertrag * preis).toLocaleString("de-DE");
+}
+
 function wachstumBerechnen(){
-  const frucht = feld.Fruchtart || "";
-  const max = fruchtStufen[frucht] || 4;
+  const frucht = fruchtObj(feld.Fruchtart);
   const tage = tageSeit(feld.Gesaet_am);
+
+  const max = frucht && frucht.Wachstumsdauer_Tage
+    ? Number(frucht.Wachstumsdauer_Tage)
+    : 4;
 
   if(tage === null){
     return {
-      stufe: feld.Wachstumsstufe || 0,
+      tage:0,
       max:max,
+      prozent:feld.Erntebereit === true ? 100 : 0,
       text:"Kein Aussaatdatum gespeichert",
-      erntereif: feld.Erntebereit === true
+      erntereif:feld.Erntebereit === true,
+      rest:null
     };
   }
 
-  const stufe = Math.min(max, Math.max(0, tage));
-  const erntereif = stufe >= max;
+  const prozent = Math.min(100, Math.max(0, Math.round((tage / max) * 100)));
+  const erntereif = tage >= max;
+  const rest = Math.max(0, max - tage);
 
   return {
-    stufe:stufe,
+    tage:tage,
     max:max,
-    text:tage + " RL-Tage / " + tage + " Ingame-Monate seit Aussaat",
-    erntereif:erntereif
+    prozent:prozent,
+    text:tage + " Tage seit Aussaat",
+    erntereif:erntereif,
+    rest:rest
   };
+}
+
+function fruchtSelectHtml(){
+  let html = `<select id="fruchtart">`;
+  html += `<option value="">Keine Fruchtart</option>`;
+
+  fruchtarten
+    .filter(f => f.Aktiv !== false)
+    .forEach(f => {
+      html += `<option value="${f.Name}" ${String(f.Name) === String(feld.Fruchtart) ? "selected" : ""}>${f.Name}</option>`;
+    });
+
+  if(feld.Fruchtart && !fruchtarten.some(f => String(f.Name) === String(feld.Fruchtart))){
+    html += `<option value="${feld.Fruchtart}" selected>${feld.Fruchtart}</option>`;
+  }
+
+  html += `</select>`;
+  return html;
 }
 
 async function api(tabelle){
@@ -346,6 +270,7 @@ async function erntereifBenachrichtigen(wachstum){
     Gelesen:false,
     Erledigt:false,
     Archiviert:false,
+    Telegram_gesendet:false,
     Erstellt_am:new Date().toISOString()
   });
 
@@ -358,7 +283,9 @@ async function erntereifBenachrichtigen(wachstum){
     Organisation_id:null,
     Chat_id:null,
     Gesendet:false,
-    Erstellt_am:new Date().toISOString()
+    Erstellt_am:new Date().toISOString(),
+    Status:"Offen",
+    Fehler:null
   });
 
   await patchFeld({
@@ -377,6 +304,7 @@ async function laden(){
     const felder = await api("Felder");
     const users = await api("Users");
     const hoefe = await api("Hoefe");
+    fruchtarten = await api("Fruchtarten");
 
     feld = felder.find(f => String(f.id) === String(FELD_ID));
     user = users.find(u => String(u.id) === String(USER_ID));
@@ -406,6 +334,43 @@ async function laden(){
       err.message +
       "</div>";
   }
+}
+
+function fruchtInfoHtml(wachstum){
+  const frucht = fruchtObj(feld.Fruchtart);
+
+  if(!frucht){
+    return `
+      <div class="card">
+        <h2>Fruchtinformationen</h2>
+        <div class="fruchtbox">
+          Keine Detaildaten zur aktuellen Fruchtart vorhanden.
+        </div>
+      </div>
+    `;
+  }
+
+  const restText = wachstum.rest === null
+    ? "-"
+    : (wachstum.rest === 0 ? "Ernte möglich" : wachstum.rest + " Tage");
+
+  return `
+    <div class="card">
+      <h2>Fruchtinformationen</h2>
+
+      <div class="fruchtbox">
+        Anpflanzzeit: ${text(frucht.Anpflanzzeit)}<br>
+        Erntezeit: ${text(frucht.Erntezeit)}<br>
+        Wachstumsdauer: ${text(frucht.Wachstumsdauer_Tage)} Tage<br>
+        Ertrag pro Hektar: ${text(frucht.Ertrag_pro_Hektar)}<br>
+        Verkaufspreis: ${text(frucht.Verkaufspreis)}<br>
+        Erwarteter Ertrag: ${erwarteterErtrag()}<br>
+        Erwarteter Verkaufswert: ${erwarteterWert()}<br>
+        Ernte ab ca.: ${ernteDatum()}<br>
+        Restzeit bis Ernte: ${restText}
+      </div>
+    </div>
+  `;
 }
 
 function anzeigen(wachstum){
@@ -450,8 +415,12 @@ function anzeigen(wachstum){
       <div class="label">Frucht</div>
       <div class="value">${text(feld.Fruchtart)}</div>
 
-      <div class="label">Wachstum berechnet</div>
-      <div class="value">${wachstum.stufe} / ${wachstum.max}</div>
+      <div class="label">Aussaatdatum</div>
+      <div class="value">${datumDeutsch(feld.Gesaet_am)}</div>
+
+      <div class="label">Wachstumsfortschritt</div>
+      <div class="value">${wachstum.prozent} %</div>
+      <div class="progress-bg"><div class="progress-fill" style="width:${wachstum.prozent}%"></div></div>
 
       <div class="label">Zeit seit Aussaat</div>
       <div class="value">${wachstum.text}</div>
@@ -459,6 +428,8 @@ function anzeigen(wachstum){
       <div class="label">Deine Rechte</div>
       <div class="value">${darfBearbeiten ? "Bearbeiten erlaubt" : "Nur Ansicht"}</div>
     </div>
+
+    ${fruchtInfoHtml(wachstum)}
 
     <div class="card">
       <h2>Feldstatus</h2>
@@ -527,7 +498,7 @@ function bearbeitungsFormular(){
       `}
 
       <div class="label">Fruchtart</div>
-      <input id="fruchtart" value="${text(feld.Fruchtart)}">
+      ${fruchtSelectHtml()}
 
       <div class="label">Wachstumsstufe manuell</div>
       <input id="wachstumsstufe" type="number" value="${feld.Wachstumsstufe || 0}">
@@ -550,6 +521,7 @@ function bearbeitungsFormular(){
       <div class="row">Erntebereit <input id="erntebereit" type="checkbox" ${checked(feld.Erntebereit)}></div>
 
       <button class="btn-green" onclick="speichern()">Speichern</button>
+      <button class="btn-green" onclick="aussaatHeute()">Aussaat heute setzen</button>
       <button class="btn-red" onclick="ernteReset()">Nach Ernte zurücksetzen</button>
 
       <div id="meldung" class="msg"></div>
@@ -570,7 +542,7 @@ async function speichern(){
     const gesaetDatum = document.getElementById("gesaetAm").value;
 
     let daten = {
-      Fruchtart:document.getElementById("fruchtart").value.trim(),
+      Fruchtart:document.getElementById("fruchtart").value,
       Wachstumsstufe:Number(document.getElementById("wachstumsstufe").value || 0),
       Gesaet_am:gesaetDatum ? new Date(gesaetDatum).toISOString() : null,
       Letzte_Aktion:document.getElementById("letzteAktion").value.trim(),
@@ -605,6 +577,18 @@ async function speichern(){
   }catch(err){
     meldung.innerText = "Fehler: " + err.message;
   }
+}
+
+async function aussaatHeute(){
+  const heute = new Date();
+  heute.setMinutes(heute.getMinutes() - heute.getTimezoneOffset());
+  const datum = heute.toISOString().slice(0,10);
+
+  document.getElementById("gesaetAm").value = datum;
+  document.getElementById("gesaet").checked = true;
+  document.getElementById("letzteAktion").value = "Aussaat gesetzt";
+
+  await speichern();
 }
 
 async function ernteReset(){
