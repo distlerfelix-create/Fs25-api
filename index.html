@@ -7,205 +7,36 @@
 
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  overflow-x:hidden;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  width:100%;
-  max-width:780px;
-  margin:auto;
-  padding:20px 15px 70px;
-}
-
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:38px;
-  margin:18px 0 24px;
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:18px;
-  margin-bottom:16px;
-  box-shadow:0 0 10px rgba(0,255,0,.18);
-}
-
-.welcome{
-  text-align:center;
-  color:white;
-  font-size:22px;
-  line-height:1.45;
-}
-
-.welcome b{
-  color:#00ff22;
-}
-
-.meta{
-  color:#ffaa33;
-  font-size:15px;
-  line-height:1.45;
-  margin-top:10px;
-  text-align:center;
-}
-
-.server{
-  color:white;
-  text-align:center;
-  font-size:17px;
-  line-height:1.55;
-}
-
-.server span{
-  color:#00ff22;
-  font-weight:bold;
-}
-
-.server-online{color:#00ff22!important;}
-.server-offline{color:red!important;}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.stat{
-  background:#090909;
-  border:1px solid #006600;
-  border-radius:12px;
-  padding:14px 10px;
-  text-align:center;
-  color:white;
-  min-height:92px;
-}
-
-.stat b{
-  display:block;
-  color:#00ff22;
-  font-size:28px;
-  margin-bottom:4px;
-}
-
-.section-title{
-  color:red;
-  font-family:Georgia,serif;
-  font-size:20px;
-  font-weight:bold;
-  margin:26px 0 12px;
-}
-
-button{
-  width:100%;
-  padding:16px;
-  margin:0;
-  border:none;
-  border-radius:14px;
-  background:#008800;
-  color:white;
-  font-size:18px;
-  font-weight:bold;
-  box-shadow:0 0 10px rgba(0,255,0,.22);
-}
-
-button:active{
-  background:#00aa00;
-}
-
-.dark{background:#333;}
-.red{background:#aa0000;}
-.blue{background:#004488;}
-.orange{background:#cc7700;}
-
-.badge{
-  display:inline-block;
-  background:red;
-  color:white;
-  border-radius:20px;
-  padding:2px 8px;
-  font-size:14px;
-  margin-left:5px;
-}
-
-.item{
-  background:#090909;
-  border:1px solid #006600;
-  border-radius:12px;
-  padding:14px;
-  margin-bottom:10px;
-  color:white;
-  line-height:1.45;
-}
-
-.item b{
-  color:#00ff22;
-}
-
-.einsatzbox{
-  border:2px solid red;
-  box-shadow:0 0 14px rgba(255,0,0,.55);
-}
-
-.einsatzTitel{
-  color:red;
-  font-size:22px;
-  font-weight:bold;
-  margin-bottom:10px;
-  text-align:center;
-}
-
-.einsatzItem{
-  color:white;
-  text-align:left;
-  border-top:1px solid #333;
-  padding:10px 0;
-}
-
-.einsatzItem b{
-  color:#00ff22;
-}
-
-.notice{
-  margin-top:25px;
-  color:#ffaa33;
-  font-size:14px;
-  text-align:center;
-}
-
-.hidden{
-  display:none!important;
-}
-
-@media(max-width:560px){
-  .grid,.stats{
-    grid-template-columns:1fr;
-  }
-
-  h1{
-    font-size:34px;
-  }
-
-  button{
-    font-size:17px;
-  }
-}
+body{margin:0;overflow-x:hidden;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:780px;margin:auto;padding:20px 15px 70px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:18px 0 24px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18);}
+.welcome{text-align:center;color:white;font-size:22px;line-height:1.45;}
+.welcome b{color:#00ff22;}
+.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;text-align:center;}
+.server{color:white;text-align:center;font-size:17px;line-height:1.55;}
+.server span{color:#00ff22;font-weight:bold;}
+.server-online{color:#00ff22!important;}.server-offline{color:red!important;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px 10px;text-align:center;color:white;min-height:92px;}
+.stat b{display:block;color:#00ff22;font-size:28px;margin-bottom:4px;}
+.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:26px 0 12px;}
+button{width:100%;padding:16px;margin:0;border:none;border-radius:14px;background:#008800;color:white;font-size:18px;font-weight:bold;box-shadow:0 0 10px rgba(0,255,0,.22);}
+button:active{background:#00aa00;}
+.dark{background:#333;}.red{background:#aa0000;}.blue{background:#004488;}.orange{background:#cc7700;}
+.badge{display:inline-block;background:red;color:white;border-radius:20px;padding:2px 8px;font-size:14px;margin-left:5px;}
+.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:10px;color:white;line-height:1.45;}
+.item b{color:#00ff22;}
+.einsatzbox{border:2px solid red;box-shadow:0 0 14px rgba(255,0,0,.55);}
+.einsatzTitel{color:red;font-size:22px;font-weight:bold;margin-bottom:10px;text-align:center;}
+.einsatzItem{color:white;text-align:left;border-top:1px solid #333;padding:10px 0;}
+.einsatzItem b{color:#00ff22;}
+.notice{margin-top:25px;color:#ffaa33;font-size:14px;text-align:center;}
+.hidden{display:none!important;}
+@media(max-width:560px){.grid,.stats{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}}
 </style>
+
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#00ff22">
 <meta name="mobile-web-app-capable" content="yes">
@@ -213,7 +44,6 @@ button:active{
 <meta name="apple-mobile-web-app-title" content="FS25 RP">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-192.png">
-
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function(){
@@ -223,53 +53,32 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-
 </head>
 
 <body>
 <div class="app">
-
 <h1>HOME</h1>
 
 <div class="card">
-  <div class="welcome">
-    Willkommen <b id="vorname">...</b><br>
-    Hof: <b id="hofname">...</b>
-  </div>
+  <div class="welcome">Willkommen <b id="vorname">...</b><br>Hof: <b id="hofname">...</b></div>
   <div id="orgKurz" class="meta">Organisationen: Lade...</div>
 </div>
 
 <div class="card server">
   <b>SERVER STATUS</b><br>
-  <span id="server">...</span> |
-  Spieler: <span id="spieler">...</span><br>
-  <span id="servername">...</span> |
-  <span id="map">...</span><br>
-  <span id="monat">...</span>,
-  Tag <span id="tag">...</span>,
-  <span id="zeit">...</span><br>
+  <span id="server">...</span> | Spieler: <span id="spieler">...</span><br>
+  <span id="servername">...</span> | <span id="map">...</span><br>
+  <span id="monat">...</span>, Tag <span id="tag">...</span>, <span id="zeit">...</span><br>
   Update: <span id="githubupdate">...</span>
 </div>
 
 <div class="card">
   <div class="section-title" style="margin-top:0">DASHBOARD</div>
   <div class="stats">
-    <div class="stat" onclick="location.href='benachrichtigungen.html'">
-      <b id="statBenachrichtigungen">0</b>
-      🔔 Offene Benachrichtigungen
-    </div>
-    <div class="stat" onclick="location.href='auftraege.html'">
-      <b id="statAuftraege">0</b>
-      📋 Offene Aufträge
-    </div>
-    <div class="stat" onclick="location.href='felder.html'">
-      <b id="statFelder">0</b>
-      🌾 Erntereife Felder
-    </div>
-    <div class="stat" onclick="location.href='rechnungen.html'">
-      <b id="statRechnungen">0</b>
-      🧾 Offene Rechnungen
-    </div>
+    <div class="stat" onclick="location.href='benachrichtigungen.html'"><b id="statBenachrichtigungen">0</b>🔔 Offene Benachrichtigungen</div>
+    <div class="stat" onclick="location.href='auftraege.html'"><b id="statAuftraege">0</b>📋 Offene Aufträge</div>
+    <div class="stat" onclick="location.href='felder.html'"><b id="statFelder">0</b>🌾 Erntereife Felder</div>
+    <div class="stat" onclick="location.href='rechnungen.html'"><b id="statRechnungen">0</b>🧾 Offene Rechnungen</div>
   </div>
 </div>
 
@@ -299,16 +108,12 @@ if ("serviceWorker" in navigator) {
 
 <div id="verwaltungBlock" class="hidden">
   <div class="section-title">VERWALTUNG</div>
-  <div class="grid">
-    <button class="blue" onclick="location.href='strafregister.html'">🚔 STRAFREGISTER</button>
-  </div>
+  <div class="grid"><button class="blue" onclick="location.href='strafregister.html'">🚔 STRAFREGISTER</button></div>
 </div>
 
 <div id="adminBlock" class="hidden">
   <div class="section-title">ADMIN</div>
-  <div class="grid">
-    <button class="orange" onclick="location.href='admin.html'">👑 ADMINBEREICH</button>
-  </div>
+  <div class="grid"><button class="orange" onclick="location.href='admin.html'">👑 ADMINBEREICH</button></div>
 </div>
 
 <div class="section-title">BENUTZER</div>
@@ -318,320 +123,161 @@ if ("serviceWorker" in navigator) {
 </div>
 
 <div class="notice">FS25 RP FIX1701 · V3.0</div>
-
 </div>
 
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 const STATUS_URL = "https://raw.githubusercontent.com/distlerfelix-create/Fs25-api/main/status.json";
-
 const USER_ID = localStorage.getItem("user_id");
 const IST_ADMIN_LOCAL = localStorage.getItem("admin") === "true";
-
 let letzterEinsatzCount = 0;
 let tonFreigeschaltet = false;
 
-document.addEventListener("click", () => {
-  tonFreigeschaltet = true;
-});
+document.addEventListener("click", () => { tonFreigeschaltet = true; });
+if(!USER_ID){ location.href = "login.html"; }
 
-if(!USER_ID){
-  location.href = "login.html";
-}
-
-function headers(){
-  return {
-    "apikey":SUPABASE_KEY,
-    "Authorization":"Bearer " + SUPABASE_KEY,
-    "Content-Type":"application/json"
-  };
-}
-
-async function api(tabelle){
-  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
-    headers:headers()
-  });
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
-
-  return await res.json();
-}
-
-function text(w){
-  return w === null || w === undefined || w === "" ? "-" : w;
-}
+function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
+async function api(tabelle){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{headers:headers()});if(!res.ok){throw new Error(await res.text());}return await res.json();}
+async function apiOptional(tabelle){try{return await api(tabelle);}catch(e){return [];}}
+function istLeer(v){return v===null||v===undefined||v==="";}
+function statusErledigt(status){return status==="Erledigt"||status==="Abgeschlossen"||status==="Bezahlt"||status==="Storniert";}
 
 function sirene(){
-  if(!tonFreigeschaltet) return;
-
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-  osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.35);
-  osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.7);
-
-  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start();
-  osc.stop(audioCtx.currentTime + 1.2);
+  if(!tonFreigeschaltet)return;
+  const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+  osc.type="sawtooth";
+  osc.frequency.setValueAtTime(600,audioCtx.currentTime);
+  osc.frequency.linearRampToValueAtTime(1200,audioCtx.currentTime+0.35);
+  osc.frequency.linearRampToValueAtTime(600,audioCtx.currentTime+0.7);
+  gain.gain.setValueAtTime(0.25,audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+1.2);
+  osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+1.2);
 }
 
 async function ladeServerstatus(){
   try{
-    const res = await fetch(STATUS_URL + "?t=" + Date.now(), {
-      cache:"no-store"
-    });
-
-    if(!res.ok){
-      throw new Error("status.json nicht erreichbar");
-    }
-
-    const status = await res.json();
-
-    document.getElementById("servername").innerText = status.servername || "-";
-    document.getElementById("map").innerText = status.map || "-";
-    document.getElementById("spieler").innerText = status.spielerOnline ?? "0";
-    document.getElementById("monat").innerText = status.monat || "-";
-    document.getElementById("tag").innerText = status.tag ?? "-";
-    document.getElementById("zeit").innerText = status.zeit || "-";
-    document.getElementById("githubupdate").innerText = status.letztesUpdate || "-";
-
-    const server = document.getElementById("server");
-
-    if(status.serverOnline === true){
-      server.innerText = "🟢 Online";
-      server.className = "server-online";
-    }else{
-      server.innerText = "🔴 Offline";
-      server.className = "server-offline";
-    }
-
+    const res=await fetch(STATUS_URL+"?t="+Date.now(),{cache:"no-store"});
+    if(!res.ok)throw new Error("status.json nicht erreichbar");
+    const status=await res.json();
+    document.getElementById("servername").innerText=status.servername||"-";
+    document.getElementById("map").innerText=status.map||"-";
+    document.getElementById("spieler").innerText=status.spielerOnline??"0";
+    document.getElementById("monat").innerText=status.monat||"-";
+    document.getElementById("tag").innerText=status.tag??"-";
+    document.getElementById("zeit").innerText=status.zeit||"-";
+    document.getElementById("githubupdate").innerText=status.letztesUpdate||"-";
+    const server=document.getElementById("server");
+    if(status.serverOnline===true){server.innerText="🟢 Online";server.className="server-online";}else{server.innerText="🔴 Offline";server.className="server-offline";}
   }catch(err){
-    document.getElementById("server").innerText = "🔴 Fehler";
-    document.getElementById("server").className = "server-offline";
-    document.getElementById("githubupdate").innerText = "Status konnte nicht geladen werden";
+    document.getElementById("server").innerText="🔴 Fehler";
+    document.getElementById("server").className="server-offline";
+    document.getElementById("githubupdate").innerText="Status konnte nicht geladen werden";
   }
 }
 
 function orgIcon(name){
-  const n = String(name || "").toLowerCase();
-
-  if(n.includes("polizei")) return "👮";
-  if(n.includes("feuerwehr")) return "🚒";
-  if(n.includes("rettung")) return "🚑";
-  if(n.includes("gemeinde")) return "🏛";
-  if(n.includes("bauhof")) return "🚜";
-  if(n.includes("förster") || n.includes("foerster")) return "🌲";
-
+  const n=String(name||"").toLowerCase();
+  if(n.includes("polizei"))return "👮";
+  if(n.includes("feuerwehr"))return "🚒";
+  if(n.includes("rettung"))return "🚑";
+  if(n.includes("gemeinde"))return "🏛";
+  if(n.includes("bauhof"))return "🚜";
+  if(n.includes("förster")||n.includes("foerster"))return "🌲";
   return "🏢";
 }
 
-function statusErledigt(status){
-  return status === "Erledigt" ||
-         status === "Abgeschlossen" ||
-         status === "Bezahlt" ||
-         status === "Storniert";
+function erlaubteHofIdsFuerUser(user,hofMitglieder){
+  let ids=[];
+  if(!istLeer(user.Hof_id))ids.push(String(user.Hof_id));
+  hofMitglieder.filter(hm=>String(hm.User_id)===String(USER_ID)&&hm.Aktiv!==false).forEach(hm=>{if(!istLeer(hm.Hof_id))ids.push(String(hm.Hof_id));});
+  return [...new Set(ids)];
+}
+
+function benachrichtigungFuerMich(b,meineOrgIds,erlaubteHofIds){
+  const global=istLeer(b.User_id)&&istLeer(b.Hof_id)&&istLeer(b.Organisation_id);
+  const fuerUser=!istLeer(b.User_id)&&String(b.User_id)===String(USER_ID);
+  const fuerHof=!istLeer(b.Hof_id)&&erlaubteHofIds.includes(String(b.Hof_id));
+  const fuerOrg=!istLeer(b.Organisation_id)&&meineOrgIds.includes(String(b.Organisation_id));
+  return global||fuerUser||fuerHof||fuerOrg;
 }
 
 async function ladeHome(){
   try{
-    const users = await api("Users");
-    const hoefe = await api("Hoefe");
-    const benachrichtigungen = await api("Benachrichtigungen");
-    const auftraege = await api("Auftraege");
-    const organisationen = await api("Organisationen");
-    const userOrgs = await api("User_Organisationen").catch(async () => await api("User_organisationen"));
-    const felder = await api("Felder");
-    const rechnungen = await api("Rechnungen");
+    const users=await api("Users");
+    const hoefe=await api("Hoefe");
+    const benachrichtigungen=await api("Benachrichtigungen");
+    const auftraege=await api("Auftraege");
+    const organisationen=await api("Organisationen");
+    const userOrgs=await api("User_Organisationen").catch(async()=>await api("User_organisationen"));
+    const hofMitglieder=await apiOptional("Hof_Mitglieder");
+    const felder=await api("Felder");
+    const rechnungen=await api("Rechnungen");
+    const user=users.find(u=>String(u.id)===String(USER_ID));
+    if(!user||user.Aktiviert===false){localStorage.clear();location.href="login.html";return;}
+    const hof=hoefe.find(h=>String(h.id)===String(user.Hof_id));
+    document.getElementById("vorname").innerText=user.Vorname||user["PSN-Username"]||"-";
+    document.getElementById("hofname").innerText=user.Hof||(hof?hof.Name:"-");
 
-    const user = users.find(u => String(u.id) === String(USER_ID));
+    const meineOrgs=userOrgs.filter(o=>String(o.User_id)===String(USER_ID)&&o.Aktiv===true);
+    const meineOrgIds=meineOrgs.map(o=>String(o.Organisation_id));
+    const orgNamen=meineOrgs.map(e=>organisationen.find(o=>String(o.id)===String(e.Organisation_id))).filter(Boolean).map(o=>o.Name);
+    document.getElementById("orgKurz").innerText=orgNamen.length>0?"Organisationen: "+orgNamen.join(" • "):"Organisationen: Keine";
 
-    if(!user || user.Aktiviert === false){
-      localStorage.clear();
-      location.href = "login.html";
-      return;
-    }
+    const erlaubteHofIds=erlaubteHofIdsFuerUser(user,hofMitglieder);
 
-    const hof = hoefe.find(h => String(h.id) === String(user.Hof_id));
-
-    document.getElementById("vorname").innerText = user.Vorname || user["PSN-Username"] || "-";
-    document.getElementById("hofname").innerText = user.Hof || (hof ? hof.Name : "-");
-
-    const meineOrgs = userOrgs.filter(o =>
-      String(o.User_id) === String(USER_ID) &&
-      o.Aktiv === true
-    );
-
-    const orgNamen = meineOrgs
-      .map(e => organisationen.find(o => String(o.id) === String(e.Organisation_id)))
-      .filter(Boolean)
-      .map(o => o.Name);
-
-    document.getElementById("orgKurz").innerText =
-      orgNamen.length > 0
-        ? "Organisationen: " + orgNamen.join(" • ")
-        : "Organisationen: Keine";
-
-    const ungelesen = benachrichtigungen.filter(b =>
-      b.Gelesen !== true &&
-      b.Archiviert !== true &&
-      (
-        String(b.User_id) === String(USER_ID) ||
-        String(b.Hof_id) === String(user.Hof_id) ||
-        b.User_id === null ||
-        b.User_id === "" ||
-        b.Hof_id === null ||
-        b.Hof_id === ""
-      )
+    const ungelesen=benachrichtigungen.filter(b=>
+      b.Gelesen!==true&&
+      b.Archiviert!==true&&
+      benachrichtigungFuerMich(b,meineOrgIds,erlaubteHofIds)
     ).length;
 
-    document.getElementById("statBenachrichtigungen").innerText = ungelesen;
+    document.getElementById("statBenachrichtigungen").innerText=ungelesen;
+    if(ungelesen>0){document.getElementById("badge").classList.remove("hidden");document.getElementById("badge").innerText=ungelesen;}else{document.getElementById("badge").classList.add("hidden");}
 
-    if(ungelesen > 0){
-      document.getElementById("badge").classList.remove("hidden");
-      document.getElementById("badge").innerText = ungelesen;
-    }else{
-      document.getElementById("badge").classList.add("hidden");
-    }
+    const offeneAuftraege=auftraege.filter(a=>!statusErledigt(a.Status));
+    document.getElementById("statAuftraege").innerText=offeneAuftraege.length;
 
-    const offeneAuftraege = auftraege.filter(a =>
-      !statusErledigt(a.Status) &&
-      a.Status !== "Erledigt"
-    );
+    const erntereifeFelder=felder.filter(f=>erlaubteHofIds.includes(String(f.Hof_id))&&f.Erntebereit===true).length;
+    document.getElementById("statFelder").innerText=erntereifeFelder;
 
-    document.getElementById("statAuftraege").innerText = offeneAuftraege.length;
+    const offeneRechnungen=rechnungen.filter(r=>(erlaubteHofIds.includes(String(r.Von_Hof_id))||erlaubteHofIds.includes(String(r.An_Hof_id)))&&r.Bezahlt!==true&&r.Storniert!==true&&r.Status!=="Bezahlt"&&r.Status!=="Storniert").length;
+    document.getElementById("statRechnungen").innerText=offeneRechnungen;
 
-    const erntereifeFelder = felder.filter(f =>
-      String(f.Hof_id) === String(user.Hof_id) &&
-      f.Erntebereit === true
-    ).length;
+    const einsaetze=auftraege.filter(a=>(a.Auftragstyp==="Einsatz"||a.Typ==="Einsatz")&&a.Status!=="Erledigt"&&a.Status!=="Abgeschlossen");
+    const einsatzBox=document.getElementById("einsatzBox");
+    const aktiveEinsaetze=document.getElementById("aktiveEinsaetze");
+    if(einsaetze.length>0){
+      einsatzBox.classList.remove("hidden");aktiveEinsaetze.innerHTML="";
+      einsaetze.slice(0,5).forEach(e=>{const div=document.createElement("div");div.className="einsatzItem";div.onclick=function(){location.href="auftrag.html?id="+e.id;};div.innerHTML=`<b>${e.Titel||"Einsatz"}</b><br>${e.Beschreibung||"-"}<br>Status: ${e.Status||"-"}`;aktiveEinsaetze.appendChild(div);});
+      if(letzterEinsatzCount>0&&einsaetze.length>letzterEinsatzCount){sirene();}
+      letzterEinsatzCount=einsaetze.length;
+    }else{einsatzBox.classList.add("hidden");letzterEinsatzCount=0;}
 
-    document.getElementById("statFelder").innerText = erntereifeFelder;
-
-    const offeneRechnungen = rechnungen.filter(r =>
-      (
-        String(r.Von_Hof_id) === String(user.Hof_id) ||
-        String(r.An_Hof_id) === String(user.Hof_id)
-      ) &&
-      r.Bezahlt !== true &&
-      r.Storniert !== true &&
-      r.Status !== "Bezahlt" &&
-      r.Status !== "Storniert"
-    ).length;
-
-    document.getElementById("statRechnungen").innerText = offeneRechnungen;
-
-    const einsaetze = auftraege.filter(a =>
-      (a.Auftragstyp === "Einsatz" || a.Typ === "Einsatz") &&
-      a.Status !== "Erledigt" &&
-      a.Status !== "Abgeschlossen"
-    );
-
-    const einsatzBox = document.getElementById("einsatzBox");
-    const aktiveEinsaetze = document.getElementById("aktiveEinsaetze");
-
-    if(einsaetze.length > 0){
-      einsatzBox.classList.remove("hidden");
-      aktiveEinsaetze.innerHTML = "";
-
-      einsaetze.slice(0,5).forEach(e => {
-        const div = document.createElement("div");
-        div.className = "einsatzItem";
-        div.onclick = function(){
-          location.href = "auftrag.html?id=" + e.id;
-        };
-
-        div.innerHTML = `
-          <b>${e.Titel || "Einsatz"}</b><br>
-          ${e.Beschreibung || "-"}<br>
-          Status: ${e.Status || "-"}
-        `;
-
-        aktiveEinsaetze.appendChild(div);
-      });
-
-      if(letzterEinsatzCount > 0 && einsaetze.length > letzterEinsatzCount){
-        sirene();
-      }
-
-      letzterEinsatzCount = einsaetze.length;
-
-    }else{
-      einsatzBox.classList.add("hidden");
-      letzterEinsatzCount = 0;
-    }
-
-    const orgBox = document.getElementById("organisationen");
-    orgBox.innerHTML = "";
-
-    if(meineOrgs.length === 0){
-      orgBox.innerHTML = "<div class='item'>Keine Organisationen.</div>";
-    }else{
-      const grid = document.createElement("div");
-      grid.className = "grid";
-
-      meineOrgs.forEach(e => {
-        const org = organisationen.find(o => String(o.id) === String(e.Organisation_id));
-
-        if(!org) return;
-
-        const btn = document.createElement("button");
-        btn.innerText = orgIcon(org.Name) + " " + org.Name;
-        btn.onclick = function(){
-          location.href = "organisation.html?id=" + org.id;
-        };
-
-        grid.appendChild(btn);
-      });
-
+    const orgBox=document.getElementById("organisationen");orgBox.innerHTML="";
+    if(meineOrgs.length===0){orgBox.innerHTML="<div class='item'>Keine Organisationen.</div>";}else{
+      const grid=document.createElement("div");grid.className="grid";
+      meineOrgs.forEach(e=>{const org=organisationen.find(o=>String(o.id)===String(e.Organisation_id));if(!org)return;const btn=document.createElement("button");btn.innerText=orgIcon(org.Name)+" "+org.Name;btn.onclick=function(){location.href="organisation.html?id="+org.id;};grid.appendChild(btn);});
       orgBox.appendChild(grid);
     }
 
-    const istAdminDb = user.Admin === true;
-    const istAdmin = IST_ADMIN_LOCAL || istAdminDb;
-    const istPolizei = orgNamen.some(n => String(n).toLowerCase() === "polizei");
-
-    if(istPolizei || istAdmin){
-      document.getElementById("verwaltungBlock").classList.remove("hidden");
-    }else{
-      document.getElementById("verwaltungBlock").classList.add("hidden");
-    }
-
-    if(istAdmin){
-      document.getElementById("adminBlock").classList.remove("hidden");
-    }else{
-      document.getElementById("adminBlock").classList.add("hidden");
-    }
-
+    const istAdminDb=user.Admin===true;
+    const istAdmin=IST_ADMIN_LOCAL||istAdminDb;
+    const istPolizei=orgNamen.some(n=>String(n).toLowerCase()==="polizei");
+    document.getElementById("verwaltungBlock").classList.toggle("hidden",!(istPolizei||istAdmin));
+    document.getElementById("adminBlock").classList.toggle("hidden",!istAdmin);
   }catch(err){
-    document.querySelector(".app").innerHTML =
-      "<div class='card'><div class='info'>Fehler beim Laden der Home-Seite:<br><br>" +
-      err.message +
-      "</div></div>";
+    document.querySelector(".app").innerHTML="<div class='card'><div class='info'>Fehler beim Laden der Home-Seite:<br><br>"+err.message+"</div></div>";
   }
 }
 
-function logout(){
-  localStorage.clear();
-  location.href = "login.html";
-}
-
+function logout(){localStorage.clear();location.href="login.html";}
 ladeHome();
 ladeServerstatus();
-
-setInterval(ladeHome, 60000);
-setInterval(ladeServerstatus, 30000);
+setInterval(ladeHome,60000);
+setInterval(ladeServerstatus,30000);
 </script>
-
 </body>
 </html>
