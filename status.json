@@ -1,12 +1,12 @@
 {
   "serverOnline": true,
   "status": "🟢 Online",
-  "servername": "$moddir$FS25_Schellenberg/maps/overview.png",
+  "servername": "RP_Fix1701",
   "map": "Schellenberg",
   "monat": "Juni",
   "tag": 3,
-  "zeit": "0:00",
-  "spielerOnline": 0,
-  "letztesUpdate": "19.06.2026 00:30",
-  "dayTimeRaw": 0
+  "zeit": "2:10",
+  "spielerOnline": 1,
+  "letztesUpdate": "19.06.2026 00:40",
+  "dayTimeRaw": 7833001
 }
