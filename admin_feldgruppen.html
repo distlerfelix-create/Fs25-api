@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Feldgruppen</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:720px;margin:auto;padding:20px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px}h1{color:white;text-align:center;font-size:36px;font-family:Georgia,serif}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:8px}.info{color:white;font-size:17px;line-height:1.5}.orange{color:#ffaa33}input,select,textarea{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px}textarea{min-height:80px;resize:vertical}button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.orangeBtn{background:#cc7700;color:white}.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line;font-weight:bold}.leer{color:white;text-align:center;margin-top:30px}.feldliste{background:#000;border:1px solid #006600;border-radius:12px;padding:12px;margin-top:12px;max-height:340px;overflow:auto}.row{display:flex;align-items:center;justify-content:space-between;color:white;border-bottom:1px solid #222;padding:8px 0;gap:10px}.row:last-child{border-bottom:none}.row input{width:26px;height:26px;margin:0}.badge{display:inline-block;background:#004488;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin:4px 4px 0 0}.badge-main{background:#008800}.badge-off{background:#aa0000}
+</style>
+</head>
+<body>
+<div class="app">
+<button class="back" onclick="location.href='admin_felder.html'">← Zurück</button>
+<h1>FELDGRUPPEN</h1>
+<div id="inhalt">Lade...</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID=localStorage.getItem("user_id");
+if(!USER_ID){location.href="login.html";}
+let users=[],felder=[],hoefe=[],feldgruppen=[];
+function headers(){return{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
+async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json();}
+async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=representation"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return await r.json();}
+async function patch(t,id,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+async function del(t,id){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"DELETE",headers:{...headers(),"Prefer":"return=minimal"}});if(!r.ok)throw new Error(await r.text());}
+function text(v){return v===null||v===undefined||v===""?"-":v}
+function hofName(id){const h=hoefe.find(x=>String(x.id)===String(id));return h?h.Name:"-"}
+function gruppenFelder(id){return felder.filter(f=>String(f.Feldgruppe_id)===String(id)).sort((a,b)=>Number(a.Feldnummer||0)-Number(b.Feldnummer||0))}
+function gruppenNummern(id){const arr=gruppenFelder(id);return arr.length?arr.map(f=>f.Feldnummer).join(", "):"-"}
+function gruppenGroesse(id){const s=gruppenFelder(id).reduce((sum,f)=>sum+Number(String(f.Feldgroesse||"0").replace(",",".")),0);return s>0?s.toLocaleString("de-DE"):"-"}
+function gruppeName(id){const g=feldgruppen.find(x=>String(x.id)===String(id));return g?g.Name:"Feldgruppe "+id}
+async function laden(){const box=document.getElementById("inhalt");try{users=await api("Users");felder=await api("Felder");hoefe=await api("Hoefe");feldgruppen=await api("Feldgruppen");const admin=users.find(u=>String(u.id)===String(USER_ID));if(!admin||admin.Admin!==true){box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";return;}felder.sort((a,b)=>Number(a.Feldnummer||0)-Number(b.Feldnummer||0));feldgruppen.sort((a,b)=>Number(b.id||0)-Number(a.id||0));anzeigen();}catch(e){box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>";}}
+function hofSelect(){let h=`<select id="neu_hof"><option value="">Kein Hof / später setzen</option>`;hoefe.forEach(x=>h+=`<option value="${x.id}">${x.Name}</option>`);return h+"</select>";}
+function feldCheckboxListe(){let html=`<div class="feldliste">`;felder.forEach(f=>{const inGruppe=f.Feldgruppe_id?` · Gruppe: ${gruppeName(f.Feldgruppe_id)}`:"";html+=`<div class="row"><label><input type="checkbox" class="feldCheck" value="${f.id}"> Feld ${text(f.Feldnummer)} · ${hofName(f.Hof_id)}${inGruppe}</label></div>`});html+=`</div>`;return html;}
+function hauptfeldSelect(){let h=`<select id="hauptfeld"><option value="">Hauptfeld auswählen</option>`;felder.forEach(f=>h+=`<option value="${f.id}">Feld ${text(f.Feldnummer)} · ${hofName(f.Hof_id)}</option>`);return h+"</select>";}
+function anzeigen(){const box=document.getElementById("inhalt");let html=`<div class="card"><div class="titel">Neue Feldgruppe erstellen</div><div class="info">Beispiel: Felder 117, 118, 119 und 120 auswählen, Feld 117 als Hauptfeld setzen.</div><input id="neu_name" placeholder="Name der Gruppe, z. B. Feldgruppe 117-120"><textarea id="neu_beschreibung" placeholder="Beschreibung"></textarea><label class="orange">Hof</label>${hofSelect()}<label class="orange">Hauptfeld</label>${hauptfeldSelect()}<label class="orange">Felder auswählen</label>${feldCheckboxListe()}<button class="green" onclick="gruppeErstellen()">Feldgruppe erstellen / zuordnen</button><div id="msg_neu" class="msg"></div></div><div class="card"><div class="titel">Bestehende Feldgruppen</div>`;if(feldgruppen.length===0){html+=`<div class="leer">Keine Feldgruppen vorhanden.</div>`;}else{feldgruppen.forEach(g=>{const gf=gruppenFelder(g.id);const aktiv=g.Aktiv!==false;html+=`<div class="card"><div class="titel">${text(g.Name)}</div><span class="badge ${aktiv?"badge-main":"badge-off"}">${aktiv?"AKTIV":"INAKTIV"}</span><div class="info"><span class="orange">ID:</span> ${g.id}<br><span class="orange">Beschreibung:</span> ${text(g.Beschreibung)}<br><span class="orange">Hof:</span> ${hofName(g.Hof_id)}<br><span class="orange">Felder:</span> ${gruppenNummern(g.id)}<br><span class="orange">Anzahl:</span> ${gf.length}<br><span class="orange">Gesamtgröße:</span> ${gruppenGroesse(g.id)} ha</div><input id="name_${g.id}" value="${g.Name||""}" placeholder="Name"><textarea id="beschreibung_${g.id}" placeholder="Beschreibung">${g.Beschreibung||""}</textarea><button class="green" onclick="gruppeSpeichern(${g.id})">Gruppe speichern</button><button class="orangeBtn" onclick="gruppeAufloesen(${g.id})">Gruppe auflösen</button><button class="red" onclick="gruppeLoeschen(${g.id})">Gruppe löschen</button><div id="msg_${g.id}" class="msg"></div></div>`;});}html+=`</div>`;box.innerHTML=html;}
+function ausgewaehlteFeldIds(){return Array.from(document.querySelectorAll(".feldCheck")).filter(c=>c.checked).map(c=>Number(c.value));}
+async function gruppeErstellen(){const msg=document.getElementById("msg_neu");msg.innerText="";const name=document.getElementById("neu_name").value.trim();const beschreibung=document.getElementById("neu_beschreibung").value.trim();const hofId=document.getElementById("neu_hof").value;const hauptfeldId=document.getElementById("hauptfeld").value;const feldIds=ausgewaehlteFeldIds();if(!name){msg.innerText="Bitte Namen eingeben.";return;}if(feldIds.length<2){msg.innerText="Bitte mindestens 2 Felder auswählen.";return;}if(!hauptfeldId){msg.innerText="Bitte Hauptfeld auswählen.";return;}if(!feldIds.includes(Number(hauptfeldId))){msg.innerText="Das Hauptfeld muss in der Auswahl enthalten sein.";return;}try{msg.innerText="Erstelle Feldgruppe...";const created=await post("Feldgruppen",{Name:name,Beschreibung:beschreibung,Hof_id:hofId?Number(hofId):null,Aktiv:true});const gruppeId=created[0].id;for(const id of feldIds){await patch("Felder",id,{Feldgruppe_id:gruppeId,Hauptfeld:Number(id)===Number(hauptfeldId)});}msg.innerText="Feldgruppe wurde erstellt.";await laden();}catch(e){msg.innerText="Fehler:\n"+e.message;}}
+async function gruppeSpeichern(id){const msg=document.getElementById("msg_"+id);msg.innerText="Speichere...";try{await patch("Feldgruppen",id,{Name:document.getElementById("name_"+id).value.trim(),Beschreibung:document.getElementById("beschreibung_"+id).value.trim()});msg.innerText="Gespeichert.";await laden();}catch(e){msg.innerText="Fehler:\n"+e.message;}}
+async function gruppeAufloesen(id){if(!confirm("Feldgruppe wirklich auflösen? Die Felder bleiben bestehen, werden aber wieder einzeln geführt."))return;try{const gf=gruppenFelder(id);for(const f of gf){await patch("Felder",f.id,{Feldgruppe_id:null,Hauptfeld:false});}await patch("Feldgruppen",id,{Aktiv:false});await laden();}catch(e){alert("Fehler:\n"+e.message);}}
+async function gruppeLoeschen(id){if(!confirm("Feldgruppe löschen? Vorher werden die Felder aus der Gruppe entfernt."))return;try{const gf=gruppenFelder(id);for(const f of gf){await patch("Felder",f.id,{Feldgruppe_id:null,Hauptfeld:false});}await del("Feldgruppen",id);await laden();}catch(e){alert("Fehler:\n"+e.message);}}
+laden();
+</script>
+</body>
+</html>
