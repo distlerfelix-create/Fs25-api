@@ -21,11 +21,12 @@ const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 const USER_ID=localStorage.getItem("user_id");
 const USERNAME=localStorage.getItem("username")||"Disti1701";
 const USER_HOF_ID=Number(localStorage.getItem("hof_id")||1);
+const STATUS_URL="https://raw.githubusercontent.com/distlerfelix-create/Fs25-api/main/status.json";
 if(!USER_ID){location.href="login.html";}
 const params=new URLSearchParams(location.search);
 const FELD_ID=params.get("id");
 
-let feld=null,alleFelder=[],user=null,hof=null,istAdmin=false,darfBearbeiten=false,bearbeitenOffen=false,fruchtarten=[],feldgruppen=[],gruppenFelder=[];
+let feld=null,alleFelder=[],user=null,hof=null,istAdmin=false,darfBearbeiten=false,bearbeitenOffen=false,fruchtarten=[],feldgruppen=[],gruppenFelder=[],serverMonat="März";
 
 function text(w){return w===null||w===undefined||w===""?"-":w}
 function checked(w){return w===true?"checked":""}
@@ -38,6 +39,46 @@ function tageSeit(d){if(!d)return null;const s=new Date(d);const h=new Date();if
 function feldgruppeName(){if(!feld||!feld.Feldgruppe_id)return"";const g=feldgruppen.find(x=>String(x.id)===String(feld.Feldgruppe_id));return g?g.Name:"Feldgruppe "+feld.Feldgruppe_id}
 function gruppenNummern(){if(!feld||!feld.Feldgruppe_id)return"";return gruppenFelder.sort((a,b)=>Number(a.Feldnummer||0)-Number(b.Feldnummer||0)).map(f=>f.Feldnummer).join(", ")}
 function gruppenGroesse(){if(!feld||!feld.Feldgruppe_id)return feld?feld.Feldgroesse:"";const s=gruppenFelder.reduce((sum,f)=>sum+zahl(f.Feldgroesse),0);return s>0?String(s).replace(".",","):feld.Feldgroesse}
+
+function monatsNummer(monat){
+  const m=String(monat||"").toLowerCase().trim();
+  const map={"januar":1,"jan":1,"februar":2,"feb":2,"märz":3,"maerz":3,"mrz":3,"april":4,"apr":4,"mai":5,"juni":6,"jun":6,"juli":7,"jul":7,"august":8,"aug":8,"september":9,"sept":9,"sep":9,"oktober":10,"okt":10,"november":11,"nov":11,"dezember":12,"dez":12};
+  return map[m]||null;
+}
+
+function letzterMonatNameAusText(txt){
+  const s=String(txt||"").toLowerCase();
+  const alle=s.match(/januar|jan|februar|feb|märz|maerz|mrz|april|apr|mai|juni|jun|juli|jul|august|aug|september|sept|sep|oktober|okt|november|nov|dezember|dez/gi);
+  if(!alle||alle.length===0)return null;
+  return alle[alle.length-1];
+}
+
+function tageVomServerMonatBis(monatsName){
+  const aktuell=monatsNummer(serverMonat);
+  const ziel=monatsNummer(monatsName);
+  if(!aktuell||!ziel)return null;
+
+  // 1 Spielmonat = 1 realer Tag.
+  // Grundlage ist der aktuelle Monat aus status.json.
+  let diff=ziel-aktuell;
+  if(diff<0)diff+=12;
+  return diff;
+}
+
+function ernteBisDatum(){
+  const fr=fruchtObj(feld.Fruchtart);
+  if(!fr||!fr.Erntezeit)return"-";
+
+  const letzterMonatName=letzterMonatNameAusText(fr.Erntezeit);
+  const tageBis=tageVomServerMonatBis(letzterMonatName);
+  if(tageBis===null)return"-";
+
+  const d=new Date();
+  d.setHours(12,0,0,0);
+  d.setDate(d.getDate()+tageBis);
+  return datumDeutsch(d);
+}
+
 function ernteDatum(){const fr=fruchtObj(feld.Fruchtart);if(!feld.Gesaet_am||!fr||!fr.Wachstumsdauer_Tage)return"-";const d=new Date(feld.Gesaet_am);if(isNaN(d.getTime()))return"-";d.setDate(d.getDate()+Number(fr.Wachstumsdauer_Tage||0));return datumDeutsch(d)}
 function erwarteterErtrag(){const fr=fruchtObj(feld.Fruchtart);if(!fr)return"-";const ha=zahl(feld.Feldgruppe_id?gruppenGroesse():feld.Feldgroesse);const ertrag=Number(fr.Ertrag_pro_Hektar||0);if(!ha||!ertrag)return"-";return Math.round(ha*ertrag).toLocaleString("de-DE")}
 function erwarteterWert(){const fr=fruchtObj(feld.Fruchtart);if(!fr)return"-";const ha=zahl(feld.Feldgruppe_id?gruppenGroesse():feld.Feldgroesse),ertrag=Number(fr.Ertrag_pro_Hektar||0),preis=Number(fr.Verkaufspreis||0);if(!ha||!ertrag||!preis)return"-";return Math.round(ha*ertrag*preis).toLocaleString("de-DE")}
@@ -70,9 +111,19 @@ async function erntereifBenachrichtigen(w){
  feld.Erntebereit=true;feld.Ernte_Benachrichtigt=true;
 }
 
+async function ladeServerMonat(){
+ try{
+  const r=await fetch(STATUS_URL+"?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok)return;
+  const s=await r.json();
+  if(s.monat)serverMonat=s.monat;
+ }catch(e){}
+}
+
 async function laden(){
  const box=document.getElementById("inhalt");
  try{
+  await ladeServerMonat();
   alleFelder=await api("Felder");
   const users=await api("Users");
   const hoefe=await api("Hoefe");
@@ -99,12 +150,13 @@ function fruchtInfoHtml(w){
  return `<div class="card"><h2>Fruchtinformationen</h2><div class="fruchtbox">
  Anpflanzzeit: ${text(fr.Anpflanzzeit)}<br>
  Erntezeit: ${text(fr.Erntezeit)}<br>
- Wachstumsdauer: ${text(fr.Wachstumsdauer_Tage)} Tage<br>
+ Wachstumsdauer: ${text(fr.Wachstumsdauer_Tage)} Monate<br>
  Ertrag pro Hektar: ${text(fr.Ertrag_pro_Hektar)}<br>
  Verkaufspreis: ${text(fr.Verkaufspreis)}<br>
  Erwarteter Ertrag: ${erwarteterErtrag()}<br>
  Erwarteter Verkaufswert: ${erwarteterWert()}<br>
  Ernte ab ca.: ${ernteDatum()}<br>
+ Ernte bis ca.: ${ernteBisDatum()}<br>
  Restzeit bis Ernte: ${rest}
  </div></div>`;
 }
@@ -132,6 +184,8 @@ function anzeigen(w){
  <div class="label">${feld.Feldgruppe_id?"Gesamtgröße":"Größe"}</div><div class="value">${text(feld.Feldgruppe_id?gruppenGroesse():feld.Feldgroesse)} ha</div>
  <div class="label">Frucht</div><div class="value">${text(feld.Fruchtart)}</div>
  <div class="label">Aussaatdatum</div><div class="value">${datumDeutsch(feld.Gesaet_am)}</div>
+ <div class="label">Ernte ab ca.</div><div class="value">${ernteDatum()}</div>
+ <div class="label">Ernte bis ca.</div><div class="value">${ernteBisDatum()}</div>
  <div class="label">Wachstumsfortschritt</div><div class="value">${w.prozent} %</div><div class="progress-bg"><div class="progress-fill" style="width:${w.prozent}%"></div></div>
  <div class="label">Zeit seit Aussaat</div><div class="value">${w.text}</div>
  <div class="label">Deine Rechte</div><div class="value">${darfBearbeiten?"Bearbeiten erlaubt":"Nur Ansicht"}</div>
