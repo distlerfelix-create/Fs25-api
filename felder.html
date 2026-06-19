@@ -59,9 +59,68 @@ function gruppenFelder(id){return felder.filter(f=>String(f.Feldgruppe_id)===Str
 function gruppenNummern(id){return gruppenFelder(id).map(f=>f.Feldnummer).join(", ")}
 function gruppenGroesse(id){const s=gruppenFelder(id).reduce((sum,f)=>sum+zahl(f.Feldgroesse),0);return s>0?s.toLocaleString("de-DE"):"-"}
 function fruchtObj(name){return fruchtarten.find(f=>String(f.Name).toLowerCase()===String(name||"").toLowerCase())}
-function ernteDatum(gesaetAm,fruchtName){const fr=fruchtObj(fruchtName);if(!gesaetAm||!fr||!fr.Wachstumsdauer_Tage)return"-";const d=new Date(gesaetAm);if(isNaN(d.getTime()))return"-";d.setDate(d.getDate()+Number(fr.Wachstumsdauer_Tage||0));return datumDeutsch(d)}
-function erwarteterErtrag(groesse,fruchtName){const fr=fruchtObj(fruchtName);if(!fr)return"-";const ha=zahl(groesse),ertrag=Number(fr.Ertrag_pro_Hektar||0);if(!ha||!ertrag)return"-";return Math.round(ha*ertrag).toLocaleString("de-DE")}
-function erwarteterWert(groesse,fruchtName){const fr=fruchtObj(fruchtName);if(!fr)return"-";const ha=zahl(groesse),ertrag=Number(fr.Ertrag_pro_Hektar||0),preis=Number(fr.Verkaufspreis||0);if(!ha||!ertrag||!preis)return"-";return Math.round(ha*ertrag*preis).toLocaleString("de-DE")}
+
+function monatsNummer(monat){
+  const m=String(monat||"").toLowerCase().trim();
+  const map={"januar":1,"jan":1,"februar":2,"feb":2,"märz":3,"maerz":3,"mrz":3,"april":4,"apr":4,"mai":5,"juni":6,"jun":6,"juli":7,"jul":7,"august":8,"aug":8,"september":9,"sept":9,"sep":9,"oktober":10,"okt":10,"november":11,"nov":11,"dezember":12,"dez":12};
+  return map[m]||null;
+}
+
+function letzteMonatsNummerAusText(txt){
+  const s=String(txt||"").toLowerCase();
+  const alle=s.match(/januar|jan|februar|feb|märz|maerz|mrz|april|apr|mai|juni|jun|juli|jul|august|aug|september|sept|sep|oktober|okt|november|nov|dezember|dez/gi);
+  if(!alle||alle.length===0)return null;
+  return monatsNummer(alle[alle.length-1]);
+}
+
+function ernteBisDatum(gesaetAm,fruchtName){
+  const fr=fruchtObj(fruchtName);
+  if(!fr||!fr.Erntezeit)return"-";
+
+  const letzterMonat=letzteMonatsNummerAusText(fr.Erntezeit);
+  if(!letzterMonat)return"-";
+
+  let jahr=new Date().getFullYear();
+
+  if(gesaetAm){
+    const saat=new Date(gesaetAm);
+    if(!isNaN(saat.getTime())){
+      jahr=saat.getFullYear();
+      const saatMonat=saat.getMonth()+1;
+      if(letzterMonat<saatMonat){
+        jahr=jahr+1;
+      }
+    }
+  }
+
+  const letzterTag=new Date(jahr,letzterMonat,0);
+  return datumDeutsch(letzterTag);
+}
+
+function ernteDatum(gesaetAm,fruchtName){
+ const fr=fruchtObj(fruchtName);
+ if(!gesaetAm||!fr||!fr.Wachstumsdauer_Tage)return"-";
+ const d=new Date(gesaetAm);
+ if(isNaN(d.getTime()))return"-";
+ d.setDate(d.getDate()+Number(fr.Wachstumsdauer_Tage||0));
+ return datumDeutsch(d);
+}
+
+function erwarteterErtrag(groesse,fruchtName){
+ const fr=fruchtObj(fruchtName);
+ if(!fr)return"-";
+ const ha=zahl(groesse),ertrag=Number(fr.Ertrag_pro_Hektar||0);
+ if(!ha||!ertrag)return"-";
+ return Math.round(ha*ertrag).toLocaleString("de-DE");
+}
+
+function erwarteterWert(groesse,fruchtName){
+ const fr=fruchtObj(fruchtName);
+ if(!fr)return"-";
+ const ha=zahl(groesse),ertrag=Number(fr.Ertrag_pro_Hektar||0),preis=Number(fr.Verkaufspreis||0);
+ if(!ha||!ertrag||!preis)return"-";
+ return Math.round(ha*ertrag*preis).toLocaleString("de-DE");
+}
 
 function fruchtInfo(f,groesseOverride){
  const fr=fruchtObj(f.Fruchtart);
@@ -71,14 +130,16 @@ function fruchtInfo(f,groesseOverride){
  <span class="orange">Fruchtinfo:</span><br>
  Anpflanzzeit: ${text(fr.Anpflanzzeit)}<br>
  Erntezeit: ${text(fr.Erntezeit)}<br>
- Wachstumsdauer: ${text(fr.Wachstumsdauer_Tage)} Tage<br>
+ Wachstumsdauer: ${text(fr.Wachstumsdauer_Tage)} Monate<br>
  Ertrag pro Hektar: ${text(fr.Ertrag_pro_Hektar)}<br>
  Verkaufspreis: ${text(fr.Verkaufspreis)}<br>
  Erwarteter Ertrag: ${erwarteterErtrag(groesse,f.Fruchtart)}<br>
  Erwarteter Wert: ${erwarteterWert(groesse,f.Fruchtart)}<br>
- Ernte ab ca.: ${ernteDatum(f.Gesaet_am,f.Fruchtart)}
+ Ernte ab ca.: ${ernteDatum(f.Gesaet_am,f.Fruchtart)}<br>
+ Ernte bis ca.: ${ernteBisDatum(f.Gesaet_am,f.Fruchtart)}
  </div>`;
 }
+
 function duengenNoetig(f){return f["Duengen_nötig"]===true||f.Duengen_noetig===true}
 function statusKlasse(f){if(f.Erntebereit===true)return"erntereif";if(f.Unkraut===true)return"unkraut";if(duengenNoetig(f))return"duengen";return""}
 function warnungen(f){let h="";if(f.Erntebereit===true)h+=`<div class="warnung gruen">🌾 Erntereif</div>`;if(duengenNoetig(f))h+=`<div class="warnung gelb">💩 Düngen nötig</div>`;if(f.Unkraut===true)h+=`<div class="warnung rot">🌿 Unkraut vorhanden</div>`;return h}
@@ -111,7 +172,8 @@ function zeigeFelder(){
     <span class="orange">Größe:</span> ${text(groesse)} ha<br>
     <span class="orange">Besitzer:</span> ${text(besitzer)}<br>
     <span class="orange">Gesät am:</span> ${datumDeutsch(f.Gesaet_am)}<br>
-    <span class="orange">Ernte ab ca.:</span> ${ernteDatum(f.Gesaet_am,f.Fruchtart)}
+    <span class="orange">Ernte ab ca.:</span> ${ernteDatum(f.Gesaet_am,f.Fruchtart)}<br>
+    <span class="orange">Ernte bis ca.:</span> ${ernteBisDatum(f.Gesaet_am,f.Fruchtart)}
    </div>
    ${fruchtInfo(f,groesse)}
    <div class="status">
