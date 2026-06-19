@@ -73,28 +73,45 @@ function letzteMonatsNummerAusText(txt){
   return monatsNummer(alle[alle.length-1]);
 }
 
+function monateSeitSpielStartBis(monatsName){
+  const zielMonat=monatsNummer(monatsName);
+  if(!zielMonat)return null;
+
+  // FS25 Saison startet bei März.
+  // März = Tag 0, April = Tag 1, Mai = Tag 2 usw.
+  const startMonat=3;
+  let diff=zielMonat-startMonat;
+  if(diff<0)diff+=12;
+  return diff;
+}
+
+function letzterMonatNameAusText(txt){
+  const s=String(txt||"").toLowerCase();
+  const alle=s.match(/januar|jan|februar|feb|märz|maerz|mrz|april|apr|mai|juni|jun|juli|jul|august|aug|september|sept|sep|oktober|okt|november|nov|dezember|dez/gi);
+  if(!alle||alle.length===0)return null;
+  return alle[alle.length-1];
+}
+
 function ernteBisDatum(gesaetAm,fruchtName){
   const fr=fruchtObj(fruchtName);
   if(!fr||!fr.Erntezeit)return"-";
+  if(!gesaetAm)return"-";
 
-  const letzterMonat=letzteMonatsNummerAusText(fr.Erntezeit);
-  if(!letzterMonat)return"-";
+  const letzterMonatName=letzterMonatNameAusText(fr.Erntezeit);
+  if(!letzterMonatName)return"-";
 
-  let jahr=new Date().getFullYear();
+  const tageBisMonat=monateSeitSpielStartBis(letzterMonatName);
+  if(tageBisMonat===null)return"-";
 
-  if(gesaetAm){
-    const saat=new Date(gesaetAm);
-    if(!isNaN(saat.getTime())){
-      jahr=saat.getFullYear();
-      const saatMonat=saat.getMonth()+1;
-      if(letzterMonat<saatMonat){
-        jahr=jahr+1;
-      }
-    }
-  }
+  // Im Spiel gilt: 1 Monat = 1 realer Tag.
+  // Grundlage ist das gespeicherte Saatdatum.
+  // Beispiel: Gesät 15.06., Erntezeit August - September
+  // August = +6 Tage, September = +7 Tage => Ernte bis 22.06.
+  const d=new Date(gesaetAm);
+  if(isNaN(d.getTime()))return"-";
 
-  const letzterTag=new Date(jahr,letzterMonat,0);
-  return datumDeutsch(letzterTag);
+  d.setDate(d.getDate()+tageBisMonat);
+  return datumDeutsch(d);
 }
 
 function ernteDatum(gesaetAm,fruchtName){
