@@ -5,35 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Felder</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}
-.app{max-width:700px;margin:auto;padding:20px}
-.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px}
-h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif}
-input,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px}
-.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px}
-.titel{color:#00ff22;font-size:24px;font-weight:bold}
-.info{color:white;margin-top:10px;line-height:1.5;font-size:17px}
-.orange{color:#ffaa33}
-button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}
-.green{background:#008800;color:white}
-.red{background:#aa0000;color:white}
-.dark{background:#333;color:white}
-.blue{background:#004488;color:white}
-.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px;font-size:17px}
-.row input{width:26px;height:26px}
-.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}
-.leer{color:white;text-align:center;margin-top:40px}
-.preview{background:#000;border:1px dashed #ffaa33;border-radius:12px;padding:12px;margin-top:12px;color:white;line-height:1.45}
-.badge{display:inline-block;background:#008800;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-top:8px}
-.badge-red{background:#aa0000}
-.badge-orange{background:#cc7700}
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:700px;margin:auto;padding:20px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:30px;font-size:18px}h1{color:white;text-align:center;font-size:38px;font-family:Georgia,serif}input,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:18px}.titel{color:#00ff22;font-size:24px;font-weight:bold}.info{color:white;margin-top:10px;line-height:1.5;font-size:17px}.orange{color:#ffaa33}button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px;font-size:17px}.row input{width:26px;height:26px}.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}.leer{color:white;text-align:center;margin-top:40px}.preview{background:#000;border:1px dashed #ffaa33;border-radius:12px;padding:12px;margin-top:12px;color:white;line-height:1.45}.badge{display:inline-block;background:#008800;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-top:8px}.badge-red{background:#aa0000}.badge-orange{background:#cc7700}.badge-blue{background:#004488}
 </style>
 </head>
 <body>
 <div class="app">
 <button class="back" onclick="location.href='admin.html'">← Zurück</button>
 <h1>FELDER ADMIN</h1>
+
+<div class="card">
+  <div class="titel">Feldgruppen</div>
+  <div class="info">Felder zusammenfügen, Hauptfelder setzen und Gruppen wieder auflösen.</div>
+  <button class="blue" onclick="location.href='admin_feldgruppen.html'">FELDGRUPPEN / FELDER ZUSAMMENFÜGEN</button>
+</div>
+
 <input id="suche" placeholder="Feld suchen..." oninput="anzeigen()">
 <div id="liste">Lade...</div>
 </div>
@@ -44,306 +29,73 @@ const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 const USER_ID = localStorage.getItem("user_id");
 if(!USER_ID){ location.href="login.html"; }
 
-let users=[], hoefe=[], felder=[], fruchtarten=[];
+let users=[], hoefe=[], felder=[], fruchtarten=[], feldgruppen=[];
 
 async function api(t){
-  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{
-    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}
-  });
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}});
   if(!r.ok) throw new Error(await r.text());
   return await r.json();
 }
-
+async function apiOptional(t){try{return await api(t);}catch(e){return [];}}
 async function post(t,d){
-  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{
-    method:"POST",
-    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
-    body:JSON.stringify(d)
-  });
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(d)});
   if(!r.ok) throw new Error(await r.text());
 }
-
 async function patch(t,id,d){
-  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{
-    method:"PATCH",
-    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},
-    body:JSON.stringify(d)
-  });
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"PATCH",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(d)});
   if(!r.ok) throw new Error(await r.text());
 }
-
 async function del(t,id){
-  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{
-    method:"DELETE",
-    headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,Prefer:"return=minimal"}
-  });
+  const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"DELETE",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,Prefer:"return=minimal"}});
   if(!r.ok) throw new Error(await r.text());
 }
 
 function text(v){return v===null||v===undefined||v===""?"-":v}
 function checked(v){return v===true?"checked":""}
 function zahl(v){const n=Number(String(v||"0").replace(",","."));return Number.isFinite(n)?n:0}
-
-function datumDeutsch(d){
-  if(!d)return"-";
-  const x=new Date(d);
-  if(isNaN(x.getTime()))return"-";
-  return x.toLocaleDateString("de-DE");
-}
-
-function fruchtObj(name){
-  return fruchtarten.find(f=>String(f.Name).toLowerCase()===String(name||"").toLowerCase());
-}
-
-function ernteDatum(gesaetAm, fruchtName){
-  const frucht=fruchtObj(fruchtName);
-  if(!gesaetAm||!frucht||!frucht.Wachstumsdauer_Tage)return"-";
-  const d=new Date(gesaetAm);
-  if(isNaN(d.getTime()))return"-";
-  d.setDate(d.getDate()+Number(frucht.Wachstumsdauer_Tage||0));
-  return datumDeutsch(d);
-}
-
-function erwarteterErtrag(groesse, fruchtName){
-  const frucht=fruchtObj(fruchtName);
-  if(!frucht)return"-";
-  const ha=zahl(groesse);
-  const ertrag=Number(frucht.Ertrag_pro_Hektar||0);
-  if(!ha||!ertrag)return"-";
-  return Math.round(ha*ertrag).toLocaleString("de-DE");
-}
-
-function erwarteterWert(groesse, fruchtName){
-  const frucht=fruchtObj(fruchtName);
-  if(!frucht)return"-";
-  const ha=zahl(groesse);
-  const ertrag=Number(frucht.Ertrag_pro_Hektar||0);
-  const preis=Number(frucht.Verkaufspreis||0);
-  if(!ha||!ertrag||!preis)return"-";
-  return Math.round(ha*ertrag*preis).toLocaleString("de-DE");
-}
-
-function hofSelect(id,aktuell){
-  let h=`<select id="hof_${id}"><option value="">Kein Hof</option>`;
-  hoefe.forEach(x=>{h+=`<option value="${x.id}" ${String(x.id)===String(aktuell)?"selected":""}>${x.Name}</option>`});
-  return h+"</select>";
-}
-
-function fruchtSelect(id,aktuell){
-  let h=`<select id="frucht_${id}" onchange="previewAktualisieren('${id}')">`;
-  h+=`<option value="">Keine Fruchtart</option>`;
-  fruchtarten.filter(f=>f.Aktiv!==false).forEach(f=>{
-    h+=`<option value="${f.Name}" ${String(f.Name)===String(aktuell)?"selected":""}>${f.Name}</option>`;
-  });
-  if(aktuell&&!fruchtarten.some(f=>String(f.Name)===String(aktuell))){
-    h+=`<option value="${aktuell}" selected>${aktuell}</option>`;
-  }
-  return h+"</select>";
-}
-
-function vorschauHtml(groesse, frucht, gesaetAm){
-  const f=fruchtObj(frucht);
-  if(!f){
-    return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Keine Fruchtart gewählt oder Fruchtart nicht vorhanden.</div>`;
-  }
-  return `
-    <div class="preview">
-      <span class="orange">Fruchtinfo:</span><br>
-      Anpflanzzeit: ${text(f.Anpflanzzeit)}<br>
-      Erntezeit: ${text(f.Erntezeit)}<br>
-      Wachstumsdauer: ${text(f.Wachstumsdauer_Tage)} Tage<br>
-      Ertrag pro Hektar: ${text(f.Ertrag_pro_Hektar)}<br>
-      Verkaufspreis: ${text(f.Verkaufspreis)}<br>
-      Erwarteter Ertrag: ${erwarteterErtrag(groesse,frucht)}<br>
-      Erwarteter Wert: ${erwarteterWert(groesse,frucht)}
-      ${gesaetAm ? "<br>Ernte ab ca.: "+ernteDatum(gesaetAm,frucht) : ""}
-    </div>`;
-}
+function datumDeutsch(d){if(!d)return"-";const x=new Date(d);if(isNaN(x.getTime()))return"-";return x.toLocaleDateString("de-DE");}
+function fruchtObj(name){return fruchtarten.find(f=>String(f.Name).toLowerCase()===String(name||"").toLowerCase());}
+function gruppenName(id){const g=feldgruppen.find(x=>String(x.id)===String(id));return g?g.Name:"Feldgruppe "+id;}
+function ernteDatum(gesaetAm, fruchtName){const frucht=fruchtObj(fruchtName);if(!gesaetAm||!frucht||!frucht.Wachstumsdauer_Tage)return"-";const d=new Date(gesaetAm);if(isNaN(d.getTime()))return"-";d.setDate(d.getDate()+Number(frucht.Wachstumsdauer_Tage||0));return datumDeutsch(d);}
+function erwarteterErtrag(groesse, fruchtName){const frucht=fruchtObj(fruchtName);if(!frucht)return"-";const ha=zahl(groesse), ertrag=Number(frucht.Ertrag_pro_Hektar||0);if(!ha||!ertrag)return"-";return Math.round(ha*ertrag).toLocaleString("de-DE");}
+function erwarteterWert(groesse, fruchtName){const frucht=fruchtObj(fruchtName);if(!frucht)return"-";const ha=zahl(groesse), ertrag=Number(frucht.Ertrag_pro_Hektar||0), preis=Number(frucht.Verkaufspreis||0);if(!ha||!ertrag||!preis)return"-";return Math.round(ha*ertrag*preis).toLocaleString("de-DE");}
+function hofSelect(id,aktuell){let h=`<select id="hof_${id}"><option value="">Kein Hof</option>`;hoefe.forEach(x=>{h+=`<option value="${x.id}" ${String(x.id)===String(aktuell)?"selected":""}>${x.Name}</option>`});return h+"</select>";}
+function fruchtSelect(id,aktuell){let h=`<select id="frucht_${id}" onchange="previewAktualisieren('${id}')"><option value="">Keine Fruchtart</option>`;fruchtarten.filter(f=>f.Aktiv!==false).forEach(f=>{h+=`<option value="${f.Name}" ${String(f.Name)===String(aktuell)?"selected":""}>${f.Name}</option>`});if(aktuell&&!fruchtarten.some(f=>String(f.Name)===String(aktuell))){h+=`<option value="${aktuell}" selected>${aktuell}</option>`;}return h+"</select>";}
+function vorschauHtml(groesse, frucht, gesaetAm){const f=fruchtObj(frucht);if(!f){return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Keine Fruchtart gewählt oder Fruchtart nicht vorhanden.</div>`;}return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Anpflanzzeit: ${text(f.Anpflanzzeit)}<br>Erntezeit: ${text(f.Erntezeit)}<br>Wachstumsdauer: ${text(f.Wachstumsdauer_Tage)} Tage<br>Ertrag pro Hektar: ${text(f.Ertrag_pro_Hektar)}<br>Verkaufspreis: ${text(f.Verkaufspreis)}<br>Erwarteter Ertrag: ${erwarteterErtrag(groesse,frucht)}<br>Erwarteter Wert: ${erwarteterWert(groesse,frucht)}${gesaetAm ? "<br>Ernte ab ca.: "+ernteDatum(gesaetAm,frucht) : ""}</div>`;}
 
 async function laden(){
   const box=document.getElementById("liste");
   try{
-    users=await api("Users");
-    hoefe=await api("Hoefe");
-    fruchtarten=await api("Fruchtarten");
-    felder=await api("Felder");
+    users=await api("Users");hoefe=await api("Hoefe");fruchtarten=await api("Fruchtarten");felder=await api("Felder");feldgruppen=await apiOptional("Feldgruppen");
     const admin=users.find(u=>String(u.id)===String(USER_ID));
-    if(!admin||admin.Admin!==true){
-      box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";
-      return;
-    }
+    if(!admin||admin.Admin!==true){box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";return;}
     fruchtarten.sort((a,b)=>String(a.Name||"").localeCompare(String(b.Name||"")));
     felder.sort((a,b)=>Number(a.Feldnummer||0)-Number(b.Feldnummer||0));
     anzeigen();
-  }catch(e){
-    box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>";
-  }
+  }catch(e){box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>";}
 }
 
 function anzeigen(){
   const box=document.getElementById("liste");
   const s=document.getElementById("suche").value.toLowerCase().trim();
-  let html=`
-  <div class="card">
-    <div class="titel">Neues Feld</div>
-    <input id="neu_nummer" placeholder="Feldnummer">
-    <input id="neu_groesse" placeholder="Feldgröße in ha" oninput="previewAktualisieren('neu')">
-    ${hofSelect("neu","")}
-    <label class="orange">Fruchtart</label>
-    ${fruchtSelect("neu","")}
-    <div id="preview_neu">${vorschauHtml("", "", null)}</div>
-    <button class="green" onclick="feldErstellen()">Feld erstellen</button>
-    <div id="msg_neu" class="msg"></div>
-  </div>`;
-
-  const gefiltert=felder.filter(f=>{
-    return [f.Feldnummer,f.Fruchtart,f.Besitzer,f.Feldgroesse,f.Letzte_Aktion].join(" ").toLowerCase().includes(s);
-  });
-
+  let html=`<div class="card"><div class="titel">Neues Feld</div><input id="neu_nummer" placeholder="Feldnummer"><input id="neu_groesse" placeholder="Feldgröße in ha" oninput="previewAktualisieren('neu')">${hofSelect("neu","")}<label class="orange">Fruchtart</label>${fruchtSelect("neu","")}<div id="preview_neu">${vorschauHtml("", "", null)}</div><button class="green" onclick="feldErstellen()">Feld erstellen</button><div id="msg_neu" class="msg"></div></div>`;
+  const gefiltert=felder.filter(f=>[f.Feldnummer,f.Fruchtart,f.Besitzer,f.Feldgroesse,f.Letzte_Aktion, f.Feldgruppe_id?gruppenName(f.Feldgruppe_id):""].join(" ").toLowerCase().includes(s));
   gefiltert.forEach(f=>{
     const erntebereitBadge=f.Erntebereit===true?"<span class='badge'>ERNTEBEREIT</span>":"";
     const duengenBadge=f["Duengen_nötig"]===true?"<span class='badge badge-orange'>DÜNGEN NÖTIG</span>":"";
     const unkrautBadge=f.Unkraut===true?"<span class='badge badge-red'>UNKRAUT</span>":"";
-
-    html+=`
-    <div class="card">
-      <div class="titel">🌱 Feld ${text(f.Feldnummer)}</div>
-      ${erntebereitBadge} ${duengenBadge} ${unkrautBadge}
-      <div class="info">
-        <span class="orange">ID:</span> ${f.id}<br>
-        <span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br>
-        <span class="orange">Größe:</span> ${text(f.Feldgroesse)} ha<br>
-        <span class="orange">Besitzer:</span> ${text(f.Besitzer)}<br>
-        <span class="orange">Wachstum:</span> ${text(f.Wachstumsstufe)}<br>
-        <span class="orange">Gesät am:</span> ${datumDeutsch(f.Gesaet_am)}<br>
-        <span class="orange">Ernte ab ca.:</span> ${ernteDatum(f.Gesaet_am,f.Fruchtart)}<br>
-        <span class="orange">Erwarteter Ertrag:</span> ${erwarteterErtrag(f.Feldgroesse,f.Fruchtart)}<br>
-        <span class="orange">Erwarteter Wert:</span> ${erwarteterWert(f.Feldgroesse,f.Fruchtart)}<br>
-        <span class="orange">Letzte Aktion:</span> ${text(f.Letzte_Aktion)}
-      </div>
-      <input id="nummer_${f.id}" value="${f.Feldnummer||""}" placeholder="Feldnummer">
-      <input id="groesse_${f.id}" value="${f.Feldgroesse||""}" placeholder="Feldgröße in ha" oninput="previewAktualisieren('${f.id}')">
-      ${hofSelect(f.id,f.Hof_id)}
-      <input id="besitzer_${f.id}" value="${f.Besitzer||""}" placeholder="Besitzer">
-      <label class="orange">Fruchtart</label>
-      ${fruchtSelect(f.id,f.Fruchtart)}
-      <input id="wachstum_${f.id}" type="number" value="${f.Wachstumsstufe||0}" placeholder="Wachstumsstufe">
-      <input id="aktion_${f.id}" value="${f.Letzte_Aktion||""}" placeholder="Letzte Aktion">
-      <input id="gesaet_am_${f.id}" type="date" value="${f.Gesaet_am?String(f.Gesaet_am).substring(0,10):""}" onchange="previewAktualisieren('${f.id}')">
-      <div id="preview_${f.id}">${vorschauHtml(f.Feldgroesse,f.Fruchtart,f.Gesaet_am)}</div>
-      <div class="row">Gekalkt <input id="gekalkt_${f.id}" type="checkbox" ${checked(f.Gekalkt)}></div>
-      <div class="row">Gedüngt 1x <input id="ged1_${f.id}" type="checkbox" ${checked(f.Geduengt_1x)}></div>
-      <div class="row">Gedüngt 2x <input id="ged2_${f.id}" type="checkbox" ${checked(f.Geduengt_2x)}></div>
-      <div class="row">Gegrubbert <input id="gegrubbert_${f.id}" type="checkbox" ${checked(f.Gegrubbert)}></div>
-      <div class="row">Gepflügt <input id="gepfluegt_${f.id}" type="checkbox" ${checked(f.Gepfluegt)}></div>
-      <div class="row">Gesät <input id="gesaet_${f.id}" type="checkbox" ${checked(f.Gesaet)}></div>
-      <div class="row">Gewalzt <input id="gewalzt_${f.id}" type="checkbox" ${checked(f.Gewalzt)}></div>
-      <div class="row">Unkraut <input id="unkraut_${f.id}" type="checkbox" ${checked(f.Unkraut)}></div>
-      <div class="row">Erntebereit <input id="ernte_${f.id}" type="checkbox" ${checked(f.Erntebereit)}></div>
-      <div class="row">Düngen nötig <input id="duengen_${f.id}" type="checkbox" ${checked(f["Duengen_nötig"])}></div>
-      <div class="row">Ernte benachrichtigt <input id="ernteben_${f.id}" type="checkbox" ${checked(f.Ernte_Benachrichtigt)}></div>
-      <button class="green" onclick="feldSpeichern(${f.id})">Speichern</button>
-      <button class="blue" onclick="saatSetzen(${f.id})">Aussaat heute setzen</button>
-      <button class="dark" onclick="location.href='feld.html?id=${f.id}'">Feld öffnen</button>
-      <button class="red" onclick="feldLoeschen(${f.id})">Feld löschen</button>
-      <div id="msg_${f.id}" class="msg"></div>
-    </div>`;
+    const gruppeBadge=f.Feldgruppe_id?`<span class='badge badge-blue'>${gruppenName(f.Feldgruppe_id)} ${f.Hauptfeld===true?"· HAUPTFELD":""}</span>`:"";
+    html+=`<div class="card"><div class="titel">🌱 Feld ${text(f.Feldnummer)}</div>${erntebereitBadge} ${duengenBadge} ${unkrautBadge} ${gruppeBadge}<div class="info"><span class="orange">ID:</span> ${f.id}<br><span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br><span class="orange">Größe:</span> ${text(f.Feldgroesse)} ha<br><span class="orange">Besitzer:</span> ${text(f.Besitzer)}<br><span class="orange">Feldgruppe:</span> ${f.Feldgruppe_id ? gruppenName(f.Feldgruppe_id) : "-"}<br><span class="orange">Gesät am:</span> ${datumDeutsch(f.Gesaet_am)}<br><span class="orange">Ernte ab ca.:</span> ${ernteDatum(f.Gesaet_am,f.Fruchtart)}<br><span class="orange">Erwarteter Ertrag:</span> ${erwarteterErtrag(f.Feldgroesse,f.Fruchtart)}<br><span class="orange">Erwarteter Wert:</span> ${erwarteterWert(f.Feldgroesse,f.Fruchtart)}<br><span class="orange">Letzte Aktion:</span> ${text(f.Letzte_Aktion)}</div><input id="nummer_${f.id}" value="${f.Feldnummer||""}" placeholder="Feldnummer"><input id="groesse_${f.id}" value="${f.Feldgroesse||""}" placeholder="Feldgröße in ha" oninput="previewAktualisieren('${f.id}')">${hofSelect(f.id,f.Hof_id)}<input id="besitzer_${f.id}" value="${f.Besitzer||""}" placeholder="Besitzer"><label class="orange">Fruchtart</label>${fruchtSelect(f.id,f.Fruchtart)}<input id="aktion_${f.id}" value="${f.Letzte_Aktion||""}" placeholder="Letzte Aktion"><input id="gesaet_am_${f.id}" type="date" value="${f.Gesaet_am?String(f.Gesaet_am).substring(0,10):""}" onchange="previewAktualisieren('${f.id}')"><div id="preview_${f.id}">${vorschauHtml(f.Feldgroesse,f.Fruchtart,f.Gesaet_am)}</div><div class="row">Gekalkt <input id="gekalkt_${f.id}" type="checkbox" ${checked(f.Gekalkt)}></div><div class="row">Gedüngt 1x <input id="ged1_${f.id}" type="checkbox" ${checked(f.Geduengt_1x)}></div><div class="row">Gedüngt 2x <input id="ged2_${f.id}" type="checkbox" ${checked(f.Geduengt_2x)}></div><div class="row">Gegrubbert <input id="gegrubbert_${f.id}" type="checkbox" ${checked(f.Gegrubbert)}></div><div class="row">Gepflügt <input id="gepfluegt_${f.id}" type="checkbox" ${checked(f.Gepfluegt)}></div><div class="row">Gesät <input id="gesaet_${f.id}" type="checkbox" ${checked(f.Gesaet)}></div><div class="row">Gewalzt <input id="gewalzt_${f.id}" type="checkbox" ${checked(f.Gewalzt)}></div><div class="row">Unkraut <input id="unkraut_${f.id}" type="checkbox" ${checked(f.Unkraut)}></div><div class="row">Erntebereit <input id="ernte_${f.id}" type="checkbox" ${checked(f.Erntebereit)}></div><div class="row">Düngen nötig <input id="duengen_${f.id}" type="checkbox" ${checked(f["Duengen_nötig"])}></div><div class="row">Ernte benachrichtigt <input id="ernteben_${f.id}" type="checkbox" ${checked(f.Ernte_Benachrichtigt)}></div><button class="green" onclick="feldSpeichern(${f.id})">Speichern</button><button class="blue" onclick="saatSetzen(${f.id})">Aussaat heute setzen</button><button class="dark" onclick="location.href='feld.html?id=${f.id}'">Feld öffnen</button><button class="red" onclick="feldLoeschen(${f.id})">Feld löschen</button><div id="msg_${f.id}" class="msg"></div></div>`;
   });
-
   if(gefiltert.length===0){html+="<div class='leer'>Keine Felder gefunden.</div>";}
   box.innerHTML=html;
 }
 
-function previewAktualisieren(id){
-  const groesse=document.getElementById("groesse_"+id)?document.getElementById("groesse_"+id).value:document.getElementById("neu_groesse").value;
-  const frucht=document.getElementById("frucht_"+id).value;
-  const gesaet=document.getElementById("gesaet_am_"+id)?document.getElementById("gesaet_am_"+id).value:null;
-  document.getElementById("preview_"+id).innerHTML=vorschauHtml(groesse,frucht,gesaet);
-}
-
-async function feldErstellen(){
-  const msg=document.getElementById("msg_neu");
-  const hofId=document.getElementById("hof_neu").value;
-  const hof=hoefe.find(h=>String(h.id)===String(hofId));
-  const nummer=document.getElementById("neu_nummer").value.trim();
-  const frucht=document.getElementById("frucht_neu").value;
-  if(!nummer){msg.innerText="Bitte Feldnummer eingeben.";return;}
-  try{
-    await post("Felder",{
-      Feldnummer:Number(nummer),
-      Feldgroesse:document.getElementById("neu_groesse").value.trim(),
-      Hof_id:hofId?Number(hofId):null,
-      Besitzer:hof?hof.Name:"",
-      Fruchtart:frucht,
-      Wachstumsstufe:0,
-      Gekalkt:false,
-      Geduengt_1x:false,
-      Geduengt_2x:false,
-      Gegrubbert:false,
-      Gepfluegt:false,
-      Gesaet:false,
-      Gewalzt:false,
-      Unkraut:false,
-      Erntebereit:false,
-      "Duengen_nötig":false,
-      Ernte_Benachrichtigt:false,
-      Letzte_Aktion:"Keine vorhanden"
-    });
-    await laden();
-  }catch(e){msg.innerText="Fehler:\n"+e.message;}
-}
-
-async function feldSpeichern(id){
-  const msg=document.getElementById("msg_"+id);
-  msg.innerText="Speichere...";
-  const hofId=document.getElementById("hof_"+id).value;
-  const hof=hoefe.find(h=>String(h.id)===String(hofId));
-  const datum=document.getElementById("gesaet_am_"+id).value;
-  try{
-    await patch("Felder",id,{
-      Feldnummer:Number(document.getElementById("nummer_"+id).value||0),
-      Feldgroesse:document.getElementById("groesse_"+id).value.trim(),
-      Hof_id:hofId?Number(hofId):null,
-      Besitzer:document.getElementById("besitzer_"+id).value.trim() || (hof?hof.Name:""),
-      Fruchtart:document.getElementById("frucht_"+id).value,
-      Wachstumsstufe:Number(document.getElementById("wachstum_"+id).value||0),
-      Letzte_Aktion:document.getElementById("aktion_"+id).value.trim(),
-      Gesaet_am:datum?new Date(datum).toISOString():null,
-      Gekalkt:document.getElementById("gekalkt_"+id).checked,
-      Geduengt_1x:document.getElementById("ged1_"+id).checked,
-      Geduengt_2x:document.getElementById("ged2_"+id).checked,
-      Gegrubbert:document.getElementById("gegrubbert_"+id).checked,
-      Gepfluegt:document.getElementById("gepfluegt_"+id).checked,
-      Gesaet:document.getElementById("gesaet_"+id).checked,
-      Gewalzt:document.getElementById("gewalzt_"+id).checked,
-      Unkraut:document.getElementById("unkraut_"+id).checked,
-      Erntebereit:document.getElementById("ernte_"+id).checked,
-      "Duengen_nötig":document.getElementById("duengen_"+id).checked,
-      Ernte_Benachrichtigt:document.getElementById("ernteben_"+id).checked
-    });
-    msg.innerText="Gespeichert.";
-    await laden();
-  }catch(e){msg.innerText="Fehler:\n"+e.message;}
-}
-
-async function saatSetzen(id){
-  const heute=new Date();
-  heute.setMinutes(heute.getMinutes()-heute.getTimezoneOffset());
-  const datum=heute.toISOString().slice(0,10);
-  document.getElementById("gesaet_am_"+id).value=datum;
-  document.getElementById("gesaet_"+id).checked=true;
-  document.getElementById("aktion_"+id).value="Aussaat gesetzt";
-  await feldSpeichern(id);
-}
-
-async function feldLoeschen(id){
-  if(!confirm("Feld wirklich löschen?"))return;
-  try{
-    await del("Felder",id);
-    await laden();
-  }catch(e){alert("Fehler:\n"+e.message);}
-}
-
+function previewAktualisieren(id){const groesse=document.getElementById("groesse_"+id)?document.getElementById("groesse_"+id).value:document.getElementById("neu_groesse").value;const frucht=document.getElementById("frucht_"+id).value;const gesaet=document.getElementById("gesaet_am_"+id)?document.getElementById("gesaet_am_"+id).value:null;document.getElementById("preview_"+id).innerHTML=vorschauHtml(groesse,frucht,gesaet);}
+async function feldErstellen(){const msg=document.getElementById("msg_neu");const hofId=document.getElementById("hof_neu").value;const hof=hoefe.find(h=>String(h.id)===String(hofId));const nummer=document.getElementById("neu_nummer").value.trim();const frucht=document.getElementById("frucht_neu").value;if(!nummer){msg.innerText="Bitte Feldnummer eingeben.";return;}try{await post("Felder",{Feldnummer:Number(nummer),Feldgroesse:document.getElementById("neu_groesse").value.trim(),Hof_id:hofId?Number(hofId):null,Besitzer:hof?hof.Name:"",Fruchtart:frucht,Gekalkt:false,Geduengt_1x:false,Geduengt_2x:false,Gegrubbert:false,Gepfluegt:false,Gesaet:false,Gewalzt:false,Unkraut:false,Erntebereit:false,"Duengen_nötig":false,Ernte_Benachrichtigt:false,Letzte_Aktion:"Keine vorhanden",Feldgruppe_id:null,Hauptfeld:false});await laden();}catch(e){msg.innerText="Fehler:\n"+e.message;}}
+async function feldSpeichern(id){const msg=document.getElementById("msg_"+id);msg.innerText="Speichere...";const hofId=document.getElementById("hof_"+id).value;const hof=hoefe.find(h=>String(h.id)===String(hofId));const datum=document.getElementById("gesaet_am_"+id).value;try{await patch("Felder",id,{Feldnummer:Number(document.getElementById("nummer_"+id).value||0),Feldgroesse:document.getElementById("groesse_"+id).value.trim(),Hof_id:hofId?Number(hofId):null,Besitzer:document.getElementById("besitzer_"+id).value.trim() || (hof?hof.Name:""),Fruchtart:document.getElementById("frucht_"+id).value,Letzte_Aktion:document.getElementById("aktion_"+id).value.trim(),Gesaet_am:datum?new Date(datum).toISOString():null,Gekalkt:document.getElementById("gekalkt_"+id).checked,Geduengt_1x:document.getElementById("ged1_"+id).checked,Geduengt_2x:document.getElementById("ged2_"+id).checked,Gegrubbert:document.getElementById("gegrubbert_"+id).checked,Gepfluegt:document.getElementById("gepfluegt_"+id).checked,Gesaet:document.getElementById("gesaet_"+id).checked,Gewalzt:document.getElementById("gewalzt_"+id).checked,Unkraut:document.getElementById("unkraut_"+id).checked,Erntebereit:document.getElementById("ernte_"+id).checked,"Duengen_nötig":document.getElementById("duengen_"+id).checked,Ernte_Benachrichtigt:document.getElementById("ernteben_"+id).checked});msg.innerText="Gespeichert.";await laden();}catch(e){msg.innerText="Fehler:\n"+e.message;}}
+async function saatSetzen(id){const heute=new Date();heute.setMinutes(heute.getMinutes()-heute.getTimezoneOffset());const datum=heute.toISOString().slice(0,10);document.getElementById("gesaet_am_"+id).value=datum;document.getElementById("gesaet_"+id).checked=true;document.getElementById("aktion_"+id).value="Aussaat gesetzt";await feldSpeichern(id);}
+async function feldLoeschen(id){if(!confirm("Feld wirklich löschen?"))return;try{await del("Felder",id);await laden();}catch(e){alert("Fehler:\n"+e.message);}}
 laden();
 </script>
 </body>
