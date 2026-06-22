@@ -5,24 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Einsatz erstellen</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}
-.app{width:100%;max-width:700px;margin:auto;padding:20px 15px 70px}
-.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}
-h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}
-.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}
-.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}
-.info{color:white;font-size:17px;line-height:1.5}
-label{display:block;margin-top:14px;margin-bottom:6px;color:#ffaa33;font-weight:bold;font-size:16px}
-input,select,textarea{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}
-textarea{min-height:120px;resize:vertical}
-button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}
-.green{background:#008800;color:white}.dark{background:#333;color:white}.red{background:#aa0000;color:white}
-.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}
-.hidden{display:none!important}
-.row{display:flex;align-items:center;justify-content:space-between;color:white;margin-top:12px;font-size:17px}
-.row input{width:26px;height:26px}
-.orgbox{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;margin-top:8px}
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{width:100%;max-width:700px;margin:auto;padding:20px 15px 70px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}.info{color:white;font-size:17px;line-height:1.5}label{display:block;margin-top:14px;margin-bottom:6px;color:#ffaa33;font-weight:bold;font-size:16px}input,select,textarea{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}textarea{min-height:120px;resize:vertical}button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.dark{background:#333;color:white}.red{background:#aa0000;color:white}.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.hidden{display:none!important}.row{display:flex;align-items:center;justify-content:space-between;color:white;margin-top:12px;font-size:17px}.row input{width:26px;height:26px}.orgbox{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -74,266 +57,99 @@ button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;fo
 </div>
 
 <script>
-const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
-const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID=localStorage.getItem("user_id");
+const USERNAME=localStorage.getItem("username")||"Unbekannt";
+if(!USER_ID){location.href="login.html";}
 
-const USER_ID = localStorage.getItem("user_id");
-const USERNAME = localStorage.getItem("username") || "Unbekannt";
+let users=[],organisationen=[],userOrgs=[],aktuellerUser=null;
 
-if(!USER_ID){ location.href = "login.html"; }
-
-let users = [];
-let organisationen = [];
-let userOrgs = [];
-let aktuellerUser = null;
-
-function headers(){
-  return {
-    "apikey":SUPABASE_KEY,
-    "Authorization":"Bearer " + SUPABASE_KEY,
-    "Content-Type":"application/json"
-  };
-}
-
-async function api(tabelle){
-  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {
-    headers:headers()
-  });
-  if(!res.ok) throw new Error(await res.text());
-  return await res.json();
-}
-
-async function postReturn(tabelle,daten){
-  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
-    method:"POST",
-    headers:{...headers(),"Prefer":"return=representation"},
-    body:JSON.stringify(daten)
-  });
-  if(!res.ok) throw new Error(await res.text());
-  const data = await res.json();
-  return data[0];
-}
-
-async function post(tabelle,daten){
-  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
-    method:"POST",
-    headers:{...headers(),"Prefer":"return=minimal"},
-    body:JSON.stringify(daten)
-  });
-  if(!res.ok) throw new Error(await res.text());
-}
-
-function text(w){
-  return w === null || w === undefined || w === "" ? "-" : w;
-}
+function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
+async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json();}
+async function apiOptional(t){try{return await api(t);}catch(e){return [];}}
+async function postReturn(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=representation"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());const data=await r.json();return data[0];}
+async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+function text(w){return w===null||w===undefined||w===""?"-":w;}
+function istAktiv(u){return u&&u.Aktiviert!==false;}
+function chatIdVonUser(u){return u.Telegram_id||u.Telegram_chat_id||u.Chat_id||null;}
+function eindeutig(liste){const m=new Map();liste.forEach(u=>{const c=chatIdVonUser(u);if(!u||!u.id||!c)return;m.set(String(u.id),u);});return Array.from(m.values());}
+function empfaengerAlle(){return eindeutig(users.filter(u=>istAktiv(u)&&chatIdVonUser(u)));}
+function empfaengerOrganisation(orgId){const ids=userOrgs.filter(o=>String(o.Organisation_id)===String(orgId)&&o.Aktiv!==false).map(o=>String(o.User_id));return eindeutig(users.filter(u=>istAktiv(u)&&ids.includes(String(u.id))&&chatIdVonUser(u)));}
+async function telegramQueueFuerEmpfaenger(titel,nachricht,typ,empfaenger,auftragId,organisationId){const liste=eindeutig(empfaenger);for(const u of liste){await post("Telegram_queue",{Titel:titel,Nachricht:nachricht,Typ:typ,User_id:Number(u.id),Hof_id:u.Hof_id?Number(u.Hof_id):null,Organisation_id:organisationId?Number(organisationId):null,Auftrag_id:auftragId||null,Chat_id:Number(chatIdVonUser(u)),Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});}return liste.length;}
 
 async function laden(){
-  const msg = document.getElementById("msg");
+  const msg=document.getElementById("msg");
   try{
-    users = await api("Users");
-    organisationen = await api("Organisationen");
-
-    try{
-      userOrgs = await api("User_Organisationen");
-    }catch(e){
-      userOrgs = await api("User_organisationen");
-    }
-
-    aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
-
-    if(!aktuellerUser){
-      localStorage.clear();
-      location.href = "login.html";
-      return;
-    }
-
-    const istAdmin = aktuellerUser.Admin === true || localStorage.getItem("admin") === "true";
-    const istOrgMitglied = userOrgs.some(o =>
-      String(o.User_id) === String(USER_ID) &&
-      o.Aktiv === true
-    );
-
-    if(!istAdmin && !istOrgMitglied){
-      document.getElementById("zugriff").classList.remove("hidden");
-      document.getElementById("formular").classList.add("hidden");
-      return;
-    }
-
+    users=await api("Users");
+    organisationen=await api("Organisationen");
+    userOrgs=await apiOptional("User_Organisationen");
+    if(userOrgs.length===0){userOrgs=await apiOptional("User_organisationen");}
+    aktuellerUser=users.find(u=>String(u.id)===String(USER_ID));
+    if(!aktuellerUser){localStorage.clear();location.href="login.html";return;}
+    const istAdmin=aktuellerUser.Admin===true||localStorage.getItem("admin")==="true";
+    const istOrgMitglied=userOrgs.some(o=>String(o.User_id)===String(USER_ID)&&o.Aktiv===true);
+    if(!istAdmin&&!istOrgMitglied){document.getElementById("zugriff").classList.remove("hidden");document.getElementById("formular").classList.add("hidden");return;}
     document.getElementById("zugriff").classList.add("hidden");
     document.getElementById("formular").classList.remove("hidden");
-
     renderOrganisationen();
-  }catch(err){
-    msg.innerText = "Fehler beim Laden:\n" + err.message;
-  }
+  }catch(err){msg.innerText="Fehler beim Laden:\n"+err.message;}
 }
 
 function renderOrganisationen(){
-  const box = document.getElementById("orgListe");
-  box.innerHTML = "";
-
-  if(organisationen.length === 0){
-    box.innerHTML = "<div class='info'>Keine Organisationen gefunden.</div>";
-    return;
-  }
-
-  organisationen.forEach(org => {
-    const div = document.createElement("div");
-    div.className = "row";
-    div.innerHTML = `
-      <span>${text(org.Name)}</span>
-      <input type="checkbox" class="orgCheck" value="${org.id}">
-    `;
-    box.appendChild(div);
-  });
+  const box=document.getElementById("orgListe");
+  box.innerHTML="";
+  if(organisationen.length===0){box.innerHTML="<div class='info'>Keine Organisationen gefunden.</div>";return;}
+  organisationen.forEach(org=>{const div=document.createElement("div");div.className="row";div.innerHTML=`<span>${text(org.Name)}</span><input type="checkbox" class="orgCheck" value="${org.id}">`;box.appendChild(div);});
 }
-
-function gewaehlteOrganisationen(){
-  return Array.from(document.querySelectorAll(".orgCheck"))
-    .filter(c => c.checked)
-    .map(c => Number(c.value));
-}
+function gewaehlteOrganisationen(){return Array.from(document.querySelectorAll(".orgCheck")).filter(c=>c.checked).map(c=>Number(c.value));}
 
 async function einsatzErstellen(){
-  const msg = document.getElementById("msg");
-  msg.innerText = "";
+  const msg=document.getElementById("msg");
+  msg.innerText="";
+  const titel=document.getElementById("titel").value.trim();
+  const beschreibung=document.getElementById("beschreibung").value.trim();
+  const typ=document.getElementById("typ").value;
+  const belohnung=Number(document.getElementById("belohnung").value||0);
+  const sichtbarkeit=document.getElementById("sichtbarkeit").value;
+  const orgIds=gewaehlteOrganisationen();
 
-  const titel = document.getElementById("titel").value.trim();
-  const beschreibung = document.getElementById("beschreibung").value.trim();
-  const typ = document.getElementById("typ").value;
-  const belohnung = Number(document.getElementById("belohnung").value || 0);
-  const sichtbarkeit = document.getElementById("sichtbarkeit").value;
-  const orgIds = gewaehlteOrganisationen();
-
-  if(!titel){
-    msg.innerText = "Bitte Titel eingeben.";
-    return;
-  }
-
-  if(!beschreibung){
-    msg.innerText = "Bitte Beschreibung eingeben.";
-    return;
-  }
-
-  if(sichtbarkeit === "Organisation" && orgIds.length === 0){
-    msg.innerText = "Bitte mindestens eine Organisation auswählen.";
-    return;
-  }
+  if(!titel){msg.innerText="Bitte Titel eingeben.";return;}
+  if(!beschreibung){msg.innerText="Bitte Beschreibung eingeben.";return;}
+  if(sichtbarkeit==="Organisation"&&orgIds.length===0){msg.innerText="Bitte mindestens eine Organisation auswählen.";return;}
 
   try{
-    msg.innerText = "Einsatz wird erstellt...";
+    msg.innerText="Einsatz wird erstellt...";
+    const einsatz=await postReturn("Auftraege",{Erstellt_am:new Date().toISOString(),Vorlage_id:null,Titel:titel,Beschreibung:beschreibung,Typ:"Einsatz",Status:"Offen",Erstellt_von:USERNAME,Angenommen_von:null,Belohnung:belohnung,Erledigt_am:null,Sichtbarkeit:sichtbarkeit,Hof:null,Organisation:sichtbarkeit==="Organisation"?"Ausgewählte Organisationen":"Alle",Auftragstyp:"Einsatz",Ziel_id:null});
+    const auftragId=einsatz&&einsatz.id?einsatz.id:null;
 
-    const einsatz = await postReturn("Auftraege", {
-      Erstellt_am:new Date().toISOString(),
-      Vorlage_id:null,
-      Titel:titel,
-      Beschreibung:beschreibung,
-      Typ:"Einsatz",
-      Status:"Offen",
-      Erstellt_von:USERNAME,
-      Angenommen_von:null,
-      Belohnung:belohnung,
-      Erledigt_am:null,
-      Sichtbarkeit:sichtbarkeit,
-      Hof:null,
-      Organisation:sichtbarkeit === "Organisation" ? "Ausgewählte Organisationen" : "Alle",
-      Auftragstyp:"Einsatz",
-      Ziel_id:null
-    });
+    for(const orgId of orgIds){await post("Einsatz_Organisationen",{Auftrag_id:auftragId,Organisation_id:orgId});}
 
-    const auftragId = einsatz && einsatz.id ? einsatz.id : null;
+    const orgText=orgIds.length>0?orgIds.map(id=>{const o=organisationen.find(x=>Number(x.id)===Number(id));return o?o.Name:id;}).join(", "):"Alle";
+    const nachricht="🚨 Neuer Einsatz\n\n"+"Titel: "+titel+"\n"+"Beschreibung: "+beschreibung+"\n"+"Einsatzart: "+typ+"\n"+"Organisationen: "+orgText+"\n"+"Erstellt von: "+USERNAME;
+    const titelBenachrichtigung="🚨 Neuer Einsatz: "+titel;
+    let telegramEmpfaengerGesamt=0;
 
-    for(const orgId of orgIds){
-      await post("Einsatz_Organisationen", {
-        Auftrag_id:auftragId,
-        Organisation_id:orgId
-      });
+    if(sichtbarkeit==="Alle"){
+      await post("Benachrichtigungen",{Titel:titelBenachrichtigung,Nachricht:nachricht,Typ:"Einsatz",User_id:null,Hof_id:null,Organisation_id:null,Auftrag_id:auftragId,Gelesen:false,Erledigt:false,Archiviert:false,Telegram_gesendet:false,Erstellt_am:new Date().toISOString()});
+      telegramEmpfaengerGesamt+=await telegramQueueFuerEmpfaenger(titelBenachrichtigung,nachricht,"Einsatz",empfaengerAlle(),auftragId,null);
     }
 
-    const orgText = orgIds.length > 0
-      ? orgIds.map(id => {
-          const o = organisationen.find(x => Number(x.id) === Number(id));
-          return o ? o.Name : id;
-        }).join(", ")
-      : "Alle";
-
-    const nachricht =
-      "🚨 Neuer Einsatz\n\n" +
-      "Titel: " + titel + "\n" +
-      "Beschreibung: " + beschreibung + "\n" +
-      "Einsatzart: " + typ + "\n" +
-      "Organisationen: " + orgText + "\n" +
-      "Erstellt von: " + USERNAME;
-
-    await post("Benachrichtigungen", {
-      Titel:"🚨 Neuer Einsatz: " + titel,
-      Nachricht:nachricht,
-      Typ:"Einsatz",
-      User_id:null,
-      Hof_id:null,
-      Organisation_id:null,
-      Auftrag_id:auftragId,
-      Gelesen:false,
-      Erledigt:false,
-      Archiviert:false,
-      Telegram_gesendet:false,
-      Erstellt_am:new Date().toISOString()
-    });
-
-    await post("Telegram_queue", {
-      Titel:"🚨 Neuer Einsatz: " + titel,
-      Nachricht:nachricht,
-      Typ:"Einsatz",
-      User_id:null,
-      Hof_id:null,
-      Organisation_id:null,
-      Chat_id:null,
-      Gesendet:false,
-      Erstellt_am:new Date().toISOString(),
-      Status:"Offen",
-      Fehler:null
-    });
-
-    for(const orgId of orgIds){
-      await post("Benachrichtigungen", {
-        Titel:"🚨 Neuer Einsatz: " + titel,
-        Nachricht:nachricht,
-        Typ:"Einsatz",
-        User_id:null,
-        Hof_id:null,
-        Organisation_id:orgId,
-        Auftrag_id:auftragId,
-        Gelesen:false,
-        Erledigt:false,
-        Archiviert:false,
-        Telegram_gesendet:false,
-        Erstellt_am:new Date().toISOString()
-      });
-
-      await post("Telegram_queue", {
-        Titel:"🚨 Neuer Einsatz: " + titel,
-        Nachricht:nachricht,
-        Typ:"Einsatz",
-        User_id:null,
-        Hof_id:null,
-        Organisation_id:orgId,
-        Chat_id:null,
-        Gesendet:false,
-        Erstellt_am:new Date().toISOString(),
-        Status:"Offen",
-        Fehler:null
-      });
+    if(sichtbarkeit==="Organisation"){
+      const gesamtEmpfaenger=[];
+      for(const orgId of orgIds){
+        await post("Benachrichtigungen",{Titel:titelBenachrichtigung,Nachricht:nachricht,Typ:"Einsatz",User_id:null,Hof_id:null,Organisation_id:orgId,Auftrag_id:auftragId,Gelesen:false,Erledigt:false,Archiviert:false,Telegram_gesendet:false,Erstellt_am:new Date().toISOString()});
+        empfaengerOrganisation(orgId).forEach(u=>gesamtEmpfaenger.push(u));
+      }
+      telegramEmpfaengerGesamt+=await telegramQueueFuerEmpfaenger(titelBenachrichtigung,nachricht,"Einsatz",gesamtEmpfaenger,auftragId,null);
     }
 
-    msg.innerText = "Einsatz wurde erstellt und in Telegram_queue eingetragen.";
-
-    document.getElementById("titel").value = "";
-    document.getElementById("beschreibung").value = "";
-    document.getElementById("belohnung").value = "0";
-    document.querySelectorAll(".orgCheck").forEach(c => c.checked = false);
-  }catch(err){
-    msg.innerText = "Fehler:\n" + err.message;
-  }
+    msg.innerText="Einsatz wurde erstellt.\nTelegram-Empfänger: "+telegramEmpfaengerGesamt;
+    document.getElementById("titel").value="";
+    document.getElementById("beschreibung").value="";
+    document.getElementById("belohnung").value="0";
+    document.querySelectorAll(".orgCheck").forEach(c=>c.checked=false);
+  }catch(err){msg.innerText="Fehler:\n"+err.message;}
 }
 
 laden();
