@@ -7,184 +7,34 @@
 
 <style>
 *{box-sizing:border-box;}
-
-body{
-  margin:0;
-  overflow-x:hidden;
-  background:#000;
-  color:#00ff22;
-  font-family:Arial,sans-serif;
-}
-
-.app{
-  width:100%;
-  max-width:700px;
-  margin:auto;
-  padding:20px;
-}
-
-.back{
-  background:#222;
-  color:white;
-  border:1px solid #555;
-  padding:14px 22px;
-  border-radius:12px;
-  margin-bottom:35px;
-  font-size:18px;
-}
-
-h1{
-  color:white;
-  text-align:center;
-  font-family:Georgia,serif;
-  font-size:40px;
-  margin:25px 0 35px;
-}
-
-.filter{
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
-}
-
-.filter button{
-  flex:1;
-  padding:12px;
-  border:2px solid #008000;
-  border-radius:10px;
-  background:#006600;
-  color:white;
-  font-weight:bold;
-  font-size:15px;
-}
-
-.filter button.aktiv{
-  background:red;
-  border-color:red;
-  box-shadow:0 0 14px rgba(255,0,0,0.65);
-}
-
-.card{
-  background:#111;
-  border:1px solid #008000;
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:16px;
-  box-shadow:0 0 10px rgba(0,255,0,0.18);
-}
-
-.card:active{
-  background:#003300;
-}
-
-.titel{
-  color:#00ff22;
-  font-size:28px;
-  font-weight:bold;
-}
-
-.info{
-  color:white;
-  margin-top:10px;
-  font-size:18px;
-  line-height:1.5;
-}
-
-.preis{
-  color:#ffaa33;
-  margin-top:12px;
-  font-size:20px;
-  font-weight:bold;
-}
-
-.leer{
-  color:white;
-  text-align:center;
-  margin-top:40px;
-  font-size:18px;
-}
-
-.popup-bg{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.85);
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  z-index:10;
-}
-
-.popup{
-  background:#111;
-  border:2px solid #00aa22;
-  border-radius:18px;
-  padding:22px;
-  width:100%;
-  max-width:620px;
-  max-height:90vh;
-  overflow-y:auto;
-  color:white;
-  box-shadow:0 0 25px #003300;
-}
-
-.popup h2{
-  color:#00ff22;
-  margin-top:0;
-  font-size:30px;
-}
-
-.popup-info{
-  font-size:19px;
-  line-height:1.5;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  margin-top:15px;
-  border-radius:10px;
-  border:1px solid #008000;
-  background:#000;
-  color:white;
-  font-size:18px;
-}
-
-.popup button{
-  width:100%;
-  margin-top:12px;
-  padding:15px;
-  border:none;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:bold;
-}
-
-.buy-btn{
-  background:#008800;
-  color:white;
-}
-
-.close-btn{
-  background:#333;
-  color:white;
-}
-
-.msg{
-  color:#ffaa33;
-  text-align:center;
-  margin-top:10px;
-  font-weight:bold;
-  white-space:pre-line;
-}
+body{margin:0;overflow-x:hidden;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:700px;margin:auto;padding:20px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:35px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:40px;margin:25px 0 35px;}
+.filter{display:flex;gap:10px;margin-bottom:20px;}
+.filter button{flex:1;padding:12px;border:2px solid #008000;border-radius:10px;background:#006600;color:white;font-weight:bold;font-size:15px;}
+.filter button.aktiv{background:red;border-color:red;box-shadow:0 0 14px rgba(255,0,0,0.65);}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,0.18);}
+.card:active{background:#003300;}
+.titel{color:#00ff22;font-size:28px;font-weight:bold;}
+.info{color:white;margin-top:10px;font-size:18px;line-height:1.5;}
+.preis{color:#ffaa33;margin-top:12px;font-size:20px;font-weight:bold;}
+.leer{color:white;text-align:center;margin-top:40px;font-size:18px;}
+.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:16px;z-index:10;}
+.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300;}
+.popup h2{color:#00ff22;margin-top:0;font-size:30px;}
+.popup-info{font-size:19px;line-height:1.5;}
+input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:18px;}
+.popup button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.buy-btn{background:#008800;color:white;}
+.close-btn{background:#333;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:10px;font-weight:bold;white-space:pre-line;}
 </style>
 </head>
 
 <body>
 <div class="app">
-
 <button class="back" onclick="location.href='index.html'">← Zurück</button>
-
 <h1>MARKTPLATZ</h1>
 
 <div class="filter">
@@ -194,16 +44,13 @@ input{
 </div>
 
 <div id="liste">Lade...</div>
-
 </div>
 
 <div id="popupBg" class="popup-bg">
   <div class="popup">
     <h2 id="popupTitel"></h2>
     <div class="popup-info" id="popupInfo"></div>
-
     <input id="menge" type="number" min="1" value="1" placeholder="Menge">
-
     <button class="buy-btn" onclick="bestellen()">Bestellen</button>
     <button class="close-btn" onclick="schliessePopup()">Schließen</button>
     <div id="popupMsg" class="msg"></div>
@@ -215,76 +62,74 @@ const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
 let angebote = [];
+let users = [];
 let ausgewaehltesAngebot = null;
 let filter = "alle";
 
-function headers(){
-  return {
-    "apikey": SUPABASE_KEY,
-    "Authorization":"Bearer " + SUPABASE_KEY,
-    "Content-Type":"application/json"
-  };
+function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
+function aktuellerUser(){return localStorage.getItem("username") || "Disti1701";}
+function aktuellerHof(){return localStorage.getItem("hof") || "BGA F&M";}
+function aktuellerHofId(){return Number(localStorage.getItem("hof_id") || 1);}
+function text(wert){return wert === null || wert === undefined || wert === "" ? "-" : wert;}
+function formatZahl(n){return Number(n || 0).toLocaleString("de-DE");}
+function istAktiv(u){return u && u.Aktiviert !== false;}
+function chatIdVonUser(u){return u.Telegram_id || u.Telegram_chat_id || u.Chat_id || null;}
+
+function eindeutigeEmpfaenger(liste){
+  const map = new Map();
+  liste.forEach(u => {
+    const chatId = chatIdVonUser(u);
+    if(!u || !u.id || !chatId) return;
+    map.set(String(u.id), u);
+  });
+  return Array.from(map.values());
 }
 
-function aktuellerUser(){
-  return localStorage.getItem("username") || "Disti1701";
+function empfaengerHof(hofId){
+  return eindeutigeEmpfaenger(users.filter(u => istAktiv(u) && String(u.Hof_id) === String(hofId) && chatIdVonUser(u)));
 }
 
-function aktuellerHof(){
-  return localStorage.getItem("hof") || "BGA F&M";
-}
-
-function aktuellerUserId(){
-  return Number(localStorage.getItem("user_id") || 1);
-}
-
-function aktuellerHofId(){
-  return Number(localStorage.getItem("hof_id") || 1);
-}
-
-function text(wert){
-  return wert === null || wert === undefined || wert === "" ? "-" : wert;
-}
-
-function formatZahl(n){
-  return Number(n || 0).toLocaleString("de-DE");
+async function api(tabelle){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*", {headers:headers()});
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
 }
 
 async function post(tabelle,daten){
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/" + tabelle,
-    {
-      method:"POST",
-      headers:{...headers(),"Prefer":"return=minimal"},
-      body:JSON.stringify(daten)
-    }
-  );
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
+    method:"POST", headers:{...headers(),"Prefer":"return=minimal"}, body:JSON.stringify(daten)
+  });
+  if(!res.ok) throw new Error(await res.text());
 }
 
 async function patch(tabelle,id,daten){
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id,
-    {
-      method:"PATCH",
-      headers:{...headers(),"Prefer":"return=minimal"},
-      body:JSON.stringify(daten)
-    }
-  );
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"PATCH", headers:{...headers(),"Prefer":"return=minimal"}, body:JSON.stringify(daten)
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
 
-  if(!res.ok){
-    throw new Error(await res.text());
+async function erstelleTelegramQueueFuerHof(titel,nachricht,zielHofId){
+  const empfaenger = empfaengerHof(zielHofId);
+  for(const u of empfaenger){
+    await post("Telegram_queue", {
+      Titel:titel,
+      Nachricht:nachricht,
+      Typ:"Bestellung",
+      User_id:Number(u.id),
+      Hof_id:u.Hof_id ? Number(u.Hof_id) : null,
+      Organisation_id:null,
+      Chat_id:Number(chatIdVonUser(u)),
+      Gesendet:false,
+      Erstellt_am:new Date().toISOString(),
+      Status:"Offen",
+      Fehler:null
+    });
   }
+  return empfaenger.length;
 }
 
-function setFilter(neuerFilter){
-  filter = neuerFilter;
-  ladeAngebote();
-}
-
+function setFilter(neuerFilter){filter = neuerFilter; ladeAngebote();}
 function filterButtonsAktualisieren(){
   document.getElementById("btnAlle").className = filter === "alle" ? "aktiv" : "";
   document.getElementById("btnWare").className = filter === "ware" ? "aktiv" : "";
@@ -293,84 +138,51 @@ function filterButtonsAktualisieren(){
 
 async function ladeAngebote(){
   filterButtonsAktualisieren();
-
   const box = document.getElementById("liste");
-
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Angebote?select=*&Aktiv=eq.true&order=id.desc",
-    {
-      headers:headers()
-    }
-  );
-
-  if(!res.ok){
-    box.innerHTML = "<div class='leer'>Angebote konnten nicht geladen werden.</div>";
-    return;
+  try{
+    if(users.length === 0){users = await api("Users");}
+    const res = await fetch(SUPABASE_URL + "/rest/v1/Angebote?select=*&Aktiv=eq.true&order=id.desc", {headers:headers()});
+    if(!res.ok) throw new Error(await res.text());
+    angebote = await res.json();
+    let daten = angebote;
+    if(filter === "ware") daten = angebote.filter(a => (a.Kategorie || "").toLowerCase() !== "dienstleistung");
+    if(filter === "dienstleistung") daten = angebote.filter(a => (a.Kategorie || "").toLowerCase() === "dienstleistung");
+    if(!daten || daten.length === 0){box.innerHTML = "<div class='leer'>Keine Angebote vorhanden.</div>"; return;}
+    box.innerHTML = "";
+    daten.forEach(a => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.onclick = function(){oeffneAngebot(a);};
+      div.innerHTML = `
+        <div class="titel">${a.Titel || "Angebot"}</div>
+        <div class="info">
+          Kategorie: ${text(a.Kategorie)}<br>
+          Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
+          Bestand: ${formatZahl(a.Bestand)}<br>
+          Hof-ID: ${text(a.Hof_id)}
+        </div>
+        <div class="preis">${formatZahl(a.Preis)} €</div>`;
+      box.appendChild(div);
+    });
+  }catch(err){
+    box.innerHTML = "<div class='leer'>Angebote konnten nicht geladen werden.<br><br>" + err.message + "</div>";
   }
-
-  angebote = await res.json();
-
-  let daten = angebote;
-
-  if(filter === "ware"){
-    daten = angebote.filter(a => (a.Kategorie || "").toLowerCase() !== "dienstleistung");
-  }
-
-  if(filter === "dienstleistung"){
-    daten = angebote.filter(a => (a.Kategorie || "").toLowerCase() === "dienstleistung");
-  }
-
-  if(!daten || daten.length === 0){
-    box.innerHTML = "<div class='leer'>Keine Angebote vorhanden.</div>";
-    return;
-  }
-
-  box.innerHTML = "";
-
-  daten.forEach(a => {
-    const div = document.createElement("div");
-    div.className = "card";
-
-    div.onclick = function(){
-      oeffneAngebot(a);
-    };
-
-    div.innerHTML = `
-      <div class="titel">${a.Titel || "Angebot"}</div>
-      <div class="info">
-        Kategorie: ${text(a.Kategorie)}<br>
-        Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
-        Bestand: ${formatZahl(a.Bestand)}<br>
-        Hof-ID: ${text(a.Hof_id)}
-      </div>
-      <div class="preis">${formatZahl(a.Preis)} €</div>
-    `;
-
-    box.appendChild(div);
-  });
 }
 
 function oeffneAngebot(a){
   ausgewaehltesAngebot = a;
-
   document.getElementById("popupTitel").innerText = a.Titel || "Angebot";
-
   document.getElementById("popupInfo").innerHTML = `
     Kategorie: ${text(a.Kategorie)}<br>
     Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
     Preis: ${formatZahl(a.Preis)} €<br>
     Bestand: ${formatZahl(a.Bestand)}<br>
-    Hof-ID: ${text(a.Hof_id)}
-  `;
-
+    Hof-ID: ${text(a.Hof_id)}`;
   document.getElementById("menge").value = 1;
   document.getElementById("popupMsg").innerText = "";
   document.getElementById("popupBg").style.display = "flex";
 }
-
-function schliessePopup(){
-  document.getElementById("popupBg").style.display = "none";
-}
+function schliessePopup(){document.getElementById("popupBg").style.display = "none";}
 
 async function erstelleBenachrichtigung(titel, nachricht, zielHofId){
   await post("Benachrichtigungen", {
@@ -388,48 +200,17 @@ async function erstelleBenachrichtigung(titel, nachricht, zielHofId){
   });
 }
 
-async function erstelleTelegramQueue(titel, nachricht, zielHofId){
-  await post("Telegram_queue", {
-    Titel:titel,
-    Nachricht:nachricht,
-    Typ:"Bestellung",
-    User_id:null,
-    Hof_id:zielHofId || null,
-    Organisation_id:null,
-    Chat_id:null,
-    Gesendet:false,
-    Erstellt_am:new Date().toISOString(),
-    Status:"Offen",
-    Fehler:null
-  });
-}
-
 async function bestellen(){
   const msg = document.getElementById("popupMsg");
   msg.innerText = "";
-
-  if(!ausgewaehltesAngebot){
-    return;
-  }
-
+  if(!ausgewaehltesAngebot) return;
   const menge = Number(document.getElementById("menge").value);
-
-  if(!menge || menge <= 0){
-    msg.innerText = "Bitte eine gültige Menge eingeben.";
-    return;
-  }
-
+  if(!menge || menge <= 0){msg.innerText = "Bitte eine gültige Menge eingeben."; return;}
   const bestand = Number(ausgewaehltesAngebot.Bestand || 0);
-
-  if(menge > bestand){
-    msg.innerText = "Nicht genug Bestand vorhanden.";
-    return;
-  }
+  if(menge > bestand){msg.innerText = "Nicht genug Bestand vorhanden."; return;}
 
   const preis = Number(ausgewaehltesAngebot.Preis || 0);
   const gesamtpreis = menge * preis;
-
-  const titel = "🛒 Neue Bestellung";
   const produkt = ausgewaehltesAngebot.Titel || "Angebot";
   const kategorie = ausgewaehltesAngebot.Kategorie || "-";
   const einheit = ausgewaehltesAngebot.Einheit || "";
@@ -455,7 +236,6 @@ async function bestellen(){
 
   try{
     msg.innerText = "Bestellung wird erstellt...";
-
     await post("Auftraege", {
       Vorlage_id: ausgewaehltesAngebot.id,
       Titel: "Bestellung: " + produkt,
@@ -470,37 +250,12 @@ async function bestellen(){
       Auftragstyp:"Bestellung",
       Ziel_id:ausgewaehltesAngebot.id
     });
-
-    await patch("Angebote", ausgewaehltesAngebot.id, {
-      Bestand:bestand - menge,
-      Aktiv:(bestand - menge) > 0
-    });
-
-    await erstelleBenachrichtigung(
-      "🛒 Neue Bestellung: " + produkt,
-      telegramNachricht,
-      zielHofId
-    );
-
-    await erstelleTelegramQueue(
-      "🛒 Neue Bestellung: " + produkt,
-      telegramNachricht,
-      zielHofId
-    );
-
-    await erstelleBenachrichtigung(
-      "🛒 Bestellung gesendet: " + produkt,
-      telegramNachricht,
-      aktuellerHofId()
-    );
-
-    msg.innerText = "Bestellung wurde erstellt und in Telegram_queue eingetragen.";
-
-    setTimeout(() => {
-      schliessePopup();
-      ladeAngebote();
-    }, 1000);
-
+    await patch("Angebote", ausgewaehltesAngebot.id, {Bestand:bestand - menge, Aktiv:(bestand - menge) > 0});
+    await erstelleBenachrichtigung("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId);
+    const anzahlTelegram = zielHofId ? await erstelleTelegramQueueFuerHof("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId) : 0;
+    await erstelleBenachrichtigung("🛒 Bestellung gesendet: " + produkt, telegramNachricht, aktuellerHofId());
+    msg.innerText = "Bestellung wurde erstellt.\\nTelegram-Empfänger Verkäufer-Hof: " + anzahlTelegram;
+    setTimeout(() => {schliessePopup(); ladeAngebote();}, 1000);
   }catch(err){
     msg.innerText = "Fehler:\\n" + err.message;
   }
@@ -508,6 +263,5 @@ async function bestellen(){
 
 ladeAngebote();
 </script>
-
 </body>
 </html>
