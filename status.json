@@ -1,12 +1,12 @@
 {
-  "serverOnline": false,
-  "status": "🔴 Offline",
+  "serverOnline": true,
+  "status": "🟢 Online",
   "servername": "",
   "map": "",
   "monat": "Juni",
   "tag": 3,
   "zeit": "0:00",
   "spielerOnline": 0,
-  "letztesUpdate": "01.07.2026 02:10",
+  "letztesUpdate": "01.07.2026 02:20",
   "dayTimeRaw": 0
 }
