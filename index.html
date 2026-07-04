@@ -17,6 +17,8 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin
 .server{color:white;text-align:center;font-size:17px;line-height:1.55;}
 .server span{color:#00ff22;font-weight:bold;}
 .server-online{color:#00ff22!important;}.server-offline{color:red!important;}
+.spielerliste{color:white;margin-top:8px;font-size:15px;line-height:1.45;}
+.spielerliste b{color:#ffaa33;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px 10px;text-align:center;color:white;min-height:92px;}
@@ -70,6 +72,7 @@ if ("serviceWorker" in navigator) {
   <span id="servername">...</span> | <span id="map">...</span><br>
   <span id="monat">...</span>, Tag <span id="tag">...</span>, <span id="zeit">...</span><br>
   Update: <span id="githubupdate">...</span>
+  <div id="spielerliste" class="spielerliste"></div>
 </div>
 
 <div class="card">
@@ -128,13 +131,12 @@ if ("serviceWorker" in navigator) {
   <button class="red" onclick="logout()">🚪 LOGOUT</button>
 </div>
 
-<div class="notice">FS25 RP FIX1701 · V3.0</div>
+<div class="notice">FS25 RP FIX1701 · V3.1</div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
-const STATUS_URL = "https://raw.githubusercontent.com/distlerfelix-create/Fs25-api/main/status.json";
 const USER_ID = localStorage.getItem("user_id");
 const IST_ADMIN_LOCAL = localStorage.getItem("admin") === "true";
 let letzterEinsatzCount = 0;
@@ -148,6 +150,13 @@ async function api(tabelle){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabel
 async function apiOptional(tabelle){try{return await api(tabelle);}catch(e){return [];}}
 function istLeer(v){return v===null||v===undefined||v==="";}
 function statusErledigt(status){return status==="Erledigt"||status==="Abgeschlossen"||status==="Bezahlt"||status==="Storniert";}
+
+function datumAnzeige(d){
+  if(!d)return "-";
+  const x=new Date(d);
+  if(isNaN(x.getTime()))return String(d);
+  return x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
 
 function sirene(){
   if(!tonFreigeschaltet)return;
@@ -165,22 +174,57 @@ function sirene(){
 
 async function ladeServerstatus(){
   try{
-    const res=await fetch(STATUS_URL+"?t="+Date.now(),{cache:"no-store"});
-    if(!res.ok)throw new Error("status.json nicht erreichbar");
-    const status=await res.json();
+    const res=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=*",{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(!res.ok){
+      throw new Error(await res.text());
+    }
+
+    const data=await res.json();
+    const status=data&&data.length>0?data[0]:null;
+
+    if(!status){
+      throw new Error("Kein Eintrag in Serverstatus mit id=1 gefunden.");
+    }
+
     document.getElementById("servername").innerText=status.servername||"-";
     document.getElementById("map").innerText=status.map||"-";
     document.getElementById("spieler").innerText=status.spielerOnline??"0";
     document.getElementById("monat").innerText=status.monat||"-";
     document.getElementById("tag").innerText=status.tag??"-";
     document.getElementById("zeit").innerText=status.zeit||"-";
-    document.getElementById("githubupdate").innerText=status.letztesUpdate||"-";
+    document.getElementById("githubupdate").innerText=datumAnzeige(status.letztesUpdate);
+
     const server=document.getElementById("server");
-    if(status.serverOnline===true){server.innerText="🟢 Online";server.className="server-online";}else{server.innerText="🔴 Offline";server.className="server-offline";}
+    if(status.serverOnline===true){
+      server.innerText="🟢 Online";
+      server.className="server-online";
+    }else{
+      server.innerText="🔴 Offline";
+      server.className="server-offline";
+    }
+
+    const spielerliste=document.getElementById("spielerliste");
+    let namen=status.spielerOnlineListe||[];
+
+    if(typeof namen==="string"){
+      try{namen=JSON.parse(namen);}catch(e){namen=[];}
+    }
+
+    if(Array.isArray(namen)&&namen.length>0){
+      spielerliste.innerHTML="<b>Online:</b><br>"+namen.map(n=>"👤 "+n).join("<br>");
+    }else{
+      spielerliste.innerHTML="<b>Online:</b> Keine Spieler";
+    }
+
   }catch(err){
     document.getElementById("server").innerText="🔴 Fehler";
     document.getElementById("server").className="server-offline";
     document.getElementById("githubupdate").innerText="Status konnte nicht geladen werden";
+    document.getElementById("spielerliste").innerHTML="";
   }
 }
 
