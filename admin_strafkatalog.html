@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Strafkatalog</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;overflow-x:hidden;}
+.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18);}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px;}
+.info{color:white;font-size:17px;line-height:1.5;}
+label{display:block;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px;}
+input,select,textarea{width:100%;padding:14px;margin-top:4px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+textarea{min-height:80px;resize:vertical;}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.red{background:#aa0000;color:white;}
+.blue{background:#004488;color:white;}
+.dark{background:#333;color:white;}
+.orangeBtn{background:#cc7700;color:white;}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line;}
+.leer{color:white;text-align:center;margin-top:25px;font-size:18px;}
+.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px;color:white;line-height:1.5;}
+.item.inaktiv{opacity:.6;border-color:#555;}
+.badge{display:inline-block;background:#008800;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin:4px 4px 8px 0;}
+.badge-off{background:#555;}
+.badge-blue{background:#004488;}
+.badge-orange{background:#cc7700;}
+.badge-red{background:#aa0000;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.search{width:100%;padding:14px;border-radius:12px;border:1px solid #008000;background:#000;color:white;font-size:18px;margin-bottom:14px;}
+.small{font-size:14px;color:#ffaa33;margin-top:8px;line-height:1.4;}
+.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px;font-size:17px;gap:12px;}
+.row input{width:28px;height:28px;margin:0;}
+@media(max-width:520px){.grid{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}}
+</style>
+</head>
+<body>
+<div class="app">
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+<h1>STRAFKATALOG</h1>
+
+<div id="zugriff" class="card"><div class="info">Prüfe Adminrechte...</div></div>
+
+<div id="inhalt" style="display:none">
+
+<div class="card">
+  <div class="titel" id="formularTitel">🚔 Neuer Verstoß</div>
+
+  <label>Kategorie</label>
+  <input id="kategorie" placeholder="z. B. Straßenverkehr, Polizei, RP-Regeln">
+
+  <label>Verstoß</label>
+  <textarea id="verstoss" placeholder="z. B. Rote Ampel missachtet"></textarea>
+
+  <div class="grid">
+    <div>
+      <label>Punkte</label>
+      <input id="punkte" type="number" min="0" value="0">
+    </div>
+    <div>
+      <label>Bußgeld</label>
+      <input id="bussgeld" type="number" min="0" value="0">
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <label>Sortierung</label>
+      <input id="sortierung" type="number" value="0">
+    </div>
+    <div>
+      <label>Status</label>
+      <select id="aktiv">
+        <option value="true">Aktiv</option>
+        <option value="false">Inaktiv</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <span>Führerscheinrelevant</span>
+    <input id="fuehrerschein" type="checkbox">
+  </div>
+
+  <button class="green" onclick="speichern()">Speichern</button>
+  <button class="dark" onclick="formularLeeren()">Formular leeren</button>
+  <div id="msg" class="msg"></div>
+  <div class="small">Tipp: Punkte und Bußgeld werden später beim Erstellen einer Strafe automatisch aus diesem Katalog übernommen.</div>
+</div>
+
+<div class="card">
+  <div class="titel">Vorhandene Verstöße</div>
+  <input id="suche" class="search" placeholder="Suchen nach Verstoß oder Kategorie..." oninput="anzeigen()">
+  <div id="liste">Lade...</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID = localStorage.getItem("user_id");
+if(!USER_ID){location.href="login.html";}
+
+let strafkatalog=[];
+let editId=null;
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer "+SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+async function api(tabelle){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{headers:headers(),cache:"no-store"});
+  if(!res.ok){throw new Error(await res.text());}
+  return await res.json();
+}
+
+async function post(tabelle,daten){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle,{
+    method:"POST",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+  if(!res.ok){throw new Error(await res.text());}
+}
+
+async function patch(tabelle,id,daten){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?id=eq."+id,{
+    method:"PATCH",
+    headers:{...headers(),"Prefer":"return=minimal"},
+    body:JSON.stringify(daten)
+  });
+  if(!res.ok){throw new Error(await res.text());}
+}
+
+function text(w){return w===null||w===undefined||w===""?"-":w;}
+function euro(w){const n=Number(w||0);return n.toLocaleString("de-DE")+" €";}
+function boolSelect(v){return v===false?"false":"true";}
+
+async function pruefen(){
+  try{
+    const users=await api("Users");
+    const user=users.find(u=>String(u.id)===String(USER_ID));
+    if(!user||user.Admin!==true){
+      document.getElementById("zugriff").innerHTML="<div class='info'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+    document.getElementById("zugriff").style.display="none";
+    document.getElementById("inhalt").style.display="block";
+    await laden();
+  }catch(err){
+    document.getElementById("zugriff").innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";
+  }
+}
+
+async function laden(){
+  const box=document.getElementById("liste");
+  try{
+    strafkatalog=await api("Strafkatalog");
+    strafkatalog.sort((a,b)=>{
+      const k=String(a.Kategorie||"").localeCompare(String(b.Kategorie||""));
+      if(k!==0)return k;
+      const s=Number(a.Sortierung||0)-Number(b.Sortierung||0);
+      if(s!==0)return s;
+      return String(a.Verstoss||"").localeCompare(String(b.Verstoss||""));
+    });
+    anzeigen();
+  }catch(err){
+    box.innerHTML="<div class='leer'>Fehler:<br><br>"+err.message+"</div>";
+  }
+}
+
+function anzeigen(){
+  const box=document.getElementById("liste");
+  const suche=document.getElementById("suche").value.toLowerCase().trim();
+  let liste=strafkatalog.slice();
+
+  if(suche){
+    liste=liste.filter(s=>[
+      s.Kategorie,
+      s.Verstoss,
+      s.Punkte,
+      s.Bussgeld
+    ].join(" ").toLowerCase().includes(suche));
+  }
+
+  if(liste.length===0){
+    box.innerHTML="<div class='leer'>Keine Verstöße gefunden.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+  liste.forEach(s=>{
+    const div=document.createElement("div");
+    div.className="item"+(s.Aktiv===false?" inaktiv":"");
+    div.innerHTML=`
+      <span class="badge ${s.Aktiv===false?"badge-off":""}">${s.Aktiv===false?"INAKTIV":"AKTIV"}</span>
+      <span class="badge badge-blue">${text(s.Kategorie)}</span>
+      <span class="badge badge-orange">${Number(s.Punkte||0)} Punkte</span>
+      ${s.Fuehrerscheinrelevant===true?"<span class='badge badge-red'>Führerschein</span>":""}
+      <div class="titel">${text(s.Verstoss)}</div>
+      <div class="info">
+        <span style="color:#ffaa33">Bußgeld:</span> ${euro(s.Bussgeld)}<br>
+        <span style="color:#ffaa33">Sortierung:</span> ${text(s.Sortierung)}<br>
+        <span style="color:#ffaa33">ID:</span> ${s.id}
+      </div>
+      <button class="blue" onclick="bearbeiten(${s.id})">Bearbeiten</button>
+      <button class="${s.Aktiv===false?"green":"red"}" onclick="aktivWechseln(${s.id}, ${s.Aktiv===false?"true":"false"})">${s.Aktiv===false?"Aktivieren":"Deaktivieren"}</button>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function bearbeiten(id){
+  const s=strafkatalog.find(x=>Number(x.id)===Number(id));
+  if(!s)return;
+  editId=id;
+  document.getElementById("formularTitel").innerText="🚔 Verstoß bearbeiten";
+  document.getElementById("kategorie").value=s.Kategorie||"";
+  document.getElementById("verstoss").value=s.Verstoss||"";
+  document.getElementById("punkte").value=s.Punkte||0;
+  document.getElementById("bussgeld").value=s.Bussgeld||0;
+  document.getElementById("sortierung").value=s.Sortierung||0;
+  document.getElementById("aktiv").value=boolSelect(s.Aktiv);
+  document.getElementById("fuehrerschein").checked=s.Fuehrerscheinrelevant===true;
+  document.getElementById("msg").innerText="Bearbeitungsmodus aktiv.";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function formularLeeren(){
+  editId=null;
+  document.getElementById("formularTitel").innerText="🚔 Neuer Verstoß";
+  document.getElementById("kategorie").value="";
+  document.getElementById("verstoss").value="";
+  document.getElementById("punkte").value=0;
+  document.getElementById("bussgeld").value=0;
+  document.getElementById("sortierung").value=0;
+  document.getElementById("aktiv").value="true";
+  document.getElementById("fuehrerschein").checked=false;
+  document.getElementById("msg").innerText="";
+}
+
+async function speichern(){
+  const msg=document.getElementById("msg");
+  msg.innerText="";
+
+  const kategorie=document.getElementById("kategorie").value.trim()||"Allgemein";
+  const verstoss=document.getElementById("verstoss").value.trim();
+  const punkte=Number(document.getElementById("punkte").value||0);
+  const bussgeld=Number(document.getElementById("bussgeld").value||0);
+  const sortierung=Number(document.getElementById("sortierung").value||0);
+  const aktiv=document.getElementById("aktiv").value==="true";
+  const fuehrerschein=document.getElementById("fuehrerschein").checked===true;
+
+  if(!verstoss){msg.innerText="Bitte einen Verstoß eintragen.";return;}
+  if(!Number.isFinite(punkte)||punkte<0){msg.innerText="Punkte sind ungültig.";return;}
+  if(!Number.isFinite(bussgeld)||bussgeld<0){msg.innerText="Bußgeld ist ungültig.";return;}
+
+  const daten={
+    Kategorie:kategorie,
+    Verstoss:verstoss,
+    Punkte:punkte,
+    Bussgeld:bussgeld,
+    Fuehrerscheinrelevant:fuehrerschein,
+    Aktiv:aktiv,
+    Sortierung:sortierung
+  };
+
+  try{
+    if(editId){
+      await patch("Strafkatalog",editId,daten);
+      msg.innerText="Verstoß wurde gespeichert.";
+    }else{
+      await post("Strafkatalog",daten);
+      msg.innerText="Verstoß wurde angelegt.";
+    }
+    formularLeeren();
+    await laden();
+  }catch(err){
+    msg.innerText="Fehler:\n"+err.message;
+  }
+}
+
+async function aktivWechseln(id,wert){
+  try{
+    await patch("Strafkatalog",id,{Aktiv:wert===true});
+    await laden();
+  }catch(err){
+    alert("Fehler:\n"+err.message);
+  }
+}
+
+pruefen();
+</script>
+</body>
+</html>
