@@ -17,7 +17,12 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin
 .server{color:white;text-align:center;font-size:17px;line-height:1.55;}
 .server span{color:#00ff22;font-weight:bold;}
 .server-online{color:#00ff22!important;}.server-offline{color:red!important;}
-.spielerliste{color:white;margin-top:8px;font-size:15px;line-height:1.45;}
+.server-meta{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.server-box{background:#090909;border:1px solid #006600;border-radius:12px;padding:10px 8px;text-align:center;color:white;line-height:1.25;}
+.server-box small{display:block;color:#ffaa33;font-size:13px;margin-bottom:4px;font-weight:bold;}
+.server-box b{display:block;color:#00ff22;font-size:20px;}
+.server-time{grid-column:1 / -1;}
+.spielerliste{color:white;margin-top:12px;font-size:15px;line-height:1.45;}
 .spielerliste b{color:#ffaa33;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -36,7 +41,7 @@ button:active{background:#00aa00;}
 .einsatzItem b{color:#00ff22;}
 .notice{margin-top:25px;color:#ffaa33;font-size:14px;text-align:center;}
 .hidden{display:none!important;}
-@media(max-width:560px){.grid,.stats{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}}
+@media(max-width:560px){.grid,.stats,.server-meta{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}.server-time{grid-column:auto;}}
 </style>
 
 <link rel="manifest" href="manifest.json">
@@ -69,9 +74,31 @@ if ("serviceWorker" in navigator) {
 <div class="card server">
   <b>SERVER STATUS</b><br>
   <span id="server">...</span> | Spieler: <span id="spieler">...</span><br>
-  <span id="servername">...</span> | <span id="map">...</span><br>
-  <span id="monat">...</span>, Tag <span id="tag">...</span>, Jahr <span id="jahr">...</span>, <span id="zeit">...</span><br>
-  Update: <span id="githubupdate">...</span>
+  <span id="servername">...</span> | <span id="map">...</span>
+
+  <div class="server-meta">
+    <div class="server-box">
+      <small>JAHR</small>
+      <b id="jahr">...</b>
+    </div>
+    <div class="server-box">
+      <small>MONAT</small>
+      <b id="monat">...</b>
+    </div>
+    <div class="server-box">
+      <small>TAG</small>
+      <b id="tag">...</b>
+    </div>
+    <div class="server-box">
+      <small>UHRZEIT</small>
+      <b id="zeit">...</b>
+    </div>
+    <div class="server-box server-time">
+      <small>LETZTES UPDATE</small>
+      <b id="githubupdate">...</b>
+    </div>
+  </div>
+
   <div id="spielerliste" class="spielerliste"></div>
 </div>
 
