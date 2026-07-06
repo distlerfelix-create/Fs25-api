@@ -41,6 +41,11 @@ h1{
   margin:25px 0 35px;
 }
 
+h2{
+  color:#ffaa33;
+  margin-top:0;
+}
+
 .card{
   background:#111;
   border:1px solid #008000;
@@ -106,11 +111,42 @@ button{
   color:white;
 }
 
+.blue{
+  background:#004488;
+  color:white;
+}
+
+.dark{
+  background:#333;
+  color:white;
+}
+
+.info{
+  color:white;
+  font-size:17px;
+  line-height:1.5;
+}
+
+.statusBox{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:14px;
+  margin-top:12px;
+  color:white;
+  line-height:1.5;
+}
+
+.statusBox b{
+  color:#00ff22;
+}
+
 .msg{
   margin-top:15px;
   color:#ffaa33;
   font-weight:bold;
   text-align:center;
+  white-space:pre-line;
 }
 </style>
 </head>
@@ -134,6 +170,24 @@ button{
 
   <div class="label">Admin</div>
   <div class="value" id="admin">...</div>
+</div>
+
+<div class="card">
+  <h2>Telegram Online-Benachrichtigung</h2>
+  <div class="info">
+    Wenn diese Funktion aktiviert ist, bekommst du eine Telegram-Nachricht, sobald ein anderer Spieler auf den Server kommt.
+  </div>
+
+  <div class="statusBox">
+    Status:<br>
+    <b id="onlineBenachrichtigungStatus">Lade...</b>
+  </div>
+
+  <button id="onlineBenachrichtigungButton" class="blue" onclick="onlineBenachrichtigungUmschalten()">
+    Lade...
+  </button>
+
+  <div id="onlineBenachrichtigungMeldung" class="msg"></div>
 </div>
 
 <div class="card">
@@ -171,73 +225,159 @@ if(!USER_ID){
 
 let aktuellerUser = null;
 
+function headers(){
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization":"Bearer " + SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
 async function api(tabelle){
   const res = await fetch(
     SUPABASE_URL + "/rest/v1/" + tabelle + "?select=*",
     {
-      headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY
-      }
+      headers: headers(),
+      cache:"no-store"
     }
   );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
 
   return await res.json();
 }
 
-async function ladeProfil(){
-  const users = await api("Users");
-  const hoefe = await api("Hoefe");
-  const userOrgs = await api("User_organisationen");
-  const organisationen = await api("Organisationen");
+async function apiOptional(tabelle){
+  try{
+    return await api(tabelle);
+  }catch(e){
+    return [];
+  }
+}
 
-  aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
+function onlineBenachrichtigungAktiv(){
+  return aktuellerUser && aktuellerUser.Telegram_Online_Benachrichtigung === true;
+}
+
+function onlineBenachrichtigungAnzeige(){
+  const aktiv = onlineBenachrichtigungAktiv();
+  const status = document.getElementById("onlineBenachrichtigungStatus");
+  const button = document.getElementById("onlineBenachrichtigungButton");
+
+  if(aktiv){
+    status.innerText = "🔔 Aktiviert";
+    button.innerText = "🔕 Online-Benachrichtigung deaktivieren";
+    button.className = "red";
+  }else{
+    status.innerText = "🔕 Deaktiviert";
+    button.innerText = "🔔 Online-Benachrichtigung aktivieren";
+    button.className = "green";
+  }
+}
+
+async function onlineBenachrichtigungUmschalten(){
+  const meldung = document.getElementById("onlineBenachrichtigungMeldung");
+  meldung.innerText = "Speichere...";
 
   if(!aktuellerUser){
-    localStorage.clear();
-    location.href = "login.html";
+    meldung.innerText = "Profil ist noch nicht geladen.";
     return;
   }
 
-  const hof = hoefe.find(h => String(h.id) === String(aktuellerUser.Hof_id));
+  const neuerWert = !onlineBenachrichtigungAktiv();
 
-  document.getElementById("username").innerText =
-    aktuellerUser["PSN-Username"] || "-";
-
-  document.getElementById("vorname").innerText =
-    aktuellerUser.Vorname || "-";
-
-  document.getElementById("hof").innerText =
-    aktuellerUser.Hof || (hof ? hof.Name : "-");
-
-  document.getElementById("admin").innerText =
-    aktuellerUser.Admin === true ? "Ja" : "Nein";
-
-  const meineOrgs = userOrgs.filter(o =>
-    String(o.User_id) === String(USER_ID) &&
-    o.Aktiv === true
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Users?id=eq." + USER_ID,
+    {
+      method:"PATCH",
+      headers:{
+        ...headers(),
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify({
+        Telegram_Online_Benachrichtigung: neuerWert
+      })
+    }
   );
 
-  const box = document.getElementById("organisationen");
-  box.innerHTML = "";
-
-  if(meineOrgs.length === 0){
-    box.innerHTML = "<div style='color:white'>Keine Organisationen.</div>";
+  if(!res.ok){
+    meldung.innerText = "Einstellung konnte nicht gespeichert werden.\n" + await res.text();
+    return;
   }
 
-  meineOrgs.forEach(eintrag => {
-    const org = organisationen.find(o =>
-      String(o.id) === String(eintrag.Organisation_id)
+  aktuellerUser.Telegram_Online_Benachrichtigung = neuerWert;
+  onlineBenachrichtigungAnzeige();
+
+  meldung.innerText = neuerWert
+    ? "Online-Benachrichtigung wurde aktiviert."
+    : "Online-Benachrichtigung wurde deaktiviert.";
+}
+
+async function ladeProfil(){
+  try{
+    const users = await api("Users");
+    const hoefe = await api("Hoefe");
+    const userOrgs = await apiOptional("User_organisationen");
+    const organisationen = await api("Organisationen");
+
+    aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
+
+    if(!aktuellerUser){
+      localStorage.clear();
+      location.href = "login.html";
+      return;
+    }
+
+    const hof = hoefe.find(h => String(h.id) === String(aktuellerUser.Hof_id));
+
+    document.getElementById("username").innerText =
+      aktuellerUser["PSN-Username"] || "-";
+
+    document.getElementById("vorname").innerText =
+      aktuellerUser.Vorname || "-";
+
+    document.getElementById("hof").innerText =
+      aktuellerUser.Hof || (hof ? hof.Name : "-");
+
+    document.getElementById("admin").innerText =
+      aktuellerUser.Admin === true ? "Ja" : "Nein";
+
+    onlineBenachrichtigungAnzeige();
+
+    const meineOrgs = userOrgs.filter(o =>
+      String(o.User_id) === String(USER_ID) &&
+      o.Aktiv === true
     );
 
-    const div = document.createElement("div");
-    div.className = "org";
-    div.innerHTML =
-      (org ? org.Name : "Organisation") +
-      "<br><span>Rolle: " + (eintrag.Rolle || "-") + "</span>";
+    const box = document.getElementById("organisationen");
+    box.innerHTML = "";
 
-    box.appendChild(div);
-  });
+    if(meineOrgs.length === 0){
+      box.innerHTML = "<div style='color:white'>Keine Organisationen.</div>";
+    }
+
+    meineOrgs.forEach(eintrag => {
+      const org = organisationen.find(o =>
+        String(o.id) === String(eintrag.Organisation_id)
+      );
+
+      const div = document.createElement("div");
+      div.className = "org";
+      div.innerHTML =
+        (org ? org.Name : "Organisation") +
+        "<br><span>Rolle: " + (eintrag.Rolle || "-") + "</span>";
+
+      box.appendChild(div);
+    });
+
+  }catch(err){
+    document.querySelector(".app").innerHTML =
+      "<div class='card'><div class='info'>Profil konnte nicht geladen werden:<br><br>" +
+      err.message +
+      "</div></div>";
+  }
 }
 
 async function passwortAendern(){
@@ -273,9 +413,7 @@ async function passwortAendern(){
     {
       method:"PATCH",
       headers:{
-        "apikey": SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY,
-        "Content-Type":"application/json",
+        ...headers(),
         "Prefer":"return=minimal"
       },
       body:JSON.stringify({
