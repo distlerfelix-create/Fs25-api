@@ -18,11 +18,11 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin
 .server span{color:#00ff22;font-weight:bold;}
 .server-online{color:#00ff22!important;}.server-offline{color:red!important;}
 .server-meta{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.server-box{background:#090909;border:1px solid #006600;border-radius:16px;padding:14px 10px;text-align:center;color:white;line-height:1.3;}
-.server-box small{display:block;color:#ffaa33;font-size:13px;margin-bottom:4px;font-weight:bold;}
+.server-box{background:#090909;border:1px solid #006600;border-radius:16px;padding:14px 8px;text-align:center;color:white;line-height:1.3;}
+.server-box small{display:block;color:#ffaa33;font-size:13px;margin-bottom:5px;font-weight:bold;}
 .server-box b{display:block;color:#00ff22;font-size:20px;}
 .server-time{grid-column:1 / -1;}
-.spielerliste{color:white;margin-top:12px;font-size:15px;line-height:1.45;}
+.spielerliste{color:white;margin-top:14px;font-size:15px;line-height:1.45;}
 .spielerliste b{color:#ffaa33;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -41,7 +41,7 @@ button:active{background:#00aa00;}
 .einsatzItem b{color:#00ff22;}
 .notice{margin-top:25px;color:#ffaa33;font-size:14px;text-align:center;}
 .hidden{display:none!important;}
-@media(max-width:560px){.grid,.stats,.server-meta{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}.server-time{grid-column:auto;}}
+@media(max-width:560px){.grid,.stats{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}.server-meta{grid-template-columns:1fr 1fr;gap:10px;}.server-box{padding:12px 6px;}.server-box b{font-size:19px;}.server-box small{font-size:12px;}.server-time{grid-column:1 / -1;}}
 </style>
 
 <link rel="manifest" href="manifest.json">
@@ -78,19 +78,19 @@ if ("serviceWorker" in navigator) {
 
   <div class="server-meta">
     <div class="server-box">
-      <small>JAHR</small>
+      <small>📅 JAHR</small>
       <b id="jahr">...</b>
     </div>
     <div class="server-box">
-      <small>MONAT</small>
+      <small>🗓️ MONAT</small>
       <b id="monat">...</b>
     </div>
     <div class="server-box">
-      <small>TAG</small>
+      <small>📆 TAG</small>
       <b id="tag">...</b>
     </div>
     <div class="server-box">
-      <small>UHRZEIT</small>
+      <small>🕒 UHRZEIT</small>
       <b id="zeit">...</b>
     </div>
     <div class="server-box server-time">
