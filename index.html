@@ -70,7 +70,7 @@ if ("serviceWorker" in navigator) {
   <b>SERVER STATUS</b><br>
   <span id="server">...</span> | Spieler: <span id="spieler">...</span><br>
   <span id="servername">...</span> | <span id="map">...</span><br>
-  <span id="monat">...</span>, Tag <span id="tag">...</span>, <span id="zeit">...</span><br>
+  <span id="monat">...</span>, Tag <span id="tag">...</span>, Jahr <span id="jahr">...</span>, <span id="zeit">...</span><br>
   Update: <span id="githubupdate">...</span>
   <div id="spielerliste" class="spielerliste"></div>
 </div>
@@ -198,6 +198,7 @@ async function ladeServerstatus(){
     document.getElementById("spieler").innerText=status.spielerOnline??"0";
     document.getElementById("monat").innerText=status.monat||"-";
     document.getElementById("tag").innerText=status.tag??"-";
+    document.getElementById("jahr").innerText=status.jahr??"1";
     document.getElementById("zeit").innerText=status.zeit||"-";
     document.getElementById("githubupdate").innerText=datumAnzeige(status.letztesUpdate);
 
