@@ -148,6 +148,71 @@ button{
   text-align:center;
   white-space:pre-line;
 }
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.stat{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:14px;
+  text-align:center;
+  color:white;
+}
+
+.stat b{
+  display:block;
+  color:#00ff22;
+  font-size:28px;
+  margin-bottom:4px;
+}
+
+.badge{
+  display:inline-block;
+  color:white;
+  border-radius:20px;
+  padding:5px 10px;
+  font-size:14px;
+  margin:5px 5px 5px 0;
+  font-weight:bold;
+}
+
+.badge-green{background:#008800;}
+.badge-yellow{background:#b59b00;}
+.badge-orange{background:#cc7700;}
+.badge-red{background:#aa0000;}
+.badge-gray{background:#555;}
+.badge-blue{background:#004488;}
+
+.item{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:12px;
+  margin-top:10px;
+  color:white;
+  line-height:1.45;
+}
+
+.item b{
+  color:#00ff22;
+}
+
+.small{
+  color:#ffaa33;
+  font-size:14px;
+  line-height:1.4;
+}
+
+@media(max-width:560px){
+  .grid{grid-template-columns:1fr;}
+}
+
 </style>
 </head>
 
@@ -170,6 +235,23 @@ button{
 
   <div class="label">Admin</div>
   <div class="value" id="admin">...</div>
+</div>
+
+<div class="card">
+  <h2>🚗 Führerschein & Punktekonto</h2>
+  <div id="fuehrerscheinBox" class="statusBox">Lade...</div>
+
+  <div class="grid">
+    <div class="stat"><b id="aktivePunkte">0</b>Aktive Punkte</div>
+    <div class="stat"><b id="historischePunkte">0</b>Historische Punkte</div>
+  </div>
+
+  <div id="punkteStatus" class="statusBox">Lade...</div>
+</div>
+
+<div class="card">
+  <h2>📜 Letzte Verstöße</h2>
+  <div id="letzteVerstoesse">Lade...</div>
 </div>
 
 <div class="card">
@@ -224,6 +306,276 @@ if(!USER_ID){
 }
 
 let aktuellerUser = null;
+
+let strafregister = [];
+let serverStatus = null;
+
+const MONATE = ["März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember","Januar","Februar"];
+
+function text(wert){
+  return wert === null || wert === undefined || wert === "" ? "-" : wert;
+}
+
+function monatsIndex(monat){
+  const m = String(monat || "").toLowerCase().trim();
+  const map = {
+    "märz":0,"maerz":0,"mrz":0,
+    "april":1,"apr":1,
+    "mai":2,
+    "juni":3,"jun":3,
+    "juli":4,"jul":4,
+    "august":5,"aug":5,
+    "september":6,"sept":6,"sep":6,
+    "oktober":7,"okt":7,
+    "november":8,"nov":8,
+    "dezember":9,"dez":9,
+    "januar":10,"jan":10,
+    "februar":11,"feb":11
+  };
+  return map[m] ?? 0;
+}
+
+function zeitwert(jahr, monat, tag){
+  const j = Number(jahr || 1);
+  const mi = monatsIndex(monat);
+  const t = Number(tag || 1);
+  return ((j - 1) * 36) + (mi * 3) + (t - 1);
+}
+
+function aktuellerZeitwert(){
+  return zeitwert(
+    serverStatus && serverStatus.jahr ? serverStatus.jahr : 1,
+    serverStatus && serverStatus.monat ? serverStatus.monat : "März",
+    serverStatus && serverStatus.tag ? serverStatus.tag : 1
+  );
+}
+
+function eintragZeitwert(e){
+  const j = e.serverjahr ?? e.Serverjahr;
+  const m = e.servermonat ?? e.Servermonat;
+  const t = e.servertag ?? e.Servertag;
+
+  if(j && m && t){
+    return zeitwert(j,m,t);
+  }
+
+  return -999999;
+}
+
+function verfallZeitwert(e){
+  const j = e.punkteverfalljahr ?? e.PunkteVerfallJahr;
+  const m = e.punkteverfallmonat ?? e.PunkteVerfallMonat;
+  const t = e.punkteverfalltag ?? e.PunkteVerfallTag;
+
+  if(j && m && t){
+    return zeitwert(j,m,t);
+  }
+
+  return eintragZeitwert(e) + 24;
+}
+
+function statusWert(e){
+  return e.bearbeitungsstatus || "Offen";
+}
+
+function istAbgelaufenReal(e){
+  if(!e.gueltig_bis)return false;
+  const bis = new Date(e.gueltig_bis);
+  return !isNaN(bis.getTime()) && bis < new Date();
+}
+
+function istErledigt(e){
+  const s = statusWert(e);
+  return e.erledigt === true ||
+    e.aktiv === false ||
+    istAbgelaufenReal(e) ||
+    s === "Erledigt" ||
+    s === "Abgeschlossen";
+}
+
+function punkteWert(e){
+  return Number(e.verwarnpunkte ?? e.Punkte ?? 0);
+}
+
+function betragWert(e){
+  return Number(e.betrag ?? e.bussgeld ?? e.Bussgeld ?? 0);
+}
+
+function punkteAktiv(e){
+  if(istErledigt(e))return false;
+  if(punkteWert(e) <= 0)return false;
+  return aktuellerZeitwert() < verfallZeitwert(e);
+}
+
+function spielzeitAnzeige(e){
+  const j = e.serverjahr ?? e.Serverjahr;
+  const m = e.servermonat ?? e.Servermonat;
+  const t = e.servertag ?? e.Servertag;
+
+  if(j && m && t){
+    return "Jahr " + j + " · " + m + " · Tag " + t;
+  }
+
+  return "-";
+}
+
+function verfallAnzeige(e){
+  const j = e.punkteverfalljahr ?? e.PunkteVerfallJahr;
+  const m = e.punkteverfallmonat ?? e.PunkteVerfallMonat;
+  const t = e.punkteverfalltag ?? e.PunkteVerfallTag;
+
+  if(j && m && t){
+    return "Jahr " + j + " · " + m + " · Tag " + t;
+  }
+
+  return "-";
+}
+
+function empfehlung(punkte){
+  const p = Number(punkte || 0);
+
+  if(p >= 15){
+    return {
+      klasse:"badge-red",
+      text:"⛔ Führerscheinentzug empfohlen",
+      hinweis:"Die aktiven Punkte liegen bei 15 oder mehr."
+    };
+  }
+
+  if(p >= 10){
+    return {
+      klasse:"badge-orange",
+      text:"🚫 Fahrverbot empfohlen",
+      hinweis:"Die aktiven Punkte liegen zwischen 10 und 14."
+    };
+  }
+
+  if(p >= 5){
+    return {
+      klasse:"badge-yellow",
+      text:"⚠️ Verwarnung empfohlen",
+      hinweis:"Die aktiven Punkte liegen zwischen 5 und 9."
+    };
+  }
+
+  return {
+    klasse:"badge-green",
+    text:"✅ Keine Maßnahme",
+    hinweis:"Die aktiven Punkte liegen unter 5."
+  };
+}
+
+function punkteSummary(){
+  const meineEintraege = strafregister.filter(e =>
+    String(e.user_id) === String(USER_ID)
+  );
+
+  const aktive = meineEintraege.filter(e => punkteAktiv(e));
+  const historisch = meineEintraege.filter(e => punkteWert(e) > 0);
+
+  return {
+    aktivePunkte: aktive.reduce((sum,e)=>sum + punkteWert(e),0),
+    historischePunkte: historisch.reduce((sum,e)=>sum + punkteWert(e),0),
+    eintraege: meineEintraege
+  };
+}
+
+async function ladeServerstatus(){
+  try{
+    const res = await fetch(
+      SUPABASE_URL + "/rest/v1/Serverstatus?id=eq.1&select=*",
+      {
+        headers: headers(),
+        cache:"no-store"
+      }
+    );
+
+    if(!res.ok){
+      throw new Error(await res.text());
+    }
+
+    const data = await res.json();
+    serverStatus = data && data.length ? data[0] : {jahr:1, monat:"März", tag:1};
+  }catch(e){
+    serverStatus = {jahr:1, monat:"März", tag:1};
+  }
+}
+
+function zeigeFuehrerscheinUndPunkte(){
+  const box = document.getElementById("fuehrerscheinBox");
+  const statusBox = document.getElementById("punkteStatus");
+
+  const summary = punkteSummary();
+  const emp = empfehlung(summary.aktivePunkte);
+
+  document.getElementById("aktivePunkte").innerText = summary.aktivePunkte;
+  document.getElementById("historischePunkte").innerText = summary.historischePunkte;
+
+  const fuehrerscheinVorhanden = aktuellerUser.Fuehrerschein !== false;
+
+  let html = "";
+
+  if(fuehrerscheinVorhanden){
+    html += "<b>✅ Führerschein vorhanden</b><br>";
+  }else{
+    html += "<b>🚫 Führerschein entzogen</b><br>";
+    html += "<span class='orange'>Seit:</span> Jahr " +
+      text(aktuellerUser.Fuehrerschein_Entzogen_Seit_Jahr) + " · " +
+      text(aktuellerUser.Fuehrerschein_Entzogen_Seit_Monat) + " · Tag " +
+      text(aktuellerUser.Fuehrerschein_Entzogen_Seit_Tag) + "<br>";
+
+    if(aktuellerUser.Fuehrerschein_Bemerkung){
+      html += "<span class='orange'>Bemerkung:</span> " +
+        text(aktuellerUser.Fuehrerschein_Bemerkung) + "<br>";
+    }
+  }
+
+  box.innerHTML = html;
+
+  statusBox.innerHTML =
+    "<span class='badge " + emp.klasse + "'>" + emp.text + "</span><br>" +
+    "<span class='small'>" + emp.hinweis + "</span><br><br>" +
+    "<span class='orange'>Aktuelle Spielzeit:</span><br>" +
+    "Jahr " + text(serverStatus.jahr) + " · " +
+    text(serverStatus.monat) + " · Tag " +
+    text(serverStatus.tag);
+}
+
+function zeigeLetzteVerstoesse(){
+  const box = document.getElementById("letzteVerstoesse");
+
+  const meineEintraege = strafregister
+    .filter(e => String(e.user_id) === String(USER_ID))
+    .sort((a,b)=>new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .slice(0,5);
+
+  if(meineEintraege.length === 0){
+    box.innerHTML = "<div class='info'>Keine Strafregister-Einträge vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML = "";
+
+  meineEintraege.forEach(e=>{
+    const div = document.createElement("div");
+    div.className = "item";
+
+    const aktiv = punkteAktiv(e);
+
+    div.innerHTML =
+      "<b>🚔 " + text(e.grund || "Eintrag") + "</b><br>" +
+      "<span class='badge " + (aktiv ? "badge-blue" : "badge-gray") + "'>" +
+      (aktiv ? "Punkte aktiv" : "Punkte abgelaufen") +
+      "</span>" +
+      "<span class='badge badge-green'>+" + punkteWert(e) + " Punkte</span><br>" +
+      "<span class='orange'>Bußgeld:</span> " + betragWert(e).toLocaleString("de-DE") + " €<br>" +
+      "<span class='orange'>Spielzeit:</span> " + spielzeitAnzeige(e) + "<br>" +
+      "<span class='orange'>Punkte gültig bis:</span> " + verfallAnzeige(e);
+
+    box.appendChild(div);
+  });
+}
+
 
 function headers(){
   return {
@@ -317,10 +669,13 @@ async function onlineBenachrichtigungUmschalten(){
 
 async function ladeProfil(){
   try{
+    await ladeServerstatus();
+
     const users = await api("Users");
     const hoefe = await api("Hoefe");
     const userOrgs = await apiOptional("User_organisationen");
     const organisationen = await api("Organisationen");
+    strafregister = await apiOptional("strafregister");
 
     aktuellerUser = users.find(u => String(u.id) === String(USER_ID));
 
@@ -345,6 +700,8 @@ async function ladeProfil(){
       aktuellerUser.Admin === true ? "Ja" : "Nein";
 
     onlineBenachrichtigungAnzeige();
+    zeigeFuehrerscheinUndPunkte();
+    zeigeLetzteVerstoesse();
 
     const meineOrgs = userOrgs.filter(o =>
       String(o.User_id) === String(USER_ID) &&
