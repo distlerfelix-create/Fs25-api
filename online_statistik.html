@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Statistik</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:white;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:900px;margin:auto;padding:18px 14px 80px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 20px;border-radius:14px;margin-bottom:22px;font-size:18px;font-weight:bold;}
+h1{color:#ffaa33;text-align:center;font-family:Georgia,serif;font-size:36px;margin:18px 0 24px;letter-spacing:1px;}
+.card{background:#111;border:1px solid #008000;border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 0 12px rgba(0,255,34,.16);}
+.titel{color:#ffaa33;font-size:23px;font-weight:bold;margin-bottom:12px;}
+.subtitel{color:#00ff22;font-size:18px;font-weight:bold;margin:16px 0 8px;}
+.info{color:white;font-size:16px;line-height:1.55;white-space:pre-line;}
+.orange{color:#ffaa33;}
+.greenText{color:#00ff22;}
+.redText{color:#ff3333;}
+.muted{color:#bbb;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:14px;background:#008800;color:white;font-size:18px;font-weight:bold;cursor:pointer;}
+button:active{transform:scale(.99);}
+.blue{background:#004488;}
+.gray{background:#333;border:1px solid #666;}
+.filterGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px;}
+.filterGrid button{margin:0;padding:13px 8px;font-size:16px;}
+.filterGrid button.active{background:#00aa22;color:white;box-shadow:0 0 12px rgba(0,255,34,.35);}
+.inputGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+input,select{width:100%;padding:14px;border-radius:14px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat{background:#090909;border:1px solid #006600;border-radius:15px;padding:14px 10px;text-align:center;color:white;min-height:92px;display:flex;flex-direction:column;justify-content:center;}
+.stat b{display:block;color:#00ff22;font-size:27px;margin-bottom:5px;word-break:break-word;}
+.item{background:#090909;border:1px solid #006600;border-radius:15px;padding:14px;margin-bottom:10px;color:white;line-height:1.5;}
+.item.online{border:2px solid #00cc44;box-shadow:0 0 14px rgba(0,255,80,.35);}
+.item.offen{border:2px solid #ffaa33;box-shadow:0 0 12px rgba(255,170,51,.22);}
+.item b{color:#00ff22;font-size:20px;}
+.leer{color:white;text-align:center;margin:20px 0;font-size:17px;line-height:1.45;}
+.tableWrap{width:100%;overflow-x:auto;border-radius:14px;border:1px solid #006600;}
+table{width:100%;border-collapse:collapse;min-width:650px;background:#080808;color:white;}
+th{background:#111;color:#ffaa33;text-align:left;padding:12px;border-bottom:1px solid #006600;font-size:15px;}
+td{padding:12px;border-bottom:1px solid #003d00;font-size:15px;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:13px;font-weight:bold;}
+.badge.online{background:#003d12;color:#00ff22;border:1px solid #00aa33;}
+.badge.offline{background:#222;color:#ddd;border:1px solid #555;}
+.chartBox{width:100%;margin-top:8px;}
+.chartRow{display:grid;grid-template-columns:110px 1fr 58px;gap:8px;align-items:center;margin:10px 0;}
+.chartName{color:white;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chartBarBg{height:22px;background:#050505;border:1px solid #004d00;border-radius:999px;overflow:hidden;}
+.chartBar{height:100%;background:#00aa22;border-radius:999px;min-width:3px;}
+.chartVal{color:#ffaa33;text-align:right;font-size:14px;white-space:nowrap;}
+.notice{color:#ffaa33;font-size:14px;line-height:1.45;text-align:center;margin-top:20px;}
+@media(max-width:620px){h1{font-size:32px;}.stats{grid-template-columns:1fr;}.filterGrid{grid-template-columns:1fr;}.inputGrid{grid-template-columns:1fr;}.chartRow{grid-template-columns:86px 1fr 50px;gap:6px;}.chartName{font-size:14px;}.chartVal{font-size:13px;}}
+</style>
+</head>
+<body>
+<div class="app">
+<button class="back" onclick="location.href='index.html'">← Zurück</button>
+<h1>ONLINE STATISTIK</h1>
+
+<div class="card">
+  <div class="titel">Serverstatus</div>
+  <div id="serverInfo" class="info">Lade...</div>
+  <button class="blue" onclick="laden()">Aktualisieren</button>
+</div>
+
+<div class="card">
+  <div class="titel">Zeitraum</div>
+  <div class="filterGrid">
+    <button id="btnHeute" onclick="setFilter('heute')">Heute</button>
+    <button id="btn7" onclick="setFilter('7')">7 Tage</button>
+    <button id="btn30" onclick="setFilter('30')">30 Tage</button>
+  </div>
+  <div class="inputGrid">
+    <div>
+      <div class="subtitel">Von</div>
+      <input id="vonDatum" type="date" onchange="setFilter('custom')">
+    </div>
+    <div>
+      <div class="subtitel">Bis</div>
+      <input id="bisDatum" type="date" onchange="setFilter('custom')">
+    </div>
+  </div>
+  <button class="gray" onclick="laden()">Zeitraum laden</button>
+</div>
+
+<div class="card">
+  <div class="titel">Übersicht</div>
+  <div class="stats">
+    <div class="stat"><b id="statOnline">0</b>Aktuell online</div>
+    <div class="stat"><b id="statSessions">0</b>Sitzungen im Zeitraum</div>
+    <div class="stat"><b id="statSpieler">0</b>Spieler im Zeitraum</div>
+    <div class="stat"><b id="statZeit">0 Min.</b>Gesamte Onlinezeit</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="titel">Aktuell online</div>
+  <div id="onlineListe">Lade...</div>
+</div>
+
+<div class="card">
+  <div class="titel">Diagramm</div>
+  <div class="info">Onlinezeit pro Spieler im gewählten Zeitraum.</div>
+  <div id="diagramm" class="chartBox">Lade...</div>
+</div>
+
+<div class="card">
+  <div class="titel">Wer war wann online?</div>
+  <input id="suche" placeholder="Spieler suchen..." oninput="anzeigen()">
+  <div id="sessionsBox">Lade...</div>
+</div>
+
+<div class="notice">FS25 RP FIX1701 · Online Statistik</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID=localStorage.getItem("user_id");
+if(!USER_ID){location.href="login.html";}
+
+let status=null;
+let onlineNamen=[];
+let sessions=[];
+let filter="heute";
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer "+SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+function text(w){
+  return w===null||w===undefined||w===""?"-":w;
+}
+
+function pad(n){return String(n).padStart(2,"0");}
+
+function localDateInput(d){
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+
+function startOfDay(d){
+  const x=new Date(d);
+  x.setHours(0,0,0,0);
+  return x;
+}
+
+function endOfDay(d){
+  const x=new Date(d);
+  x.setHours(23,59,59,999);
+  return x;
+}
+
+function datumAnzeige(d){
+  if(!d)return "-";
+  const x=new Date(d);
+  if(isNaN(x.getTime()))return String(d);
+  return x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
+
+function uhrzeit(d){
+  if(!d)return "-";
+  const x=new Date(d);
+  if(isNaN(x.getTime()))return "-";
+  return x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
+
+function dauerText(minuten){
+  let m=Number(minuten||0);
+  if(!Number.isFinite(m)||m<0)m=0;
+  m=Math.round(m);
+  const h=Math.floor(m/60);
+  const rest=m%60;
+  if(h<=0)return rest+" Min.";
+  if(rest===0)return h+" Std.";
+  return h+" Std. "+rest+" Min.";
+}
+
+function dauerSeit(login){
+  if(!login)return 0;
+  const start=new Date(login).getTime();
+  if(!Number.isFinite(start))return 0;
+  return Math.max(0,Math.round((Date.now()-start)/60000));
+}
+
+function normalisieren(s){
+  return String(s||"").toLowerCase().trim();
+}
+
+function getSessionName(s){
+  return s.spielername||s.name||s.spieler||"Unbekannt";
+}
+
+function getSessionDauer(s){
+  if(s.logout_zeit===null||s.logout_zeit===undefined||s.logout_zeit===""){
+    return dauerSeit(s.login_zeit);
+  }
+  if(s.dauer_minuten!==null&&s.dauer_minuten!==undefined&&s.dauer_minuten!==""){
+    return Number(s.dauer_minuten)||0;
+  }
+  const a=new Date(s.login_zeit).getTime();
+  const b=new Date(s.logout_zeit).getTime();
+  if(Number.isFinite(a)&&Number.isFinite(b))return Math.max(0,Math.round((b-a)/60000));
+  return 0;
+}
+
+function getZeitraum(){
+  const heute=new Date();
+  let von=startOfDay(heute);
+  let bis=endOfDay(heute);
+
+  if(filter==="7"){
+    von=startOfDay(new Date(heute.getFullYear(),heute.getMonth(),heute.getDate()-6));
+  }else if(filter==="30"){
+    von=startOfDay(new Date(heute.getFullYear(),heute.getMonth(),heute.getDate()-29));
+  }else if(filter==="custom"){
+    const vonWert=document.getElementById("vonDatum").value;
+    const bisWert=document.getElementById("bisDatum").value;
+    if(vonWert){von=startOfDay(new Date(vonWert+"T00:00:00"));}
+    if(bisWert){bis=endOfDay(new Date(bisWert+"T00:00:00"));}
+  }
+
+  return {von,bis};
+}
+
+function setFilter(wert){
+  filter=wert;
+  const heute=new Date();
+
+  if(wert==="heute"){
+    document.getElementById("vonDatum").value=localDateInput(heute);
+    document.getElementById("bisDatum").value=localDateInput(heute);
+  }
+  if(wert==="7"){
+    document.getElementById("vonDatum").value=localDateInput(new Date(heute.getFullYear(),heute.getMonth(),heute.getDate()-6));
+    document.getElementById("bisDatum").value=localDateInput(heute);
+  }
+  if(wert==="30"){
+    document.getElementById("vonDatum").value=localDateInput(new Date(heute.getFullYear(),heute.getMonth(),heute.getDate()-29));
+    document.getElementById("bisDatum").value=localDateInput(heute);
+  }
+
+  markiereFilter();
+  laden();
+}
+
+function markiereFilter(){
+  document.getElementById("btnHeute").classList.toggle("active",filter==="heute");
+  document.getElementById("btn7").classList.toggle("active",filter==="7");
+  document.getElementById("btn30").classList.toggle("active",filter==="30");
+}
+
+async function ladeStatus(){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=*",{headers:headers(),cache:"no-store"});
+  if(!res.ok)throw new Error(await res.text());
+  const data=await res.json();
+  if(!data||data.length===0)throw new Error("Kein Serverstatus mit id=1 gefunden.");
+  status=data[0];
+  let namen=status.spielerOnlineListe||[];
+  if(typeof namen==="string"){
+    try{namen=JSON.parse(namen);}catch(e){namen=[];}
+  }
+  if(!Array.isArray(namen))namen=[];
+  onlineNamen=namen;
+}
+
+async function ladeSessions(){
+  const z=getZeitraum();
+  const vonIso=encodeURIComponent(z.von.toISOString());
+  const bisIso=encodeURIComponent(z.bis.toISOString());
+  const query="select=*&or=(login_zeit.gte."+vonIso+",logout_zeit.gte."+vonIso+")&login_zeit=lte."+bisIso+"&order=login_zeit.desc";
+  const res=await fetch(SUPABASE_URL+"/rest/v1/spieler_sessions?"+query,{headers:headers(),cache:"no-store"});
+  if(!res.ok)throw new Error(await res.text());
+  sessions=await res.json();
+  if(!Array.isArray(sessions))sessions=[];
+}
+
+async function laden(){
+  try{
+    document.getElementById("serverInfo").innerText="Lade...";
+    document.getElementById("onlineListe").innerHTML="Lade...";
+    document.getElementById("diagramm").innerHTML="Lade...";
+    document.getElementById("sessionsBox").innerHTML="Lade...";
+    await ladeStatus();
+    await ladeSessions();
+    anzeigen();
+  }catch(err){
+    document.getElementById("serverInfo").innerText="Fehler:\n"+err.message;
+    document.getElementById("onlineListe").innerHTML="<div class='leer'>Fehler beim Laden.</div>";
+    document.getElementById("diagramm").innerHTML="<div class='leer'>Fehler beim Laden.</div>";
+    document.getElementById("sessionsBox").innerHTML="<div class='leer'>Fehler beim Laden.</div>";
+  }
+}
+
+function anzeigen(){
+  zeigeServerstatus();
+  zeigeOnlineListe();
+  zeigeUebersicht();
+  zeigeDiagramm();
+  zeigeSessions();
+}
+
+function zeigeServerstatus(){
+  const serverOnline=status&&status.serverOnline===true;
+  document.getElementById("serverInfo").innerHTML=
+    "<span class='"+(serverOnline?"greenText":"redText")+"'>"+(serverOnline?"🟢 Online":"🔴 Offline")+"</span>"+
+    "<br>Server: "+text(status.servername)+
+    "<br>Map: "+text(status.map)+
+    "<br>Spielzeit: "+text(status.monat)+", Tag "+text(status.tag)+", "+text(status.zeit)+
+    "<br>Spieler online: "+text(status.spielerOnline)+
+    "<br>Letztes Update: "+datumAnzeige(status.letztesUpdate);
+}
+
+function zeigeOnlineListe(){
+  const box=document.getElementById("onlineListe");
+  if(onlineNamen.length===0){
+    box.innerHTML="<div class='leer'>Aktuell ist kein Spieler online.</div>";
+    return;
+  }
+  box.innerHTML="";
+  onlineNamen.forEach(name=>{
+    const offene=sessions.find(s=>normalisieren(getSessionName(s))===normalisieren(name)&&!s.logout_zeit);
+    const div=document.createElement("div");
+    div.className="item online";
+    div.innerHTML="<b>👤 "+text(name)+"</b>"+
+      "<br><span class='orange'>Status:</span> Online"+
+      "<br><span class='orange'>Seit:</span> "+(offene?datumAnzeige(offene.login_zeit):"wird erfasst")+
+      "<br><span class='orange'>Bisher:</span> "+(offene?dauerText(getSessionDauer(offene)):"-");
+    box.appendChild(div);
+  });
+}
+
+function gefilterteSessions(){
+  const suche=document.getElementById("suche").value.toLowerCase().trim();
+  let liste=sessions.slice();
+  if(suche){
+    liste=liste.filter(s=>getSessionName(s).toLowerCase().includes(suche));
+  }
+  return liste;
+}
+
+function summenProSpieler(liste){
+  const map={};
+  liste.forEach(s=>{
+    const name=getSessionName(s);
+    if(!map[name])map[name]=0;
+    map[name]+=getSessionDauer(s);
+  });
+  return Object.keys(map).map(name=>({name:name,minuten:map[name]})).sort((a,b)=>b.minuten-a.minuten);
+}
+
+function zeigeUebersicht(){
+  const liste=gefilterteSessions();
+  const namen=new Set(liste.map(s=>normalisieren(getSessionName(s))));
+  const gesamt=liste.reduce((sum,s)=>sum+getSessionDauer(s),0);
+  document.getElementById("statOnline").innerText=onlineNamen.length;
+  document.getElementById("statSessions").innerText=liste.length;
+  document.getElementById("statSpieler").innerText=namen.size;
+  document.getElementById("statZeit").innerText=dauerText(gesamt);
+}
+
+function zeigeDiagramm(){
+  const box=document.getElementById("diagramm");
+  const daten=summenProSpieler(gefilterteSessions()).slice(0,10);
+  if(daten.length===0){
+    box.innerHTML="<div class='leer'>Für diesen Zeitraum gibt es noch keine Onlinezeiten.</div>";
+    return;
+  }
+  const max=Math.max(...daten.map(d=>d.minuten),1);
+  box.innerHTML="";
+  daten.forEach(d=>{
+    const prozent=Math.max(3,Math.round((d.minuten/max)*100));
+    const row=document.createElement("div");
+    row.className="chartRow";
+    row.innerHTML="<div class='chartName'>"+text(d.name)+"</div>"+
+      "<div class='chartBarBg'><div class='chartBar' style='width:"+prozent+"%'></div></div>"+
+      "<div class='chartVal'>"+dauerText(d.minuten)+"</div>";
+    box.appendChild(row);
+  });
+}
+
+function zeigeSessions(){
+  const box=document.getElementById("sessionsBox");
+  const liste=gefilterteSessions();
+  if(liste.length===0){
+    box.innerHTML="<div class='leer'>Keine Sitzungen im gewählten Zeitraum gefunden.</div>";
+    return;
+  }
+  let html="<div class='tableWrap'><table><thead><tr>"+
+    "<th>Spieler</th><th>Login</th><th>Logout</th><th>Dauer</th><th>Status</th>"+
+    "</tr></thead><tbody>";
+  liste.forEach(s=>{
+    const offen=!s.logout_zeit;
+    html+="<tr>"+
+      "<td><b class='greenText'>"+text(getSessionName(s))+"</b></td>"+
+      "<td>"+datumAnzeige(s.login_zeit)+"</td>"+
+      "<td>"+(offen?"Noch online":datumAnzeige(s.logout_zeit))+"</td>"+
+      "<td>"+dauerText(getSessionDauer(s))+"</td>"+
+      "<td><span class='badge "+(offen?"online":"offline")+"'>"+(offen?"Online":"Beendet")+"</span></td>"+
+      "</tr>";
+  });
+  html+="</tbody></table></div>";
+  box.innerHTML=html;
+}
+
+function init(){
+  const heute=new Date();
+  document.getElementById("vonDatum").value=localDateInput(heute);
+  document.getElementById("bisDatum").value=localDateInput(heute);
+  markiereFilter();
+  laden();
+  setInterval(laden,60000);
+}
+
+init();
+</script>
+</body>
+</html>
