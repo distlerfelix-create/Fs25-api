@@ -25,9 +25,9 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin
 .spielerliste{color:white;margin-top:14px;font-size:15px;line-height:1.45;}
 .spielerliste b{color:#ffaa33;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px 10px;text-align:center;color:white;min-height:92px;}
-.stat b{display:block;color:#00ff22;font-size:28px;margin-bottom:4px;}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch;}
+.stat{background:#090909;border:1px solid #006600;border-radius:16px;padding:18px 10px;text-align:center;color:white;min-height:130px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:.2s;}.stat:hover{transform:translateY(-2px);box-shadow:0 0 12px rgba(0,255,0,.25);}
+.stat b{display:block;color:#00ff22;font-size:42px;line-height:1;margin-bottom:10px;font-weight:bold;}
 .section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:26px 0 12px;}
 button{width:100%;padding:16px;margin:0;border:none;border-radius:14px;background:#008800;color:white;font-size:18px;font-weight:bold;box-shadow:0 0 10px rgba(0,255,0,.22);}
 button:active{background:#00aa00;}
@@ -41,7 +41,7 @@ button:active{background:#00aa00;}
 .einsatzItem b{color:#00ff22;}
 .notice{margin-top:25px;color:#ffaa33;font-size:14px;text-align:center;}
 .hidden{display:none!important;}
-@media(max-width:560px){.grid,.stats{grid-template-columns:1fr;}h1{font-size:34px;}button{font-size:17px;}.server-meta{grid-template-columns:1fr 1fr;gap:10px;}.server-box{padding:12px 6px;}.server-box b{font-size:19px;}.server-box small{font-size:12px;}.server-time{grid-column:1 / -1;}}
+@media(max-width:560px){.grid{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;gap:10px;}h1{font-size:34px;}button{font-size:17px;}.server-meta{grid-template-columns:1fr 1fr;gap:10px;}.server-box{padding:12px 6px;}.server-box b{font-size:19px;}.server-box small{font-size:12px;}.server-time{grid-column:1 / -1;}}
 </style>
 
 <link rel="manifest" href="manifest.json">
