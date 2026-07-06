@@ -203,8 +203,54 @@ button{
   display:block;
 }
 
+
+.badge-green{background:#008800;}
+.badge-yellow{background:#b59b00;}
+.badge-orange{background:#cc7700;}
+.badge-red{background:#aa0000;}
+.badge-gray{background:#555;}
+.badge-blue{background:#004488;}
+
+.memberStats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+
+.memberStat{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+  color:white;
+}
+
+.memberStat b{
+  display:block;
+  color:#00ff22;
+  font-size:22px;
+  margin-bottom:4px;
+}
+
+.item.punkte-warn{
+  border:1px solid #ffaa33;
+  box-shadow:0 0 10px rgba(255,170,0,.25);
+}
+
+.item.punkte-orange{
+  border:1px solid #cc7700;
+  box-shadow:0 0 12px rgba(255,120,0,.3);
+}
+
+.item.punkte-red{
+  border:1px solid #ff2222;
+  box-shadow:0 0 14px rgba(255,0,0,.38);
+}
+
 @media(max-width:560px){
-  .grid,.stats,.tabs{
+  .grid,.stats,.tabs,.memberStats{
     grid-template-columns:1fr;
   }
 }
@@ -391,6 +437,10 @@ let lager=[];
 let bewegungen=[];
 let rechnungen=[];
 let hofRechnungen=[];
+let strafregister=[];
+let serverStatus=null;
+
+const MONATE=["März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember","Januar","Februar"];
 
 function headers(){
   return {
@@ -474,6 +524,127 @@ function datum(d){
          x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
 }
 
+
+function monatsIndex(monat){
+  const m=String(monat||"").toLowerCase().trim();
+  const map={
+    "märz":0,"maerz":0,"mrz":0,
+    "april":1,"apr":1,
+    "mai":2,
+    "juni":3,"jun":3,
+    "juli":4,"jul":4,
+    "august":5,"aug":5,
+    "september":6,"sept":6,"sep":6,
+    "oktober":7,"okt":7,
+    "november":8,"nov":8,
+    "dezember":9,"dez":9,
+    "januar":10,"jan":10,
+    "februar":11,"feb":11
+  };
+  return map[m]??0;
+}
+
+function zeitwert(jahr,monat,tag){
+  const j=Number(jahr||1);
+  const mi=monatsIndex(monat);
+  const t=Number(tag||1);
+  return ((j-1)*36)+(mi*3)+(t-1);
+}
+
+function aktuellerZeitwert(){
+  return zeitwert(
+    serverStatus&&serverStatus.jahr?serverStatus.jahr:1,
+    serverStatus&&serverStatus.monat?serverStatus.monat:"März",
+    serverStatus&&serverStatus.tag?serverStatus.tag:1
+  );
+}
+
+function eintragZeitwert(e){
+  const j=e.serverjahr??e.Serverjahr;
+  const m=e.servermonat??e.Servermonat;
+  const t=e.servertag??e.Servertag;
+  if(j&&m&&t)return zeitwert(j,m,t);
+  return -999999;
+}
+
+function verfallZeitwert(e){
+  const j=e.punkteverfalljahr??e.PunkteVerfallJahr;
+  const m=e.punkteverfallmonat??e.PunkteVerfallMonat;
+  const t=e.punkteverfalltag??e.PunkteVerfallTag;
+  if(j&&m&&t)return zeitwert(j,m,t);
+  return eintragZeitwert(e)+24;
+}
+
+function statusWert(e){
+  return e.bearbeitungsstatus||"Offen";
+}
+
+function istAbgelaufenReal(e){
+  if(!e.gueltig_bis)return false;
+  const bis=new Date(e.gueltig_bis);
+  return !isNaN(bis.getTime())&&bis<new Date();
+}
+
+function istErledigtStrafe(e){
+  const s=statusWert(e);
+  return e.erledigt===true||
+         e.aktiv===false||
+         istAbgelaufenReal(e)||
+         s==="Erledigt"||
+         s==="Abgeschlossen";
+}
+
+function punkteWert(e){
+  return Number(e.verwarnpunkte??e.Punkte??0);
+}
+
+function punkteAktiv(e){
+  if(istErledigtStrafe(e))return false;
+  if(punkteWert(e)<=0)return false;
+  return aktuellerZeitwert()<verfallZeitwert(e);
+}
+
+function punkteSummary(userId){
+  const arr=strafregister.filter(e=>String(e.user_id)===String(userId));
+  const aktive=arr.filter(e=>punkteAktiv(e));
+  const hist=arr.filter(e=>punkteWert(e)>0);
+  return {
+    aktivePunkte:aktive.reduce((sum,e)=>sum+punkteWert(e),0),
+    historischePunkte:hist.reduce((sum,e)=>sum+punkteWert(e),0),
+    anzahl:arr.length
+  };
+}
+
+function punkteEmpfehlung(punkte){
+  const p=Number(punkte||0);
+  if(p>=15)return {text:"⛔ Führerscheinentzug empfohlen",klasse:"punkte-red",badge:"badge-red"};
+  if(p>=10)return {text:"🚫 Fahrverbot empfohlen",klasse:"punkte-orange",badge:"badge-orange"};
+  if(p>=5)return {text:"⚠️ Verwarnung empfohlen",klasse:"punkte-warn",badge:"badge-yellow"};
+  return {text:"✅ Keine Maßnahme",klasse:"",badge:"badge-green"};
+}
+
+async function apiOptional(tabelle){
+  try{
+    return await api(tabelle);
+  }catch(e){
+    return [];
+  }
+}
+
+async function ladeServerstatus(){
+  try{
+    const res=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=*",{
+      headers:headers(),
+      cache:"no-store"
+    });
+    if(!res.ok)throw new Error(await res.text());
+    const data=await res.json();
+    serverStatus=data&&data.length?data[0]:{jahr:1,monat:"März",tag:1};
+  }catch(e){
+    serverStatus={jahr:1,monat:"März",tag:1};
+  }
+}
+
 function userName(u){
   if(!u) return "-";
   return u.Vorname || u["PSN-Username"] || u.Username || ("User " + u.id);
@@ -503,11 +674,13 @@ async function laden(){
   const kopf=document.getElementById("kopf");
 
   try{
+    await ladeServerstatus();
     users=await api("Users");
     hoefe=await api("Hoefe");
     const alleLager=await api("Hof_Lager");
     const alleBewegungen=await api("Lagerbewegungen");
     rechnungen=await api("Rechnungen");
+    strafregister=await apiOptional("strafregister");
 
     user=users.find(u=>String(u.id)===String(USER_ID));
 
@@ -591,21 +764,48 @@ function renderMitglieder(){
 
   mitglieder.forEach(m=>{
     const div=document.createElement("div");
-    div.className="item";
+    const summary=punkteSummary(m.id);
+    const emp=punkteEmpfehlung(summary.aktivePunkte);
+    const fuehrerscheinVorhanden=m.Fuehrerschein!==false;
+
+    div.className="item "+emp.klasse;
+
+    let fuehrerscheinText=fuehrerscheinVorhanden?"✅ Vorhanden":"🚫 Entzogen";
+
+    if(!fuehrerscheinVorhanden){
+      fuehrerscheinText+="<br><span class='orange'>Seit:</span> Jahr "+
+        text(m.Fuehrerschein_Entzogen_Seit_Jahr)+" · "+
+        text(m.Fuehrerschein_Entzogen_Seit_Monat)+" · Tag "+
+        text(m.Fuehrerschein_Entzogen_Seit_Tag);
+
+      if(m.Fuehrerschein_Bemerkung){
+        fuehrerscheinText+="<br><span class='orange'>Bemerkung:</span> "+text(m.Fuehrerschein_Bemerkung);
+      }
+    }
 
     div.innerHTML=`
+      <span class="badge ${emp.badge}">${emp.text}</span>
+      <span class="badge ${fuehrerscheinVorhanden?"badge-green":"badge-red"}">🚗 Führerschein: ${fuehrerscheinVorhanden?"Ja":"Nein"}</span>
+
       <div class="titel">${userName(m)}</div>
+
+      <div class="memberStats">
+        <div class="memberStat"><b>${summary.aktivePunkte}</b>Aktive Punkte</div>
+        <div class="memberStat"><b>${summary.historischePunkte}</b>Historische Punkte</div>
+      </div>
+
       <div class="info">
         PSN: ${text(m["PSN-Username"] || m.Username)}<br>
         Admin: ${m.Admin === true ? "Ja" : "Nein"}<br>
-        Aktiviert: ${m.Aktiviert === false ? "Nein" : "Ja"}
+        Aktiviert: ${m.Aktiviert === false ? "Nein" : "Ja"}<br>
+        Führerschein: ${fuehrerscheinText}<br>
+        Strafregister-Einträge: ${summary.anzahl}
       </div>
     `;
 
     box.appendChild(div);
   });
 }
-
 function renderLager(){
   const box=document.getElementById("lagerListe");
 
