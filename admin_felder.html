@@ -29,7 +29,7 @@ const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 const USER_ID = localStorage.getItem("user_id");
 if(!USER_ID){ location.href="login.html"; }
 
-let users=[], hoefe=[], felder=[], fruchtarten=[], feldgruppen=[];
+let users=[], hoefe=[], felder=[], fruchtarten=[], feldgruppen=[], serverMonat="März";
 
 async function api(t){
   const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY}});
@@ -37,6 +37,18 @@ async function api(t){
   return await r.json();
 }
 async function apiOptional(t){try{return await api(t);}catch(e){return [];}}
+
+async function ladeServerMonat(){
+  try{
+    const r=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=monat",{
+      headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY},
+      cache:"no-store"
+    });
+    if(!r.ok)return;
+    const data=await r.json();
+    if(data&&data.length>0&&data[0].monat)serverMonat=data[0].monat;
+  }catch(e){}
+}
 async function post(t,d){
   const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(d)});
   if(!r.ok) throw new Error(await r.text());
@@ -55,18 +67,37 @@ function checked(v){return v===true?"checked":""}
 function zahl(v){const n=Number(String(v||"0").replace(",","."));return Number.isFinite(n)?n:0}
 function datumDeutsch(d){if(!d)return"-";const x=new Date(d);if(isNaN(x.getTime()))return"-";return x.toLocaleDateString("de-DE");}
 function fruchtObj(name){return fruchtarten.find(f=>String(f.Name).toLowerCase()===String(name||"").toLowerCase());}
+
+function normalisiereFruchtName(name){
+  return String(name||"")
+    .toLowerCase()
+    .trim()
+    .replace(/ä/g,"ae")
+    .replace(/ö/g,"oe")
+    .replace(/ü/g,"ue")
+    .replace(/ß/g,"ss")
+    .replace(/[^a-z0-9]+/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+const WINTER_RESET_FRUECHTE=["ackergras","bluehende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese"];
+function istWinterResetFrucht(name){return WINTER_RESET_FRUECHTE.includes(normalisiereFruchtName(name));}
+function istWinterMonat(){const m=String(serverMonat||"").toLowerCase().trim();return m==="dezember"||m==="januar";}
+function winterResetAktivFrucht(fruchtName){return istWinterMonat()&&istWinterResetFrucht(fruchtName);}
+function winterResetAktiv(feld){return feld&&winterResetAktivFrucht(feld.Fruchtart);}
+function ernteDatumAnzeige(gesaetAm,fruchtName){return winterResetAktivFrucht(fruchtName)?"❄️ Winterruhe: Wachstumsstufe 0":ernteDatum(gesaetAm,fruchtName);}
 function gruppenName(id){const g=feldgruppen.find(x=>String(x.id)===String(id));return g?g.Name:"Feldgruppe "+id;}
 function ernteDatum(gesaetAm, fruchtName){const frucht=fruchtObj(fruchtName);if(!gesaetAm||!frucht||!frucht.Wachstumsdauer_Tage)return"-";const d=new Date(gesaetAm);if(isNaN(d.getTime()))return"-";d.setDate(d.getDate()+Number(frucht.Wachstumsdauer_Tage||0));return datumDeutsch(d);}
 function erwarteterErtrag(groesse, fruchtName){const frucht=fruchtObj(fruchtName);if(!frucht)return"-";const ha=zahl(groesse), ertrag=Number(frucht.Ertrag_pro_Hektar||0);if(!ha||!ertrag)return"-";return Math.round(ha*ertrag).toLocaleString("de-DE");}
 function erwarteterWert(groesse, fruchtName){const frucht=fruchtObj(fruchtName);if(!frucht)return"-";const ha=zahl(groesse), ertrag=Number(frucht.Ertrag_pro_Hektar||0), preis=Number(frucht.Verkaufspreis||0);if(!ha||!ertrag||!preis)return"-";return Math.round(ha*ertrag*preis).toLocaleString("de-DE");}
 function hofSelect(id,aktuell){let h=`<select id="hof_${id}"><option value="">Kein Hof</option>`;hoefe.forEach(x=>{h+=`<option value="${x.id}" ${String(x.id)===String(aktuell)?"selected":""}>${x.Name}</option>`});return h+"</select>";}
 function fruchtSelect(id,aktuell){let h=`<select id="frucht_${id}" onchange="previewAktualisieren('${id}')"><option value="">Keine Fruchtart</option>`;fruchtarten.filter(f=>f.Aktiv!==false).forEach(f=>{h+=`<option value="${f.Name}" ${String(f.Name)===String(aktuell)?"selected":""}>${f.Name}</option>`});if(aktuell&&!fruchtarten.some(f=>String(f.Name)===String(aktuell))){h+=`<option value="${aktuell}" selected>${aktuell}</option>`;}return h+"</select>";}
-function vorschauHtml(groesse, frucht, gesaetAm){const f=fruchtObj(frucht);if(!f){return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Keine Fruchtart gewählt oder Fruchtart nicht vorhanden.</div>`;}return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Anpflanzzeit: ${text(f.Anpflanzzeit)}<br>Erntezeit: ${text(f.Erntezeit)}<br>Wachstumsdauer: ${text(f.Wachstumsdauer_Tage)} Tage<br>Ertrag pro Hektar: ${text(f.Ertrag_pro_Hektar)}<br>Verkaufspreis: ${text(f.Verkaufspreis)}<br>Erwarteter Ertrag: ${erwarteterErtrag(groesse,frucht)}<br>Erwarteter Wert: ${erwarteterWert(groesse,frucht)}${gesaetAm ? "<br>Ernte ab ca.: "+ernteDatum(gesaetAm,frucht) : ""}</div>`;}
+function vorschauHtml(groesse, frucht, gesaetAm){const f=fruchtObj(frucht);if(!f){return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Keine Fruchtart gewählt oder Fruchtart nicht vorhanden.<br><span class="orange">Aktueller Servermonat:</span> ${text(serverMonat)}</div>`;}const winter=winterResetAktivFrucht(frucht);return `<div class="preview"><span class="orange">Fruchtinfo:</span><br>Anpflanzzeit: ${text(f.Anpflanzzeit)}<br>Erntezeit: ${text(f.Erntezeit)}<br>Wachstumsdauer: ${text(f.Wachstumsdauer_Tage)} Tage<br>Ertrag pro Hektar: ${text(f.Ertrag_pro_Hektar)}<br>Verkaufspreis: ${text(f.Verkaufspreis)}<br>Erwarteter Ertrag: ${erwarteterErtrag(groesse,frucht)}<br>Erwarteter Wert: ${erwarteterWert(groesse,frucht)}<br><span class="orange">Aktueller Servermonat:</span> ${text(serverMonat)}${gesaetAm ? "<br>Ernte ab ca.: "+ernteDatumAnzeige(gesaetAm,frucht) : ""}${winter ? '<br><span class="orange">Winterregel:</span> Wachstumsstufe 0 im Dezember/Januar' : ""}</div>`;}
 
 async function laden(){
   const box=document.getElementById("liste");
   try{
-    users=await api("Users");hoefe=await api("Hoefe");fruchtarten=await api("Fruchtarten");felder=await api("Felder");feldgruppen=await apiOptional("Feldgruppen");
+    await ladeServerMonat();users=await api("Users");hoefe=await api("Hoefe");fruchtarten=await api("Fruchtarten");felder=await api("Felder");feldgruppen=await apiOptional("Feldgruppen");
     const admin=users.find(u=>String(u.id)===String(USER_ID));
     if(!admin||admin.Admin!==true){box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";return;}
     fruchtarten.sort((a,b)=>String(a.Name||"").localeCompare(String(b.Name||"")));
@@ -81,11 +112,12 @@ function anzeigen(){
   let html=`<div class="card"><div class="titel">Neues Feld</div><input id="neu_nummer" placeholder="Feldnummer"><input id="neu_groesse" placeholder="Feldgröße in ha" oninput="previewAktualisieren('neu')">${hofSelect("neu","")}<label class="orange">Fruchtart</label>${fruchtSelect("neu","")}<div id="preview_neu">${vorschauHtml("", "", null)}</div><button class="green" onclick="feldErstellen()">Feld erstellen</button><div id="msg_neu" class="msg"></div></div>`;
   const gefiltert=felder.filter(f=>[f.Feldnummer,f.Fruchtart,f.Besitzer,f.Feldgroesse,f.Letzte_Aktion, f.Feldgruppe_id?gruppenName(f.Feldgruppe_id):""].join(" ").toLowerCase().includes(s));
   gefiltert.forEach(f=>{
-    const erntebereitBadge=f.Erntebereit===true?"<span class='badge'>ERNTEBEREIT</span>":"";
+    const winterBadge=winterResetAktiv(f)?"<span class='badge badge-orange'>❄️ WINTERRUHE</span>":"";
+    const erntebereitBadge=(!winterResetAktiv(f)&&f.Erntebereit===true)?"<span class='badge'>ERNTEBEREIT</span>":"";
     const duengenBadge=f["Duengen_nötig"]===true?"<span class='badge badge-orange'>DÜNGEN NÖTIG</span>":"";
     const unkrautBadge=f.Unkraut===true?"<span class='badge badge-red'>UNKRAUT</span>":"";
     const gruppeBadge=f.Feldgruppe_id?`<span class='badge badge-blue'>${gruppenName(f.Feldgruppe_id)} ${f.Hauptfeld===true?"· HAUPTFELD":""}</span>`:"";
-    html+=`<div class="card"><div class="titel">🌱 Feld ${text(f.Feldnummer)}</div>${erntebereitBadge} ${duengenBadge} ${unkrautBadge} ${gruppeBadge}<div class="info"><span class="orange">ID:</span> ${f.id}<br><span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br><span class="orange">Größe:</span> ${text(f.Feldgroesse)} ha<br><span class="orange">Besitzer:</span> ${text(f.Besitzer)}<br><span class="orange">Feldgruppe:</span> ${f.Feldgruppe_id ? gruppenName(f.Feldgruppe_id) : "-"}<br><span class="orange">Gesät am:</span> ${datumDeutsch(f.Gesaet_am)}<br><span class="orange">Ernte ab ca.:</span> ${ernteDatum(f.Gesaet_am,f.Fruchtart)}<br><span class="orange">Erwarteter Ertrag:</span> ${erwarteterErtrag(f.Feldgroesse,f.Fruchtart)}<br><span class="orange">Erwarteter Wert:</span> ${erwarteterWert(f.Feldgroesse,f.Fruchtart)}<br><span class="orange">Letzte Aktion:</span> ${text(f.Letzte_Aktion)}</div><input id="nummer_${f.id}" value="${f.Feldnummer||""}" placeholder="Feldnummer"><input id="groesse_${f.id}" value="${f.Feldgroesse||""}" placeholder="Feldgröße in ha" oninput="previewAktualisieren('${f.id}')">${hofSelect(f.id,f.Hof_id)}<input id="besitzer_${f.id}" value="${f.Besitzer||""}" placeholder="Besitzer"><label class="orange">Fruchtart</label>${fruchtSelect(f.id,f.Fruchtart)}<input id="aktion_${f.id}" value="${f.Letzte_Aktion||""}" placeholder="Letzte Aktion"><input id="gesaet_am_${f.id}" type="date" value="${f.Gesaet_am?String(f.Gesaet_am).substring(0,10):""}" onchange="previewAktualisieren('${f.id}')"><div id="preview_${f.id}">${vorschauHtml(f.Feldgroesse,f.Fruchtart,f.Gesaet_am)}</div><div class="row">Gekalkt <input id="gekalkt_${f.id}" type="checkbox" ${checked(f.Gekalkt)}></div><div class="row">Gedüngt 1x <input id="ged1_${f.id}" type="checkbox" ${checked(f.Geduengt_1x)}></div><div class="row">Gedüngt 2x <input id="ged2_${f.id}" type="checkbox" ${checked(f.Geduengt_2x)}></div><div class="row">Gegrubbert <input id="gegrubbert_${f.id}" type="checkbox" ${checked(f.Gegrubbert)}></div><div class="row">Gepflügt <input id="gepfluegt_${f.id}" type="checkbox" ${checked(f.Gepfluegt)}></div><div class="row">Gesät <input id="gesaet_${f.id}" type="checkbox" ${checked(f.Gesaet)}></div><div class="row">Gewalzt <input id="gewalzt_${f.id}" type="checkbox" ${checked(f.Gewalzt)}></div><div class="row">Unkraut <input id="unkraut_${f.id}" type="checkbox" ${checked(f.Unkraut)}></div><div class="row">Erntebereit <input id="ernte_${f.id}" type="checkbox" ${checked(f.Erntebereit)}></div><div class="row">Düngen nötig <input id="duengen_${f.id}" type="checkbox" ${checked(f["Duengen_nötig"])}></div><div class="row">Ernte benachrichtigt <input id="ernteben_${f.id}" type="checkbox" ${checked(f.Ernte_Benachrichtigt)}></div><button class="green" onclick="feldSpeichern(${f.id})">Speichern</button><button class="blue" onclick="saatSetzen(${f.id})">Aussaat heute setzen</button><button class="dark" onclick="location.href='feld.html?id=${f.id}'">Feld öffnen</button><button class="red" onclick="feldLoeschen(${f.id})">Feld löschen</button><div id="msg_${f.id}" class="msg"></div></div>`;
+    html+=`<div class="card"><div class="titel">🌱 Feld ${text(f.Feldnummer)}</div>${winterBadge} ${erntebereitBadge} ${duengenBadge} ${unkrautBadge} ${gruppeBadge}<div class="info"><span class="orange">ID:</span> ${f.id}<br><span class="orange">Frucht:</span> ${text(f.Fruchtart)}<br><span class="orange">Größe:</span> ${text(f.Feldgroesse)} ha<br><span class="orange">Besitzer:</span> ${text(f.Besitzer)}<br><span class="orange">Feldgruppe:</span> ${f.Feldgruppe_id ? gruppenName(f.Feldgruppe_id) : "-"}<br><span class="orange">Gesät am:</span> ${datumDeutsch(f.Gesaet_am)}<br><span class="orange">Ernte ab ca.:</span> ${ernteDatumAnzeige(f.Gesaet_am,f.Fruchtart)}<br><span class="orange">Erwarteter Ertrag:</span> ${erwarteterErtrag(f.Feldgroesse,f.Fruchtart)}<br><span class="orange">Erwarteter Wert:</span> ${erwarteterWert(f.Feldgroesse,f.Fruchtart)}<br><span class="orange">Letzte Aktion:</span> ${text(f.Letzte_Aktion)}</div><input id="nummer_${f.id}" value="${f.Feldnummer||""}" placeholder="Feldnummer"><input id="groesse_${f.id}" value="${f.Feldgroesse||""}" placeholder="Feldgröße in ha" oninput="previewAktualisieren('${f.id}')">${hofSelect(f.id,f.Hof_id)}<input id="besitzer_${f.id}" value="${f.Besitzer||""}" placeholder="Besitzer"><label class="orange">Fruchtart</label>${fruchtSelect(f.id,f.Fruchtart)}<input id="aktion_${f.id}" value="${f.Letzte_Aktion||""}" placeholder="Letzte Aktion"><input id="gesaet_am_${f.id}" type="date" value="${f.Gesaet_am?String(f.Gesaet_am).substring(0,10):""}" onchange="previewAktualisieren('${f.id}')"><div id="preview_${f.id}">${vorschauHtml(f.Feldgroesse,f.Fruchtart,f.Gesaet_am)}</div><div class="row">Gekalkt <input id="gekalkt_${f.id}" type="checkbox" ${checked(f.Gekalkt)}></div><div class="row">Gedüngt 1x <input id="ged1_${f.id}" type="checkbox" ${checked(f.Geduengt_1x)}></div><div class="row">Gedüngt 2x <input id="ged2_${f.id}" type="checkbox" ${checked(f.Geduengt_2x)}></div><div class="row">Gegrubbert <input id="gegrubbert_${f.id}" type="checkbox" ${checked(f.Gegrubbert)}></div><div class="row">Gepflügt <input id="gepfluegt_${f.id}" type="checkbox" ${checked(f.Gepfluegt)}></div><div class="row">Gesät <input id="gesaet_${f.id}" type="checkbox" ${checked(f.Gesaet)}></div><div class="row">Gewalzt <input id="gewalzt_${f.id}" type="checkbox" ${checked(f.Gewalzt)}></div><div class="row">Unkraut <input id="unkraut_${f.id}" type="checkbox" ${checked(f.Unkraut)}></div><div class="row">Erntebereit <input id="ernte_${f.id}" type="checkbox" ${checked(f.Erntebereit)}></div><div class="row">Düngen nötig <input id="duengen_${f.id}" type="checkbox" ${checked(f["Duengen_nötig"])}></div><div class="row">Ernte benachrichtigt <input id="ernteben_${f.id}" type="checkbox" ${checked(f.Ernte_Benachrichtigt)}></div><button class="green" onclick="feldSpeichern(${f.id})">Speichern</button><button class="blue" onclick="saatSetzen(${f.id})">Aussaat heute setzen</button><button class="dark" onclick="location.href='feld.html?id=${f.id}'">Feld öffnen</button><button class="red" onclick="feldLoeschen(${f.id})">Feld löschen</button><div id="msg_${f.id}" class="msg"></div></div>`;
   });
   if(gefiltert.length===0){html+="<div class='leer'>Keine Felder gefunden.</div>";}
   box.innerHTML=html;
