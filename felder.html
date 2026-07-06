@@ -22,7 +22,6 @@ const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 const USER_ID=localStorage.getItem("user_id");
 const USER_HOF_ID=localStorage.getItem("hof_id");
-const STATUS_URL="https://raw.githubusercontent.com/distlerfelix-create/Fs25-api/main/status.json";
 if(!USER_ID){location.href="login.html";}
 
 let felder=[],hoefe=[],fruchtarten=[],feldgruppen=[],users=[],aktuellerUser=null,nurEigene=true,serverMonat="März";
@@ -33,10 +32,10 @@ async function apiOptional(t){try{return await api(t)}catch(e){return[]}}
 
 async function ladeServerMonat(){
  try{
-  const r=await fetch(STATUS_URL+"?t="+Date.now(),{cache:"no-store"});
+  const r=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=monat",{headers:headers(),cache:"no-store"});
   if(!r.ok)return;
-  const s=await r.json();
-  if(s.monat)serverMonat=s.monat;
+  const data=await r.json();
+  if(data&&data.length>0&&data[0].monat)serverMonat=data[0].monat;
  }catch(e){}
 }
 
@@ -70,6 +69,11 @@ function gruppenFelder(id){return felder.filter(f=>String(f.Feldgruppe_id)===Str
 function gruppenNummern(id){return gruppenFelder(id).map(f=>f.Feldnummer).join(", ")}
 function gruppenGroesse(id){const s=gruppenFelder(id).reduce((sum,f)=>sum+zahl(f.Feldgroesse),0);return s>0?s.toLocaleString("de-DE"):"-"}
 function fruchtObj(name){return fruchtarten.find(f=>String(f.Name).toLowerCase()===String(name||"").toLowerCase())}
+function normalisiereFruchtName(name){return String(name||"").toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+const WINTER_RESET_FRUECHTE=["ackergras","bluhende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese"];
+function istWinterResetFrucht(name){return WINTER_RESET_FRUECHTE.includes(normalisiereFruchtName(name))}
+function istWinterMonat(){const m=monatsNummer(serverMonat);return m===12||m===1}
+function winterResetAktiv(f){return istWinterMonat()&&istWinterResetFrucht(f.Fruchtart)}
 
 function monatsNummer(monat){
   const m=String(monat||"").toLowerCase().trim();
@@ -149,13 +153,13 @@ function fruchtInfo(f,groesseOverride){
  Erwarteter Ertrag: ${erwarteterErtrag(groesse,f.Fruchtart)}<br>
  Erwarteter Wert: ${erwarteterWert(groesse,f.Fruchtart)}<br>
  Ernte ab ca.: ${ernteDatum(f.Gesaet_am,f.Fruchtart)}<br>
- Ernte bis ca.: ${ernteBisDatum(f.Gesaet_am,f.Fruchtart)}
+ Ernte bis ca.: ${ernteBisDatum(f.Gesaet_am,f.Fruchtart)}${winterResetAktiv(f)?"<br><span class=\"orange\">Winterregel:</span> Wachstumsstufe 0 im Dezember/Januar":""}
  </div>`;
 }
 
 function duengenNoetig(f){return f["Duengen_nötig"]===true||f.Duengen_noetig===true}
-function statusKlasse(f){if(f.Erntebereit===true)return"erntereif";if(f.Unkraut===true)return"unkraut";if(duengenNoetig(f))return"duengen";return""}
-function warnungen(f){let h="";if(f.Erntebereit===true)h+=`<div class="warnung gruen">🌾 Erntereif</div>`;if(duengenNoetig(f))h+=`<div class="warnung gelb">💩 Düngen nötig</div>`;if(f.Unkraut===true)h+=`<div class="warnung rot">🌿 Unkraut vorhanden</div>`;return h}
+function statusKlasse(f){if(!winterResetAktiv(f)&&f.Erntebereit===true)return"erntereif";if(f.Unkraut===true)return"unkraut";if(duengenNoetig(f))return"duengen";return""}
+function warnungen(f){let h="";if(winterResetAktiv(f))h+=`<div class="warnung gelb">❄️ Winterruhe: Wachstumsstufe 0</div>`;else if(f.Erntebereit===true)h+=`<div class="warnung gruen">🌾 Erntereif</div>`;if(duengenNoetig(f))h+=`<div class="warnung gelb">💩 Düngen nötig</div>`;if(f.Unkraut===true)h+=`<div class="warnung rot">🌿 Unkraut vorhanden</div>`;return h}
 function sichtbaresFeld(f){if(!f.Feldgruppe_id)return true;return f.Hauptfeld===true}
 function feldGehortMir(f){if(!nurEigene)return true;const hofId=aktuellerUser&&aktuellerUser.Hof_id?aktuellerUser.Hof_id:USER_HOF_ID;if(!hofId)return true;return String(f.Hof_id)===String(hofId)}
 function suchTextFeld(f){const besitzer=f.Besitzer&&f.Besitzer!==""?f.Besitzer:hofName(f.Hof_id);let g="";if(f.Feldgruppe_id)g=feldgruppeName(f.Feldgruppe_id)+" "+gruppenNummern(f.Feldgruppe_id);return [f.Feldnummer,f.Fruchtart,besitzer,f.Feldgroesse,f.Letzte_Aktion,g].join(" ").toLowerCase()}
