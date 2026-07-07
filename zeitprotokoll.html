@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeitprotokoll</title>
+
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif;}
+.app{width:100%;max-width:820px;margin:auto;padding:20px 15px 70px;}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px;}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px;}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18);}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px;}
+.info{color:white;font-size:17px;line-height:1.5;white-space:pre-line;}
+.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line;}
+.orange{color:#ffaa33;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.stat{background:#090909;border:1px solid #006600;border-radius:14px;padding:14px;text-align:center;color:white;min-height:92px;}
+.stat b{display:block;color:#00ff22;font-size:30px;margin-bottom:5px;}
+input,select{width:100%;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px;}
+button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
+.green{background:#008800;color:white;}
+.dark{background:#333;color:white;}
+.blue{background:#004488;color:white;}
+.red{background:#aa0000;color:white;}
+.item{background:#090909;border:1px solid #006600;border-radius:14px;padding:16px;margin-bottom:14px;color:white;line-height:1.5;}
+.item.warn{border:2px solid #ffaa33;box-shadow:0 0 14px rgba(255,170,0,.3);}
+.item.redwarn{border:2px solid #ff2222;box-shadow:0 0 16px rgba(255,0,0,.38);}
+.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin:4px 5px 6px 0;font-weight:bold;}
+.badge-orange{background:#cc7700;}
+.badge-red{background:#aa0000;}
+.badge-green{background:#008800;}
+.badge-blue{background:#004488;}
+.badge-gray{background:#555;}
+.spielerbox{background:#000;border:1px solid #006600;border-radius:12px;padding:12px;margin-top:10px;color:white;}
+.leer{color:white;text-align:center;margin-top:30px;font-size:18px;}
+.notice{margin-top:25px;color:#ffaa33;font-size:14px;text-align:center;}
+@media(max-width:560px){.grid,.stats{grid-template-columns:1fr;}h1{font-size:34px;}}
+</style>
+</head>
+
+<body>
+<div class="app">
+<button class="back" onclick="location.href='admin.html'">← Zurück</button>
+<h1>ZEITPROTOKOLL</h1>
+
+<div id="zugriff" class="card">
+  <div class="info">Prüfe Adminrechte...</div>
+</div>
+
+<div id="inhalt" style="display:none">
+
+<div class="card">
+  <div class="titel">⏱️ Übersicht</div>
+  <div class="stats">
+    <div class="stat"><b id="statGesamt">0</b>Gesamt</div>
+    <div class="stat"><b id="statHeute">0</b>Heute</div>
+    <div class="stat"><b id="statSpieler">0</b>Spieler beim letzten</div>
+  </div>
+  <div id="letzterSprung" class="meta"></div>
+</div>
+
+<div class="card">
+  <div class="titel">🔍 Filter</div>
+  <input id="suche" placeholder="Suchen: Spieler, Server, Map, Monat..." oninput="anzeigen()">
+  <select id="filter" onchange="anzeigen()">
+    <option value="alle">Alle Einträge</option>
+    <option value="heute">Heute</option>
+    <option value="7tage">Letzte 7 Tage</option>
+    <option value="30tage">Letzte 30 Tage</option>
+  </select>
+</div>
+
+<div id="liste">Lade...</div>
+
+<div class="card">
+  <button class="dark" onclick="location.href='admin.html'">Zurück zum Adminbereich</button>
+  <button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button>
+</div>
+
+<div class="notice">FS25 RP FIX1701 · Zeitprotokoll</div>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID=localStorage.getItem("user_id");
+if(!USER_ID){location.href="login.html";}
+
+let user=null;
+let eintraege=[];
+
+function headers(){
+  return {
+    "apikey":SUPABASE_KEY,
+    "Authorization":"Bearer "+SUPABASE_KEY,
+    "Content-Type":"application/json"
+  };
+}
+
+async function api(tabelle){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{
+    headers:headers(),
+    cache:"no-store"
+  });
+  if(!res.ok)throw new Error(await res.text());
+  return await res.json();
+}
+
+async function laden(){
+  const zugriff=document.getElementById("zugriff");
+  const liste=document.getElementById("liste");
+
+  try{
+    const users=await api("Users");
+    user=users.find(u=>String(u.id)===String(USER_ID));
+
+    if(!user||user.Admin!==true){
+      zugriff.innerHTML="<div class='titel'>Kein Zugriff</div><div class='info'>Diese Seite ist nur für Admins sichtbar.</div>";
+      return;
+    }
+
+    zugriff.style.display="none";
+    document.getElementById("inhalt").style.display="block";
+
+    const res=await fetch(SUPABASE_URL+"/rest/v1/Zeitprotokoll?select=*&order=Erstellt_am.desc&limit=200",{
+      headers:headers(),
+      cache:"no-store"
+    });
+
+    if(!res.ok)throw new Error(await res.text());
+
+    eintraege=await res.json();
+    renderStats();
+    anzeigen();
+
+  }catch(err){
+    zugriff.innerHTML="<div class='titel'>Fehler</div><div class='info'>"+err.message+"</div>";
+    liste.innerHTML="";
+  }
+}
+
+function text(v){return v===null||v===undefined||v===""?"-":v;}
+function datum(d){
+  if(!d)return"-";
+  const x=new Date(d);
+  if(isNaN(x.getTime()))return"-";
+  return x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
+function istHeute(d){
+  const x=new Date(d);
+  const h=new Date();
+  return x.toDateString()===h.toDateString();
+}
+function tageZurueck(d,tage){
+  const x=new Date(d);
+  const grenze=new Date();
+  grenze.setDate(grenze.getDate()-tage);
+  return x>=grenze;
+}
+function minutenText(m){
+  const n=Number(m||0);
+  const h=Math.floor(n/60);
+  const min=n%60;
+  if(h>0)return h+" Std. "+min+" Min.";
+  return min+" Min.";
+}
+function spielerliste(e){
+  let liste=e.SpielerListe||e.spielerliste||[];
+
+  if(typeof liste==="string"){
+    try{liste=JSON.parse(liste);}catch(err){liste=[];}
+  }
+
+  if(!Array.isArray(liste)||liste.length===0){
+    return "<div class='spielerbox'>Keine Spieler online gespeichert.</div>";
+  }
+
+  return "<div class='spielerbox'><span class='orange'>Spieler online:</span><br>"+
+    liste.map(n=>"👤 "+text(n)).join("<br>")+
+    "</div>";
+}
+
+function renderStats(){
+  const heute=eintraege.filter(e=>istHeute(e.Erstellt_am)).length;
+  const letzter=eintraege[0];
+
+  document.getElementById("statGesamt").innerText=eintraege.length;
+  document.getElementById("statHeute").innerText=heute;
+  document.getElementById("statSpieler").innerText=letzter?Number(letzter.SpielerOnline||0):0;
+
+  if(letzter){
+    document.getElementById("letzterSprung").innerText=
+      "Letzter Zeitsprung:\n"+
+      "Jahr "+text(letzter.Serverjahr)+" · "+text(letzter.Servermonat)+" · Tag "+text(letzter.Servertag)+"\n"+
+      text(letzter.Von_Zeit)+" → "+text(letzter.Bis_Zeit)+" (+"+minutenText(letzter.Differenz_Minuten)+")";
+  }else{
+    document.getElementById("letzterSprung").innerText="Noch keine Zeitsprünge gespeichert.";
+  }
+}
+
+function anzeigen(){
+  const box=document.getElementById("liste");
+  const suche=document.getElementById("suche").value.toLowerCase().trim();
+  const filter=document.getElementById("filter").value;
+
+  let daten=[...eintraege];
+
+  if(filter==="heute")daten=daten.filter(e=>istHeute(e.Erstellt_am));
+  if(filter==="7tage")daten=daten.filter(e=>tageZurueck(e.Erstellt_am,7));
+  if(filter==="30tage")daten=daten.filter(e=>tageZurueck(e.Erstellt_am,30));
+
+  if(suche){
+    daten=daten.filter(e=>{
+      const spieler=Array.isArray(e.SpielerListe)?e.SpielerListe.join(" "):String(e.SpielerListe||"");
+      const s=[
+        e.Serverjahr,e.Servermonat,e.Servertag,
+        e.Von_Zeit,e.Bis_Zeit,e.Hinweis,e.Ausloeser,
+        e.Servername,e.Map,e.SpielerOnline,spieler
+      ].join(" ").toLowerCase();
+      return s.includes(suche);
+    });
+  }
+
+  if(daten.length===0){
+    box.innerHTML="<div class='leer'>Keine Einträge gefunden.</div>";
+    return;
+  }
+
+  box.innerHTML="";
+
+  daten.forEach(e=>{
+    const diff=Number(e.Differenz_Minuten||0);
+    const div=document.createElement("div");
+    div.className="item "+(diff>=180?"redwarn":"warn");
+
+    div.innerHTML=`
+      <span class="badge ${diff>=180?"badge-red":"badge-orange"}">⏱️ Zeit vorgespult</span>
+      <span class="badge badge-blue">+${minutenText(diff)}</span>
+      <span class="badge badge-green">👥 ${Number(e.SpielerOnline||0)} online</span>
+
+      <div class="titel">${text(e.Von_Zeit)} → ${text(e.Bis_Zeit)}</div>
+
+      <div class="info">
+        <span class="orange">Spielzeit:</span> Jahr ${text(e.Serverjahr)} · ${text(e.Servermonat)} · Tag ${text(e.Servertag)}<br>
+        <span class="orange">Server:</span> ${text(e.Servername)}<br>
+        <span class="orange">Map:</span> ${text(e.Map)}<br>
+        <span class="orange">Hinweis:</span> ${text(e.Hinweis)}<br>
+        <span class="orange">Auslöser:</span> ${text(e.Ausloeser)}
+      </div>
+
+      ${spielerliste(e)}
+
+      <div class="meta">
+        Erstellt am: ${datum(e.Erstellt_am)}
+      </div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+laden();
+</script>
+</body>
+</html>
