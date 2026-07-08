@@ -65,7 +65,7 @@ button{width:100%;margin-top:10px;padding:15px;border:none;border-radius:12px;fo
 
 <div class="card">
   <div class="titel">🔍 Filter</div>
-  <input id="suche" placeholder="Suchen: Spieler, Server, Map, Monat..." oninput="anzeigen()">
+  <input id="suche" placeholder="Suchen: Spieler, Auslöser, Server, Map, Monat..." oninput="anzeigen()">
   <select id="filter" onchange="anzeigen()">
     <option value="alle">Alle Einträge</option>
     <option value="heute">Heute</option>
@@ -197,7 +197,7 @@ function renderStats(){
     document.getElementById("letzterSprung").innerText=
       "Letzter Zeitsprung:\n"+
       "Jahr "+text(letzter.Serverjahr)+" · "+text(letzter.Servermonat)+" · Tag "+text(letzter.Servertag)+"\n"+
-      text(letzter.Von_Zeit)+" → "+text(letzter.Bis_Zeit)+" (+"+minutenText(letzter.Differenz_Minuten)+")";
+      text(letzter.Von_Zeit)+" → "+text(letzter.Bis_Zeit)+" (+"+minutenText(letzter.Differenz_Minuten)+")\n"+"Auslöser: "+text(letzter.Ausloeser||letzter.AusloeserName||"-");
   }else{
     document.getElementById("letzterSprung").innerText="Noch keine Zeitsprünge gespeichert.";
   }
@@ -219,7 +219,7 @@ function anzeigen(){
       const spieler=Array.isArray(e.SpielerListe)?e.SpielerListe.join(" "):String(e.SpielerListe||"");
       const s=[
         e.Serverjahr,e.Servermonat,e.Servertag,
-        e.Von_Zeit,e.Bis_Zeit,e.Hinweis,e.Ausloeser,
+        e.Von_Zeit,e.Bis_Zeit,e.Hinweis,e.Ausloeser,e.Ausloeser,
         e.Servername,e.Map,e.SpielerOnline,spieler
       ].join(" ").toLowerCase();
       return s.includes(suche);
@@ -249,8 +249,7 @@ function anzeigen(){
         <span class="orange">Spielzeit:</span> Jahr ${text(e.Serverjahr)} · ${text(e.Servermonat)} · Tag ${text(e.Servertag)}<br>
         <span class="orange">Server:</span> ${text(e.Servername)}<br>
         <span class="orange">Map:</span> ${text(e.Map)}<br>
-        <span class="orange">Hinweis:</span> ${text(e.Hinweis)}<br>
-        <span class="orange">Auslöser:</span> ${text(e.Ausloeser)}
+        <span class="orange">Hinweis:</span> ${text(e.Hinweis)}<br>\n        <span class="orange">Auslöser:</span> ${text(e.Ausloeser||e.AusloeserName||"-")}
       </div>
 
       ${spielerliste(e)}
