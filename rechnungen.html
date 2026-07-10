@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rechnungen</title>
 <style>
-*{box-sizing:border-box;}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}.info{color:white;font-size:17px;line-height:1.5;white-space:pre-line}.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line}.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px}button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.leer{color:white;text-align:center;margin-top:25px;font-size:18px}.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;text-align:center;color:white}.stat b{color:#00ff22;font-size:24px}.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px}.item.offen{border:2px solid #ffaa33;box-shadow:0 0 12px rgba(255,170,0,.22)}.item.bezahlt{border:1px solid #008800;opacity:.86}.item.storniert{border:1px solid #aa0000;opacity:.72}.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-bottom:8px}.badge-offen{background:#cc7700}.badge-bezahlt{background:#008800}.badge-storno{background:#aa0000}.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:20}.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300}textarea,input{width:100%;padding:14px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}textarea{min-height:90px;resize:vertical}label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+*{box-sizing:border-box;}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}.info{color:white;font-size:17px;line-height:1.5;white-space:pre-line}.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line}.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px}button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.leer{color:white;text-align:center;margin-top:25px;font-size:18px}.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;text-align:center;color:white}.stat b{color:#00ff22;font-size:24px}.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px}.item.offen{border:2px solid #ffaa33;box-shadow:0 0 12px rgba(255,170,0,.22)}.item.bezahlt{border:1px solid #008800;opacity:.86}.item.storniert{border:1px solid #aa0000;opacity:.72}.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-bottom:8px}.badge-offen{background:#cc7700}.badge-bezahlt{background:#008800}.badge-storno{background:#aa0000}.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:20}.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300}textarea,input,select{width:100%;padding:14px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}textarea{min-height:90px;resize:vertical}label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px}.rechnung-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rechnung-form-grid .voll{grid-column:1/-1}.summe{font-size:24px;color:#00ff22;font-weight:bold;text-align:center;margin-top:16px;padding:12px;border:1px solid #008000;border-radius:12px;background:#090909}@media(max-width:560px){.grid{grid-template-columns:1fr}.rechnung-form-grid{grid-template-columns:1fr}.rechnung-form-grid .voll{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -14,11 +14,29 @@
 <h1>RECHNUNGEN</h1>
 <div id="kopf" class="card"><div class="info">Lade Rechnungen...</div></div>
 <div id="inhalt" style="display:none">
-<div class="card"><div class="titel">Übersicht</div><div class="grid"><div class="stat"><b id="statOffen">0</b><br>Offen</div><div class="stat"><b id="statBetrag">0</b><br>Offener Betrag</div><div class="stat"><b id="statBezahlt">0</b><br>Bezahlt</div></div></div>
+<div class="card"><div class="titel">Übersicht</div><div class="grid"><div class="stat"><b id="statOffen">0</b><br>Offen</div><div class="stat"><b id="statBetrag">0</b><br>Offener Betrag</div><div class="stat"><b id="statBezahlt">0</b><br>Bezahlt</div></div></div><div class="card"><div class="titel">Eigene Rechnung schreiben</div><div class="info">Manuelle Rechnung ohne Vorlage erstellen.</div><button class="green" onclick="rechnungPopupOeffnen()">Neue Rechnung erstellen</button></div>
 <div class="section-title">OFFENE RECHNUNGEN</div><div id="offenListe">Lade...</div>
 <div class="section-title">BEZAHLTE RECHNUNGEN</div><div id="bezahltListe">Lade...</div>
 <div class="section-title">STORNIERTE RECHNUNGEN</div><div id="stornoListe">Lade...</div>
 <div class="card"><button class="dark" onclick="location.href='hofverwaltung.html'">Zur Hofverwaltung</button><button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button></div>
+</div></div>
+
+<div id="rechnungNeuBg" class="popup-bg"><div class="popup">
+<div class="titel">Neue Rechnung</div>
+<div class="rechnung-form-grid">
+<div><label>Rechnung von Hof</label><select id="neuVonHof"></select></div>
+<div><label>Rechnung an Hof</label><select id="neuAnHof"></select></div>
+<div class="voll"><label>Produkt / Leistung</label><input id="neuProdukt" placeholder="z. B. Lohnarbeit, Lieferung, Reparatur"></div>
+<div><label>Menge</label><input id="neuMenge" type="number" min="0" step="0.01" value="1" oninput="rechnungSummeAktualisieren()"></div>
+<div><label>Einheit</label><input id="neuEinheit" placeholder="z. B. Stück, ha, Std." value="Stück"></div>
+<div><label>Einzelpreis</label><input id="neuEinzelpreis" type="number" min="0" step="0.01" value="0" oninput="rechnungSummeAktualisieren()"></div>
+<div><label>Gesamtpreis</label><input id="neuGesamtpreis" type="number" min="0" step="0.01" value="0" oninput="rechnungGesamtManuell()"></div>
+<div class="voll"><label>Bemerkung</label><textarea id="neuBemerkung" placeholder="Freier Text zur Rechnung"></textarea></div>
+</div>
+<div id="neuSumme" class="summe">Gesamt: 0</div>
+<button class="green" onclick="manuelleRechnungErstellen()">Rechnung erstellen</button>
+<button class="dark" onclick="rechnungPopupSchliessen()">Abbrechen</button>
+<div id="neuMsg" class="msg"></div>
 </div></div>
 <div id="detailBg" class="popup-bg"><div class="popup"><div class="titel" id="detailTitel">Rechnung</div><div id="detailInhalt" class="info"></div><label>Bemerkung</label><textarea id="bemerkungText" placeholder="Bemerkung zur Rechnung"></textarea><button class="green" onclick="bemerkungSpeichern()">Bemerkung speichern</button><button class="dark" onclick="schliesseDetails()">Schließen</button><div id="detailMsg" class="msg"></div></div></div>
 <script>
@@ -42,9 +60,90 @@ function statusText(r){if(istStorniert(r))return"Storniert";if(istBezahlt(r))ret
 function darfAktion(r){if(istAdmin)return true;return String(r.Von_Hof_id)===String(user.Hof_id)||String(r.An_Hof_id)===String(user.Hof_id)}
 function istAktiv(u){return u&&u.Aktiviert!==false}
 function chatIdVonUser(u){return u.Telegram_id||u.Telegram_chat_id||u.Chat_id||null}
-function eindeutigeEmpfaenger(liste){const map=new Map();liste.forEach(u=>{const chatId=chatIdVonUser(u);if(!u||!u.id||!chatId)return;map.set(String(u.id),u)});return Array.from(map.values())}
+function eindeutigeEmpfaenger(liste){const map=new Map();liste.forEach(u=>{const chatId=chatIdVonUser(u);if(!u||!u.id||!chatId)return;if(!map.has(String(chatId)))map.set(String(chatId),u)});return Array.from(map.values())}
 function empfaengerHof(hofId){return eindeutigeEmpfaenger(users.filter(u=>istAktiv(u)&&String(u.Hof_id)===String(hofId)&&chatIdVonUser(u)))}
 async function telegramQueueFuerHof(titel,nachricht,hofId){const empfaenger=empfaengerHof(hofId);for(const u of empfaenger){await post("Telegram_queue",{Titel:titel,Nachricht:nachricht,Typ:"Rechnung",User_id:Number(u.id),Hof_id:u.Hof_id?Number(u.Hof_id):null,Organisation_id:null,Chat_id:Number(chatIdVonUser(u)),Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});}return empfaenger.length;}
+
+function euroZahl(v){const n=Number(String(v??"0").replace(",","."));return Number.isFinite(n)?n:0}
+function rechnungsNummerErzeugen(){
+  const d=new Date();
+  return "RE-"+String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+String(d.getSeconds()).padStart(2,"0");
+}
+function rechnungPopupOeffnen(){
+  const von=document.getElementById("neuVonHof"),an=document.getElementById("neuAnHof");
+  von.innerHTML="";an.innerHTML='<option value="">Empfänger auswählen</option>';
+  hoefe.forEach(h=>{
+    const a=document.createElement("option");a.value=h.id;a.textContent=h.Name;von.appendChild(a);
+    const b=document.createElement("option");b.value=h.id;b.textContent=h.Name;an.appendChild(b);
+  });
+  if(!istAdmin){von.disabled=true;von.value=String(user.Hof_id);}else{von.disabled=false;if(user&&user.Hof_id)von.value=String(user.Hof_id);}
+  document.getElementById("neuProdukt").value="";
+  document.getElementById("neuMenge").value="1";
+  document.getElementById("neuEinheit").value="Stück";
+  document.getElementById("neuEinzelpreis").value="0";
+  document.getElementById("neuGesamtpreis").value="0";
+  document.getElementById("neuBemerkung").value="";
+  document.getElementById("neuMsg").innerText="";
+  rechnungSummeAktualisieren();
+  document.getElementById("rechnungNeuBg").style.display="flex";
+}
+function rechnungPopupSchliessen(){document.getElementById("rechnungNeuBg").style.display="none";}
+function rechnungSummeAktualisieren(){
+  const menge=euroZahl(document.getElementById("neuMenge").value);
+  const einzel=euroZahl(document.getElementById("neuEinzelpreis").value);
+  const gesamt=Math.round((menge*einzel+Number.EPSILON)*100)/100;
+  document.getElementById("neuGesamtpreis").value=gesamt.toFixed(2);
+  document.getElementById("neuSumme").innerText="Gesamt: "+gesamt.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function rechnungGesamtManuell(){
+  const gesamt=euroZahl(document.getElementById("neuGesamtpreis").value);
+  document.getElementById("neuSumme").innerText="Gesamt: "+gesamt.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+async function manuelleRechnungErstellen(){
+  const msg=document.getElementById("neuMsg");msg.innerText="";
+  const vonHofId=document.getElementById("neuVonHof").value;
+  const anHofId=document.getElementById("neuAnHof").value;
+  const produkt=document.getElementById("neuProdukt").value.trim();
+  const menge=euroZahl(document.getElementById("neuMenge").value);
+  const einheit=document.getElementById("neuEinheit").value.trim()||"Stück";
+  const einzelpreis=euroZahl(document.getElementById("neuEinzelpreis").value);
+  const gesamtpreis=euroZahl(document.getElementById("neuGesamtpreis").value);
+  const bemerkung=document.getElementById("neuBemerkung").value.trim();
+
+  if(!vonHofId){msg.innerText="Bitte Absender-Hof auswählen.";return;}
+  if(!anHofId){msg.innerText="Bitte Empfänger-Hof auswählen.";return;}
+  if(String(vonHofId)===String(anHofId)){msg.innerText="Absender und Empfänger dürfen nicht derselbe Hof sein.";return;}
+  if(!produkt){msg.innerText="Bitte Produkt oder Leistung eintragen.";return;}
+  if(menge<=0){msg.innerText="Die Menge muss größer als 0 sein.";return;}
+  if(gesamtpreis<0){msg.innerText="Der Gesamtpreis darf nicht negativ sein.";return;}
+  if(!istAdmin&&String(vonHofId)!==String(user.Hof_id)){msg.innerText="Du darfst nur Rechnungen von deinem eigenen Hof erstellen.";return;}
+
+  try{
+    msg.innerText="Rechnung wird erstellt...";
+    const rechnungNr=rechnungsNummerErzeugen();
+    await post("Rechnungen",{
+      Rechnung_nr:rechnungNr,
+      Von_Hof_id:Number(vonHofId),
+      An_Hof_id:Number(anHofId),
+      Produkt:produkt,
+      Menge:menge,
+      Einheit:einheit,
+      Einzelpreis:einzelpreis,
+      Gesamtpreis:gesamtpreis,
+      Bemerkung:bemerkung,
+      Bezahlt:false,
+      Storniert:false,
+      Status:"Offen",
+      Erstellt_von:USERNAME
+    });
+    const titel="🧾 Neue Rechnung: "+rechnungNr;
+    const nachricht="Neue Rechnung erhalten.\n\nVon: "+hofName(vonHofId)+"\nAn: "+hofName(anHofId)+"\nProdukt/Leistung: "+produkt+"\nMenge: "+formatZahl(menge)+" "+einheit+"\nGesamtbetrag: "+formatZahl(gesamtpreis);
+    await telegramUndBenachrichtigung(null,titel,nachricht,anHofId);
+    rechnungPopupSchliessen();
+    await laden();
+  }catch(err){msg.innerText="Fehler:\n"+err.message;}
+}
+
 async function laden(){const kopf=document.getElementById("kopf");try{users=await api("Users");hoefe=await api("Hoefe");rechnungen=await api("Rechnungen");user=users.find(u=>String(u.id)===String(USER_ID));if(!user){localStorage.clear();location.href="login.html";return;}istAdmin=user.Admin===true;userHof=hoefe.find(h=>String(h.id)===String(user.Hof_id));if(!userHof&&!istAdmin){kopf.innerHTML="<div class='info'>Du bist keinem Hof zugeordnet.</div>";return;}sichtbareRechnungen=rechnungen.filter(r=>{if(istAdmin)return true;return String(r.Von_Hof_id)===String(user.Hof_id)||String(r.An_Hof_id)===String(user.Hof_id)});sichtbareRechnungen.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));kopf.innerHTML=`<div class="titel">${istAdmin?"Admin-Ansicht":userHof.Name}</div><div class="info">Angemeldet als: <b>${text(user.Vorname||user["PSN-Username"])}</b><br>Sichtbar: ${istAdmin?"Alle Rechnungen":"Rechnungen deines Hofes"}</div>`;document.getElementById("inhalt").style.display="block";render();}catch(err){kopf.innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";}}
 function render(){const offen=sichtbareRechnungen.filter(r=>!istBezahlt(r)&&!istStorniert(r));const bezahlt=sichtbareRechnungen.filter(r=>istBezahlt(r)&&!istStorniert(r));const storno=sichtbareRechnungen.filter(r=>istStorniert(r));const offenerBetrag=offen.reduce((sum,r)=>sum+Number(r.Gesamtpreis||0),0);document.getElementById("statOffen").innerText=offen.length;document.getElementById("statBetrag").innerText=formatZahl(offenerBetrag);document.getElementById("statBezahlt").innerText=bezahlt.length;renderListe("offenListe",offen,"offen");renderListe("bezahltListe",bezahlt,"bezahlt");renderListe("stornoListe",storno,"storniert");}
 function renderListe(id,liste,typ){const box=document.getElementById(id);if(liste.length===0){box.innerHTML="<div class='leer'>Keine Einträge.</div>";return;}box.innerHTML="";liste.forEach(r=>{const div=document.createElement("div");div.className="item "+typ;const badgeClass=typ==="offen"?"badge-offen":typ==="bezahlt"?"badge-bezahlt":"badge-storno";let buttons=`<button class="blue" onclick="detailsOeffnen(${r.id})">Details</button>`;if(!istBezahlt(r)&&!istStorniert(r)&&darfAktion(r)){buttons+=`<button class="green" onclick="rechnungBezahlt(${r.id})">Als bezahlt markieren</button>`;buttons+=`<button class="red" onclick="rechnungStornieren(${r.id})">Stornieren</button>`;}div.innerHTML=`<span class="badge ${badgeClass}">${statusText(r)}</span><div class="titel">${text(r.Rechnung_nr)}</div><div class="info">Von: ${hofName(r.Von_Hof_id)}<br>An: ${hofName(r.An_Hof_id)}<br><br>Produkt: ${text(r.Produkt)}<br>Menge: ${formatZahl(r.Menge)} ${text(r.Einheit)}<br>Einzelpreis: ${formatZahl(r.Einzelpreis)}<br>Gesamtpreis: <b>${formatZahl(r.Gesamtpreis)}</b></div><div class="meta">Erstellt: ${datum(r.created_at)}<br>Bezahlt am: ${datum(r.Bezahlt_am)}<br>Erstellt von: ${text(r.Erstellt_von)}</div>${buttons}`;box.appendChild(div);});}
