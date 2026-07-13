@@ -24,7 +24,7 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:40px;margin
 .popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300;}
 .popup h2{color:#00ff22;margin-top:0;font-size:30px;}
 .popup-info{font-size:19px;line-height:1.5;}
-input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:18px;}
+input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:18px;}.kauf-summe{margin-top:12px;color:#00ff22;font-size:18px;font-weight:bold;line-height:1.5;}
 .popup button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
 .buy-btn{background:#008800;color:white;}
 .close-btn{background:#333;color:white;}
@@ -50,7 +50,7 @@ input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px soli
   <div class="popup">
     <h2 id="popupTitel"></h2>
     <div class="popup-info" id="popupInfo"></div>
-    <input id="menge" type="number" min="1" value="1" placeholder="Menge">
+    <input id="menge" type="number" min="1" step="1" value="1" placeholder="Anzahl Verpackungen" oninput="kaufVorschauAktualisieren()"><div id="kaufVorschau" class="kauf-summe"></div>
     <button class="buy-btn" onclick="bestellen()">Bestellen</button>
     <button class="close-btn" onclick="schliessePopup()">Schließen</button>
     <div id="popupMsg" class="msg"></div>
@@ -80,7 +80,7 @@ function eindeutigeEmpfaenger(liste){
   liste.forEach(u => {
     const chatId = chatIdVonUser(u);
     if(!u || !u.id || !chatId) return;
-    map.set(String(u.id), u);
+    if(!map.has(String(chatId))) map.set(String(chatId), u);
   });
   return Array.from(map.values());
 }
@@ -157,11 +157,13 @@ async function ladeAngebote(){
         <div class="titel">${a.Titel || "Angebot"}</div>
         <div class="info">
           Kategorie: ${text(a.Kategorie)}<br>
-          Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
-          Bestand: ${formatZahl(a.Bestand)}<br>
+          Verpackung: ${text(a.Verpackungseinheit||"Einheit")}<br>
+          Inhalt je Verpackung: ${formatZahl(a.Inhalt)} ${text(a.Einheit)}<br>
+          Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
+          Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
           Hof-ID: ${text(a.Hof_id)}
         </div>
-        <div class="preis">${formatZahl(a.Preis)} €</div>`;
+        <div class="preis">${formatZahl(a.Preis)} € je ${text(a.Verpackungseinheit||"Einheit")}</div>`;
       box.appendChild(div);
     });
   }catch(err){
@@ -174,13 +176,28 @@ function oeffneAngebot(a){
   document.getElementById("popupTitel").innerText = a.Titel || "Angebot";
   document.getElementById("popupInfo").innerHTML = `
     Kategorie: ${text(a.Kategorie)}<br>
-    Inhalt: ${text(a.Inhalt)} ${text(a.Einheit)}<br>
-    Preis: ${formatZahl(a.Preis)} €<br>
-    Bestand: ${formatZahl(a.Bestand)}<br>
+    Verpackungseinheit: ${text(a.Verpackungseinheit||"Einheit")}<br>
+    Inhalt je Verpackung: ${formatZahl(a.Inhalt)} ${text(a.Einheit)}<br>
+    Preis je Verpackung: ${formatZahl(a.Preis)} €<br>
+    Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
+    Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
     Hof-ID: ${text(a.Hof_id)}`;
   document.getElementById("menge").value = 1;
   document.getElementById("popupMsg").innerText = "";
+  kaufVorschauAktualisieren();
   document.getElementById("popupBg").style.display = "flex";
+}
+
+function kaufVorschauAktualisieren(){
+  if(!ausgewaehltesAngebot)return;
+  const anzahl=Math.floor(Number(document.getElementById("menge").value||0));
+  const inhalt=Number(ausgewaehltesAngebot.Inhalt||0);
+  const preis=Number(ausgewaehltesAngebot.Preis||0);
+  const verpackung=ausgewaehltesAngebot.Verpackungseinheit||"Einheit";
+  document.getElementById("kaufVorschau").innerText=
+    anzahl+" "+verpackung+
+    " = "+formatZahl(anzahl*inhalt)+" "+text(ausgewaehltesAngebot.Einheit)+
+    "\nGesamtpreis: "+formatZahl(anzahl*preis)+" €";
 }
 function schliessePopup(){document.getElementById("popupBg").style.display = "none";}
 
@@ -204,7 +221,7 @@ async function bestellen(){
   const msg = document.getElementById("popupMsg");
   msg.innerText = "";
   if(!ausgewaehltesAngebot) return;
-  const menge = Number(document.getElementById("menge").value);
+  const menge = Math.floor(Number(document.getElementById("menge").value));
   if(!menge || menge <= 0){msg.innerText = "Bitte eine gültige Menge eingeben."; return;}
   const bestand = Number(ausgewaehltesAngebot.Bestand || 0);
   if(menge > bestand){msg.innerText = "Nicht genug Bestand vorhanden."; return;}
