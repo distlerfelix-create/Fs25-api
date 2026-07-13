@@ -345,17 +345,30 @@ button{
 
     <div class="grid">
       <div>
-        <label>Menge</label>
-        <input id="angebotMenge" type="number" min="0" value="0">
+        <label>Anzahl Verpackungen</label>
+        <input id="angebotMenge" type="number" min="1" step="1" value="1" oninput="angebotVorschauAktualisieren()">
       </div>
       <div>
-        <label>Einheit</label>
+        <label>Verpackungseinheit</label>
+        <input id="angebotVerpackung" value="Palette" placeholder="z. B. Palette, BigBag, Stück">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>Inhalt je Verpackung</label>
+        <input id="angebotInhalt" type="number" min="0.01" step="0.01" value="0" oninput="angebotVorschauAktualisieren()">
+      </div>
+      <div>
+        <label>Inhaltseinheit</label>
         <input id="angebotEinheit" value="Liter">
       </div>
     </div>
 
-    <label>Preis</label>
-    <input id="angebotPreis" type="number" min="0" value="0">
+    <div class="meta" id="angebotVorschau">Gesamtmenge im Angebot: 0 Liter</div>
+
+    <label>Preis je Verpackung</label>
+    <input id="angebotPreis" type="number" min="0" step="0.01" value="0">
 
     <label>Titel</label>
     <input id="angebotTitel" placeholder="z. B. Weizen Verkauf">
@@ -1035,6 +1048,16 @@ function angebotProduktGewechselt(){
 
   document.getElementById("angebotEinheit").value=l.Einheit||"Liter";
   document.getElementById("angebotTitel").value=produkt+" Verkauf";
+  angebotVorschauAktualisieren();
+}
+
+function angebotVorschauAktualisieren(){
+  const anzahl=zahl(document.getElementById("angebotMenge").value);
+  const inhalt=zahl(document.getElementById("angebotInhalt").value);
+  const einheit=document.getElementById("angebotEinheit").value.trim()||"Liter";
+  const gesamt=anzahl*inhalt;
+  document.getElementById("angebotVorschau").innerText=
+    "Gesamtmenge im Angebot: "+formatZahl(gesamt)+" "+einheit;
 }
 
 async function angebotErstellen(){
@@ -1042,25 +1065,41 @@ async function angebotErstellen(){
   msg.innerText="";
 
   const produkt=document.getElementById("angebotProdukt").value;
-  const menge=zahl(document.getElementById("angebotMenge").value);
+  const anzahlVerpackungen=Math.floor(zahl(document.getElementById("angebotMenge").value));
+  const verpackungseinheit=document.getElementById("angebotVerpackung").value.trim()||"Verpackung";
+  const inhaltJeVerpackung=zahl(document.getElementById("angebotInhalt").value);
   const einheit=document.getElementById("angebotEinheit").value.trim()||"Liter";
-  const preis=zahl(document.getElementById("angebotPreis").value);
+  const preisJeVerpackung=zahl(document.getElementById("angebotPreis").value);
   const titel=document.getElementById("angebotTitel").value.trim()||produkt+" Verkauf";
+  const gesamtMenge=anzahlVerpackungen*inhaltJeVerpackung;
 
   if(!produkt){
     msg.innerText="Bitte Produkt auswählen.";
     return;
   }
 
-  if(menge<=0){
-    msg.innerText="Bitte Menge eintragen.";
+  if(anzahlVerpackungen<=0){
+    msg.innerText="Bitte Anzahl der Verpackungen eintragen.";
+    return;
+  }
+
+  if(inhaltJeVerpackung<=0){
+    msg.innerText="Bitte Inhalt je Verpackung eintragen.";
+    return;
+  }
+
+  if(preisJeVerpackung<0){
+    msg.innerText="Preis darf nicht negativ sein.";
     return;
   }
 
   const l=lagerEintrag(produkt);
 
-  if(!l||Number(l.Menge||0)<menge){
-    msg.innerText="Nicht genug Lagerbestand vorhanden.";
+  if(!l||Number(l.Menge||0)<gesamtMenge){
+    msg.innerText=
+      "Nicht genug Lagerbestand vorhanden.\n"+
+      "Benötigt: "+formatZahl(gesamtMenge)+" "+einheit+"\n"+
+      "Im Lager: "+formatZahl(l?l.Menge:0)+" "+text(l?l.Einheit:einheit);
     return;
   }
 
@@ -1068,18 +1107,23 @@ async function angebotErstellen(){
     await post("Angebote",{
       Titel:titel,
       Kategorie:produkt,
-      Inhalt:menge,
+      Inhalt:inhaltJeVerpackung,
       Einheit:einheit,
-      Preis:preis,
-      Bestand:menge,
+      Verpackungseinheit:verpackungseinheit,
+      Preis:preisJeVerpackung,
+      Bestand:anzahlVerpackungen,
       Hof_id:Number(user.Hof_id),
       Aktiv:true
     });
 
-    msg.innerText="Angebot wurde erstellt.";
+    msg.innerText=
+      "Angebot wurde erstellt.\n"+
+      anzahlVerpackungen+" "+verpackungseinheit+
+      " zu je "+formatZahl(inhaltJeVerpackung)+" "+einheit+
+      " (gesamt "+formatZahl(gesamtMenge)+" "+einheit+").";
 
   }catch(err){
-    msg.innerText="Fehler:\\n"+err.message;
+    msg.innerText="Fehler:\n"+err.message;
   }
 }
 
