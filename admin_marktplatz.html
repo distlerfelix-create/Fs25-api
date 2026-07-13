@@ -163,10 +163,11 @@ function anzeigen(){
 
       <input id="neu_titel" placeholder="Titel">
       <input id="neu_kategorie" placeholder="Kategorie">
-      <input id="neu_inhalt" type="number" placeholder="Inhalt / Menge">
-      <input id="neu_einheit" placeholder="Einheit">
-      <input id="neu_preis" type="number" placeholder="Preis">
-      <input id="neu_bestand" type="number" placeholder="Bestand">
+      <input id="neu_inhalt" type="number" placeholder="Inhalt je Verpackung">
+      <input id="neu_einheit" placeholder="Inhaltseinheit, z. B. Liter">
+      <input id="neu_verpackung" placeholder="Verpackungseinheit, z. B. Palette">
+      <input id="neu_preis" type="number" placeholder="Preis je Verpackung">
+      <input id="neu_bestand" type="number" placeholder="Anzahl Verpackungen">
 
       ${hofSelect("neu","")}
 
@@ -203,19 +204,22 @@ function anzeigen(){
         <div class="info">
           <span class="orange">ID:</span> ${a.id}<br>
           <span class="orange">Kategorie:</span> ${text(a.Kategorie)}<br>
-          <span class="orange">Inhalt:</span> ${text(a.Inhalt)} ${text(a.Einheit)}<br>
-          <span class="orange">Preis:</span> ${text(a.Preis)} €<br>
-          <span class="orange">Bestand:</span> ${text(a.Bestand)}<br>
+          <span class="orange">Verpackung:</span> ${text(a.Verpackungseinheit||"Einheit")}<br>
+          <span class="orange">Inhalt je Verpackung:</span> ${text(a.Inhalt)} ${text(a.Einheit)}<br>
+          <span class="orange">Preis je Verpackung:</span> ${text(a.Preis)} €<br>
+          <span class="orange">Anzahl Verpackungen:</span> ${text(a.Bestand)}<br>
+          <span class="orange">Gesamtmenge:</span> ${Number(a.Bestand||0)*Number(a.Inhalt||0)} ${text(a.Einheit)}<br>
           <span class="orange">Hof:</span> ${hofName(a.Hof_id)}<br>
           <span class="orange">Aktiv:</span> ${a.Aktiv === true ? "Ja" : "Nein"}
         </div>
 
         <input id="titel_${a.id}" value="${a.Titel || ""}" placeholder="Titel">
         <input id="kategorie_${a.id}" value="${a.Kategorie || ""}" placeholder="Kategorie">
-        <input id="inhalt_${a.id}" type="number" value="${a.Inhalt || 0}" placeholder="Inhalt">
-        <input id="einheit_${a.id}" value="${a.Einheit || ""}" placeholder="Einheit">
-        <input id="preis_${a.id}" type="number" value="${a.Preis || 0}" placeholder="Preis">
-        <input id="bestand_${a.id}" type="number" value="${a.Bestand || 0}" placeholder="Bestand">
+        <input id="inhalt_${a.id}" type="number" value="${a.Inhalt || 0}" placeholder="Inhalt je Verpackung">
+        <input id="einheit_${a.id}" value="${a.Einheit || ""}" placeholder="Inhaltseinheit">
+        <input id="verpackung_${a.id}" value="${a.Verpackungseinheit || ""}" placeholder="Verpackungseinheit">
+        <input id="preis_${a.id}" type="number" value="${a.Preis || 0}" placeholder="Preis je Verpackung">
+        <input id="bestand_${a.id}" type="number" value="${a.Bestand || 0}" placeholder="Anzahl Verpackungen">
 
         ${hofSelect(a.id,a.Hof_id)}
 
@@ -252,6 +256,7 @@ async function angebotErstellen(){
       Kategorie:document.getElementById("neu_kategorie").value.trim(),
       Inhalt:Number(document.getElementById("neu_inhalt").value || 0),
       Einheit:document.getElementById("neu_einheit").value.trim(),
+      Verpackungseinheit:document.getElementById("neu_verpackung").value.trim()||"Einheit",
       Preis:Number(document.getElementById("neu_preis").value || 0),
       Bestand:Number(document.getElementById("neu_bestand").value || 0),
       Hof_id:hofId ? Number(hofId) : null,
@@ -277,6 +282,7 @@ async function angebotSpeichern(id){
       Kategorie:document.getElementById("kategorie_" + id).value.trim(),
       Inhalt:Number(document.getElementById("inhalt_" + id).value || 0),
       Einheit:document.getElementById("einheit_" + id).value.trim(),
+      Verpackungseinheit:document.getElementById("verpackung_" + id).value.trim()||"Einheit",
       Preis:Number(document.getElementById("preis_" + id).value || 0),
       Bestand:Number(document.getElementById("bestand_" + id).value || 0),
       Hof_id:hofId ? Number(hofId) : null,
