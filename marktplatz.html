@@ -27,7 +27,7 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:40px;margin
 input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:18px;}.kauf-summe{margin-top:12px;color:#00ff22;font-size:18px;font-weight:bold;line-height:1.5;}
 .popup button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold;}
 .buy-btn{background:#008800;color:white;}
-.close-btn{background:#333;color:white;}
+.close-btn{background:#333;color:white;}.owner-btn{background:#004488;color:white;}.owner-box{display:none;margin-top:18px;padding-top:16px;border-top:1px solid #006600;}.owner-title{color:#ffaa33;font-size:20px;font-weight:bold;margin-bottom:8px;}
 .msg{color:#ffaa33;text-align:center;margin-top:10px;font-weight:bold;white-space:pre-line;}
 </style>
 </head>
@@ -50,8 +50,18 @@ input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px soli
   <div class="popup">
     <h2 id="popupTitel"></h2>
     <div class="popup-info" id="popupInfo"></div>
-    <input id="menge" type="number" min="1" step="1" value="1" placeholder="Anzahl Verpackungen" oninput="kaufVorschauAktualisieren()"><div id="kaufVorschau" class="kauf-summe"></div>
-    <button class="buy-btn" onclick="bestellen()">Bestellen</button>
+    <div id="kaufBereich">
+      <input id="menge" type="number" min="1" step="1" value="1" placeholder="Anzahl Verpackungen" oninput="kaufVorschauAktualisieren()">
+      <div id="kaufVorschau" class="kauf-summe"></div>
+      <button class="buy-btn" onclick="bestellen()">Bestellen</button>
+    </div>
+    <div id="ownerBereich" class="owner-box">
+      <div class="owner-title">Eigenes Angebot verwalten</div>
+      <div id="ownerInfo" class="popup-info"></div>
+      <input id="ownerMehrVerpackungen" type="number" min="1" step="1" value="1" placeholder="Verpackungen hinzufügen" oninput="ownerVorschauAktualisieren()">
+      <div id="ownerVorschau" class="kauf-summe"></div>
+      <button class="owner-btn" onclick="verfuegbarkeitErhoehen()">Verfügbarkeit erhöhen</button>
+    </div>
     <button class="close-btn" onclick="schliessePopup()">Schließen</button>
     <div id="popupMsg" class="msg"></div>
   </div>
@@ -63,6 +73,7 @@ const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 
 let angebote = [];
 let users = [];
+let lager = [];
 let ausgewaehltesAngebot = null;
 let filter = "alle";
 
@@ -141,6 +152,7 @@ async function ladeAngebote(){
   const box = document.getElementById("liste");
   try{
     if(users.length === 0){users = await api("Users");}
+    if(lager.length === 0){lager = await api("Hof_Lager");}
     const res = await fetch(SUPABASE_URL + "/rest/v1/Angebote?select=*&Aktiv=eq.true&order=id.desc", {headers:headers()});
     if(!res.ok) throw new Error(await res.text());
     angebote = await res.json();
@@ -171,6 +183,19 @@ async function ladeAngebote(){
   }
 }
 
+
+function istEigenesAngebot(a){
+  return String(a.Hof_id) === String(aktuellerHofId());
+}
+
+function eigenerLagerEintragFuerAngebot(a){
+  return lager.find(l =>
+    String(l.Hof_id) === String(aktuellerHofId()) &&
+    String(l.Produkt || "").toLowerCase() === String(a.Kategorie || "").toLowerCase() &&
+    l.Aktiv !== false
+  ) || null;
+}
+
 function oeffneAngebot(a){
   ausgewaehltesAngebot = a;
   document.getElementById("popupTitel").innerText = a.Titel || "Angebot";
@@ -182,9 +207,27 @@ function oeffneAngebot(a){
     Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
     Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
     Hof-ID: ${text(a.Hof_id)}`;
-  document.getElementById("menge").value = 1;
+
   document.getElementById("popupMsg").innerText = "";
-  kaufVorschauAktualisieren();
+  const eigenesAngebot = istEigenesAngebot(a);
+  document.getElementById("kaufBereich").style.display = eigenesAngebot ? "none" : "block";
+  document.getElementById("ownerBereich").style.display = eigenesAngebot ? "block" : "none";
+
+  if(eigenesAngebot){
+    const l = eigenerLagerEintragFuerAngebot(a);
+    const lagerMenge = l ? Number(l.Menge || 0) : 0;
+    const maxVerpackungen = Number(a.Inhalt || 0) > 0 ? Math.floor(lagerMenge / Number(a.Inhalt || 1)) : 0;
+    document.getElementById("ownerInfo").innerHTML =
+      "Aktueller Angebotsbestand: <b>"+formatZahl(a.Bestand)+"</b> "+text(a.Verpackungseinheit||"Einheiten")+"<br>"+
+      "Verfügbarer Lagerbestand: <b>"+formatZahl(lagerMenge)+"</b> "+text(a.Einheit)+"<br>"+
+      "Maximal zusätzlich möglich: <b>"+formatZahl(maxVerpackungen)+"</b> "+text(a.Verpackungseinheit||"Einheiten");
+    document.getElementById("ownerMehrVerpackungen").value = maxVerpackungen > 0 ? 1 : 0;
+    ownerVorschauAktualisieren();
+  }else{
+    document.getElementById("menge").value = 1;
+    kaufVorschauAktualisieren();
+  }
+
   document.getElementById("popupBg").style.display = "flex";
 }
 
@@ -199,6 +242,72 @@ function kaufVorschauAktualisieren(){
     " = "+formatZahl(anzahl*inhalt)+" "+text(ausgewaehltesAngebot.Einheit)+
     "\nGesamtpreis: "+formatZahl(anzahl*preis)+" €";
 }
+
+function ownerVorschauAktualisieren(){
+  if(!ausgewaehltesAngebot)return;
+  const anzahl = Math.floor(Number(document.getElementById("ownerMehrVerpackungen").value || 0));
+  const inhalt = Number(ausgewaehltesAngebot.Inhalt || 0);
+  document.getElementById("ownerVorschau").innerText =
+    "Zusätzlich: "+anzahl+" "+text(ausgewaehltesAngebot.Verpackungseinheit||"Einheiten")+
+    " = "+formatZahl(anzahl*inhalt)+" "+text(ausgewaehltesAngebot.Einheit);
+}
+
+async function verfuegbarkeitErhoehen(){
+  const msg = document.getElementById("popupMsg");
+  msg.innerText = "";
+
+  if(!ausgewaehltesAngebot || !istEigenesAngebot(ausgewaehltesAngebot)){
+    msg.innerText = "Dieses Angebot gehört nicht zu deinem Hof.";
+    return;
+  }
+
+  const anzahl = Math.floor(Number(document.getElementById("ownerMehrVerpackungen").value || 0));
+  if(!anzahl || anzahl <= 0){
+    msg.innerText = "Bitte Anzahl der zusätzlichen Verpackungen eingeben.";
+    return;
+  }
+
+  const inhaltJeVerpackung = Number(ausgewaehltesAngebot.Inhalt || 0);
+  const benoetigteLagerMenge = anzahl * inhaltJeVerpackung;
+  const l = eigenerLagerEintragFuerAngebot(ausgewaehltesAngebot);
+
+  if(!l){
+    msg.innerText = "Kein passender Lagerbestand gefunden.";
+    return;
+  }
+
+  const lagerMenge = Number(l.Menge || 0);
+  if(lagerMenge < benoetigteLagerMenge){
+    msg.innerText =
+      "Nicht genug Lagerbestand vorhanden.\n"+
+      "Benötigt: "+formatZahl(benoetigteLagerMenge)+" "+text(ausgewaehltesAngebot.Einheit)+"\n"+
+      "Im Lager: "+formatZahl(lagerMenge)+" "+text(l.Einheit);
+    return;
+  }
+
+  try{
+    msg.innerText = "Verfügbarkeit wird erhöht...";
+    const neuerBestand = Number(ausgewaehltesAngebot.Bestand || 0) + anzahl;
+
+    await patch("Angebote", ausgewaehltesAngebot.id, {
+      Bestand: neuerBestand,
+      Aktiv: true
+    });
+
+    // Beim Erhöhen der Verfügbarkeit wird noch nichts aus dem Lager abgezogen.
+    // Der Lagerabzug erfolgt erst beim tatsächlichen Verkauf.
+    await ladeAngebote();
+
+    const aktualisiert = angebote.find(a => String(a.id) === String(ausgewaehltesAngebot.id));
+    if(aktualisiert){
+      oeffneAngebot(aktualisiert);
+      document.getElementById("popupMsg").innerText = "Verfügbarkeit wurde erfolgreich erhöht.";
+    }
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
 function schliessePopup(){document.getElementById("popupBg").style.display = "none";}
 
 async function erstelleBenachrichtigung(titel, nachricht, zielHofId){
@@ -267,7 +376,47 @@ async function bestellen(){
       Auftragstyp:"Bestellung",
       Ziel_id:ausgewaehltesAngebot.id
     });
-    await patch("Angebote", ausgewaehltesAngebot.id, {Bestand:bestand - menge, Aktiv:(bestand - menge) > 0});
+    await patch("Angebote", ausgewaehltesAngebot.id, {
+      Bestand: bestand - menge,
+      Aktiv: (bestand - menge) > 0
+    });
+
+    // Lagerbestand des Verkäufer-Hofs erst jetzt beim tatsächlichen Verkauf abziehen.
+    const verkaufsMenge = menge * Number(ausgewaehltesAngebot.Inhalt || 0);
+    const verkaufsLager = lager.find(l =>
+      String(l.Hof_id) === String(zielHofId) &&
+      String(l.Produkt || "").toLowerCase() === String(kategorie || "").toLowerCase() &&
+      l.Aktiv !== false
+    );
+
+    if(!verkaufsLager){
+      throw new Error("Kein passender Lagerbestand beim Verkäufer-Hof gefunden.");
+    }
+
+    const neuerLagerbestand = Number(verkaufsLager.Menge || 0) - verkaufsMenge;
+
+    if(neuerLagerbestand < 0){
+      throw new Error(
+        "Der Lagerbestand des Verkäufer-Hofs reicht nicht aus. " +
+        "Benötigt: " + formatZahl(verkaufsMenge) + " " + einheit
+      );
+    }
+
+    await patch("Hof_Lager", verkaufsLager.id, {
+      Menge: neuerLagerbestand
+    });
+
+    await post("Lagerbewegungen", {
+      Hof_id: Number(zielHofId),
+      Produkt: kategorie,
+      Menge: -verkaufsMenge,
+      Aktion: "Marktplatz Verkauf",
+      Benutzer: aktuellerUser(),
+      Bemerkung:
+        menge + " " + text(ausgewaehltesAngebot.Verpackungseinheit || "Einheiten") +
+        " über Angebot ID " + ausgewaehltesAngebot.id + " verkauft"
+    });
+
     await erstelleBenachrichtigung("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId);
     const anzahlTelegram = zielHofId ? await erstelleTelegramQueueFuerHof("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId) : 0;
     await erstelleBenachrichtigung("🛒 Bestellung gesendet: " + produkt, telegramNachricht, aktuellerHofId());
