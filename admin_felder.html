@@ -27,8 +27,22 @@ function checked(v){return v===true?"checked":""}
 async function automatisieren(){
  for(const f of felder){
   const d={};let save=false;
-  if(f.Gekalkt&&f.Gekalkt_Serverjahr&&Number(status.jahr)>Number(f.Gekalkt_Serverjahr)){d.Gekalkt=false;save=true}
-  if(f.Gepfluegt&&f.Gepfluegt_Serverjahr&&Number(status.jahr)>Number(f.Gepfluegt_Serverjahr)){d.Gepfluegt=false;save=true}
+  if(
+    f.Gekalkt===true &&
+    f.Gekalkt_Serverjahr &&
+    f.Gekalkt_Servermonat &&
+    f.Gekalkt_Servertag &&
+    zeitwert(status.jahr,status.monat,status.tag) >=
+      zeitwert(f.Gekalkt_Serverjahr,f.Gekalkt_Servermonat,f.Gekalkt_Servertag) + 36
+  ){d.Gekalkt=false;save=true}
+  if(
+    f.Gepfluegt===true &&
+    f.Gepfluegt_Serverjahr &&
+    f.Gepfluegt_Servermonat &&
+    f.Gepfluegt_Servertag &&
+    zeitwert(status.jahr,status.monat,status.tag) >=
+      zeitwert(f.Gepfluegt_Serverjahr,f.Gepfluegt_Servermonat,f.Gepfluegt_Servertag) + 36
+  ){d.Gepfluegt=false;save=true}
   const e=erntereif(f);if(f.Erntebereit!==e){d.Erntebereit=e;if(!e)d.Ernte_Benachrichtigt=false;save=true}
   if(save){await patch(f.id,d);Object.assign(f,d)}
  }
@@ -58,7 +72,7 @@ async function speichern(id){
  const f=felder.find(x=>Number(x.id)===Number(id)),m=document.getElementById("msg_"+id);
  try{
   const gekalkt=document.getElementById("gekalkt_"+id).checked,gepfl=document.getElementById("gepfluegt_"+id).checked;
-  await patch(id,{Feldnummer:Number(document.getElementById("nummer_"+id).value||0),Fruchtart:document.getElementById("frucht_"+id).value,Gekalkt:gekalkt,Gekalkt_Serverjahr:gekalkt?(f.Gekalkt_Serverjahr||Number(status.jahr)):null,Gepfluegt:gepfl,Gepfluegt_Serverjahr:gepfl?(f.Gepfluegt_Serverjahr||Number(status.jahr)):null,Steine_sammeln_noetig:document.getElementById("steine_"+id).checked,Gesaet:document.getElementById("gesaet_"+id).checked,Walzen_noetig:document.getElementById("walzen_"+id).checked,Gewalzt:document.getElementById("gewalzt_"+id).checked,"Duengen_nötig":document.getElementById("duengen_"+id).checked});
+  await patch(id,{Feldnummer:Number(document.getElementById("nummer_"+id).value||0),Fruchtart:document.getElementById("frucht_"+id).value,Gekalkt:gekalkt,Gekalkt_Serverjahr:gekalkt?(f.Gekalkt_Serverjahr||Number(status.jahr)):null,Gekalkt_Servermonat:gekalkt?(f.Gekalkt_Servermonat||status.monat):null,Gekalkt_Servertag:gekalkt?(f.Gekalkt_Servertag||Number(status.tag)):null,Gepfluegt:gepfl,Gepfluegt_Serverjahr:gepfl?(f.Gepfluegt_Serverjahr||Number(status.jahr)):null,Gepfluegt_Servermonat:gepfl?(f.Gepfluegt_Servermonat||status.monat):null,Gepfluegt_Servertag:gepfl?(f.Gepfluegt_Servertag||Number(status.tag)):null,Steine_sammeln_noetig:document.getElementById("steine_"+id).checked,Gesaet:document.getElementById("gesaet_"+id).checked,Walzen_noetig:document.getElementById("walzen_"+id).checked,Gewalzt:document.getElementById("gewalzt_"+id).checked,"Duengen_nötig":document.getElementById("duengen_"+id).checked});
   m.innerText="Gespeichert.";await laden()
  }catch(e){m.innerText="Fehler:\n"+e.message}
 }
