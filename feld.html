@@ -36,8 +36,22 @@ async function patchAlle(d){if(feld.Feldgruppe_id){for(const f of felder.filter(
 
 async function automatisieren(){
  const d={};let save=false;
- if(feld.Gekalkt&&feld.Gekalkt_Serverjahr&&Number(status.jahr)>Number(feld.Gekalkt_Serverjahr)){d.Gekalkt=false;save=true}
- if(feld.Gepfluegt&&feld.Gepfluegt_Serverjahr&&Number(status.jahr)>Number(feld.Gepfluegt_Serverjahr)){d.Gepfluegt=false;save=true}
+ if(
+   feld.Gekalkt===true &&
+   feld.Gekalkt_Serverjahr &&
+   feld.Gekalkt_Servermonat &&
+   feld.Gekalkt_Servertag &&
+   zeitwert(status.jahr,status.monat,status.tag) >=
+     zeitwert(feld.Gekalkt_Serverjahr,feld.Gekalkt_Servermonat,feld.Gekalkt_Servertag) + 36
+ ){d.Gekalkt=false;save=true}
+ if(
+   feld.Gepfluegt===true &&
+   feld.Gepfluegt_Serverjahr &&
+   feld.Gepfluegt_Servermonat &&
+   feld.Gepfluegt_Servertag &&
+   zeitwert(status.jahr,status.monat,status.tag) >=
+     zeitwert(feld.Gepfluegt_Serverjahr,feld.Gepfluegt_Servermonat,feld.Gepfluegt_Servertag) + 36
+ ){d.Gepfluegt=false;save=true}
  const e=ernte();if(feld.Erntebereit!==e){d.Erntebereit=e;if(!e)d.Ernte_Benachrichtigt=false;save=true}
  if(save){await patchAlle(d);Object.assign(feld,d)}
 }
@@ -55,8 +69,8 @@ function anzeigen(){
  box.innerHTML=h
 }
 async function run(d){const m=document.getElementById("msg");try{await patchAlle(d);bearbeiten=false;await laden()}catch(e){if(m)m.innerText="Fehler:\n"+e.message}}
-async function kalken(){await run({Gekalkt:true,Gekalkt_Serverjahr:Number(status.jahr),Letzte_Aktion:"Gekalkt"})}
-async function pfluegen(){await run({Gepfluegt:true,Gepfluegt_Serverjahr:Number(status.jahr),Steine_sammeln_noetig:true,Letzte_Aktion:"Gepflügt"})}
+async function kalken(){await run({Gekalkt:true,Gekalkt_Serverjahr:Number(status.jahr),Gekalkt_Servermonat:status.monat,Gekalkt_Servertag:Number(status.tag),Letzte_Aktion:"Gekalkt"})}
+async function pfluegen(){await run({Gepfluegt:true,Gepfluegt_Serverjahr:Number(status.jahr),Gepfluegt_Servermonat:status.monat,Gepfluegt_Servertag:Number(status.tag),Steine_sammeln_noetig:true,Letzte_Aktion:"Gepflügt"})}
 async function steine(){await run({Steine_sammeln_noetig:false,Letzte_Aktion:"Steine gesammelt"})}
 async function saeen(){await run({Fruchtart:document.getElementById("frucht").value,Gesaet:true,Gesaet_Serverjahr:Number(status.jahr),Gesaet_Servermonat:status.monat,Gesaet_Servertag:Number(status.tag),Erntebereit:false,Ernte_Benachrichtigt:false,Gewalzt:false,Walzen_noetig:true,Letzte_Aktion:"Gesät"})}
 async function walzen(){await run({Gewalzt:true,Walzen_noetig:false,Letzte_Aktion:"Gewalzt"})}
