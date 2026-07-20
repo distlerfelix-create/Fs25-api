@@ -20,7 +20,7 @@ async function ladeStatus(){const r=await fetch(SUPABASE_URL+"/rest/v1/Serversta
 function monatsNr(m){const x=String(m||"").toLowerCase();return{"januar":1,"februar":2,"märz":3,"maerz":3,"april":4,"mai":5,"juni":6,"juli":7,"august":8,"september":9,"oktober":10,"november":11,"dezember":12}[x]||1}
 function zeitwert(j,m,t){return(Number(j||1)-1)*36+(monatsNr(m)-1)*3+(Number(t||1)-1)}
 function norm(n){return String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
-function mehrjaehrig(n){return["ackergras","bluhende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese"].includes(norm(n))}
+function mehrjaehrig(n){return["ackergras","bluhende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese","pappel","pappeln"].includes(norm(n))}
 function winter(){const m=monatsNr(status.monat);return mehrjaehrig(feld.Fruchtart)&&(m===12||m===1)}
 function frucht(){return fruchtarten.find(x=>String(x.Name).toLowerCase()===String(feld.Fruchtart||"").toLowerCase())}
 function wachstumstage(){
@@ -65,7 +65,7 @@ function anzeigen(){
  <div class="card"><h2>Feldstatus</h2><div class="status">Gekalkt: ${feld.Gekalkt?"✅ Ja":"❌ Nein"}<br>Gepflügt: ${feld.Gepfluegt?"✅ Ja":"❌ Nein"}<br>Steine sammeln nötig: ${feld.Steine_sammeln_noetig?"✅ Ja":"❌ Nein"}<br>Gesät: ${feld.Gesaet?"✅ Ja":"❌ Nein"}<br>Walzen nötig: ${feld.Walzen_noetig?"✅ Ja":"❌ Nein"}<br>Gewalzt: ${feld.Gewalzt?"✅ Ja":"❌ Nein"}<br>Gedüngt 1x: ${feld.Geduengt_1x?"✅ Ja":"❌ Nein"}<br>Gedüngt 2x: ${feld.Geduengt_2x?"✅ Ja":"❌ Nein"}<br>Düngen nötig: ${duengen()?"✅ Ja":"❌ Nein"}</div></div>`;
  if(darf)h+=`<div class="card"><button class="green" onclick="bearbeiten=!bearbeiten;anzeigen()">${bearbeiten?"Bearbeiten schließen":"Feld bearbeiten"}</button></div>`;
  if(darf&&bearbeiten)h+=`<div class="card"><h2>Aktionen</h2><div class="label">Fruchtart</div>${fruchtSelect()}
- <button class="green" onclick="kalken()">Feld kalken</button><button class="green" onclick="pfluegen()">Feld pflügen</button><button class="orange" onclick="steine()">Steine gesammelt</button><button class="green" onclick="saeen()">Säen</button><button class="orange" onclick="walzen()">Walzen</button><button class="green" onclick="dueng1()">1. Düngung</button><button class="green" onclick="dueng2()">2. Düngung</button><button class="red" onclick="ernten()">Ernte abgeschlossen</button><div id="msg" class="msg"></div></div>`;
+ <button class="green" onclick="kalken()">Feld kalken</button><button class="green" onclick="pfluegen()">Feld pflügen</button><button class="orange" onclick="steine()">Steine gesammelt</button><button class="green" onclick="saeen()">Säen</button><button class="orange" onclick="walzen()">Walzen</button><button class="green" onclick="dueng1()">1. Düngung</button><button class="green" onclick="dueng2()">2. Düngung</button>${mehrjaehrig(feld.Fruchtart)?'<button class="green" onclick="weiterWachsen()">🌱 Weiter wachsen lassen</button>':''}<button class="red" onclick="ernten()">Ernte abgeschlossen</button><div id="msg" class="msg"></div></div>`;
  box.innerHTML=h
 }
 async function run(d){const m=document.getElementById("msg");try{await patchAlle(d);bearbeiten=false;await laden()}catch(e){if(m)m.innerText="Fehler:\n"+e.message}}
@@ -76,6 +76,24 @@ async function saeen(){await run({Fruchtart:document.getElementById("frucht").va
 async function walzen(){await run({Gewalzt:true,Walzen_noetig:false,Letzte_Aktion:"Gewalzt"})}
 async function dueng1(){await run({Geduengt_1x:true,"Duengen_nötig":false,Letzte_Aktion:"1. Düngung"})}
 async function dueng2(){await run({Geduengt_2x:true,"Duengen_nötig":false,Letzte_Aktion:"2. Düngung"})}
+async function weiterWachsen(){
+ const d={
+   Erntebereit:false,
+   Ernte_Benachrichtigt:false,
+   Geduengt_1x:false,
+   Geduengt_2x:false,
+   "Duengen_nötig":true,
+   Gesaet:true,
+   Gesaet_Serverjahr:Number(status.jahr),
+   Gesaet_Servermonat:status.monat,
+   Gesaet_Servertag:Number(status.tag),
+   Gewalzt:true,
+   Walzen_noetig:false,
+   Letzte_Aktion:"Geerntet - wächst weiter"
+ };
+ await run(d)
+}
+
 async function ernten(){
  const d={Erntebereit:false,Ernte_Benachrichtigt:false,Geduengt_1x:false,Geduengt_2x:false,"Duengen_nötig":true,Letzte_Aktion:"Geerntet"};
  if(mehrjaehrig(feld.Fruchtart)){d.Gesaet=true;d.Gesaet_Serverjahr=Number(status.jahr);d.Gesaet_Servermonat=status.monat;d.Gesaet_Servertag=Number(status.tag)}
