@@ -20,7 +20,8 @@ async function ladeStatus(){const r=await fetch(SUPABASE_URL+"/rest/v1/Serversta
 function monatsNr(m){const x=String(m||"").toLowerCase();return{"januar":1,"februar":2,"märz":3,"maerz":3,"april":4,"mai":5,"juni":6,"juli":7,"august":8,"september":9,"oktober":10,"november":11,"dezember":12}[x]||1}
 function zeitwert(j,m,t){return(Number(j||1)-1)*36+(monatsNr(m)-1)*3+(Number(t||1)-1)}
 function norm(n){return String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
-function mehrjaehrig(n){return["ackergras","bluhende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese","pappel","pappeln"].includes(norm(n))}
+function mehrjaehrig(n){return["ackergras","feldgras","fieldgrass","gras","klee","luzerne","wiese","pappel","pappeln"].includes(norm(n))}
+function pfluegenNachErnteNoetig(n){return["mais","kornmais","kornermais","koernermais","grain maize","grainmaize","silagemais","silage maize","silagemaize","kartoffel","kartoffeln","zuckerrube","zuckerruben","zuckerrohr"].includes(norm(n))}
 function winter(){const m=monatsNr(status.monat);return mehrjaehrig(feld.Fruchtart)&&(m===12||m===1)}
 function frucht(){return fruchtarten.find(x=>String(x.Name).toLowerCase()===String(feld.Fruchtart||"").toLowerCase())}
 function wachstumstage(){
@@ -44,14 +45,6 @@ async function automatisieren(){
    zeitwert(status.jahr,status.monat,status.tag) >=
      zeitwert(feld.Gekalkt_Serverjahr,feld.Gekalkt_Servermonat,feld.Gekalkt_Servertag) + 36
  ){d.Gekalkt=false;save=true}
- if(
-   feld.Gepfluegt===true &&
-   feld.Gepfluegt_Serverjahr &&
-   feld.Gepfluegt_Servermonat &&
-   feld.Gepfluegt_Servertag &&
-   zeitwert(status.jahr,status.monat,status.tag) >=
-     zeitwert(feld.Gepfluegt_Serverjahr,feld.Gepfluegt_Servermonat,feld.Gepfluegt_Servertag) + 36
- ){d.Gepfluegt=false;save=true}
  const e=ernte();if(feld.Erntebereit!==e){d.Erntebereit=e;if(!e)d.Ernte_Benachrichtigt=false;save=true}
  if(save){await patchAlle(d);Object.assign(feld,d)}
 }
@@ -70,7 +63,7 @@ function anzeigen(){
 }
 async function run(d){const m=document.getElementById("msg");try{await patchAlle(d);bearbeiten=false;await laden()}catch(e){if(m)m.innerText="Fehler:\n"+e.message}}
 async function kalken(){await run({Gekalkt:true,Gekalkt_Serverjahr:Number(status.jahr),Gekalkt_Servermonat:status.monat,Gekalkt_Servertag:Number(status.tag),Letzte_Aktion:"Gekalkt"})}
-async function pfluegen(){await run({Gepfluegt:true,Gepfluegt_Serverjahr:Number(status.jahr),Gepfluegt_Servermonat:status.monat,Gepfluegt_Servertag:Number(status.tag),Steine_sammeln_noetig:true,Letzte_Aktion:"Gepflügt"})}
+async function pfluegen(){await run({Gepfluegt:true,Steine_sammeln_noetig:true,Letzte_Aktion:"Gepflügt"})}
 async function steine(){await run({Steine_sammeln_noetig:false,Letzte_Aktion:"Steine gesammelt"})}
 async function saeen(){await run({Fruchtart:document.getElementById("frucht").value,Gesaet:true,Gesaet_Serverjahr:Number(status.jahr),Gesaet_Servermonat:status.monat,Gesaet_Servertag:Number(status.tag),Erntebereit:false,Ernte_Benachrichtigt:false,Gewalzt:false,Walzen_noetig:true,Letzte_Aktion:"Gesät"})}
 async function walzen(){await run({Gewalzt:true,Walzen_noetig:false,Letzte_Aktion:"Gewalzt"})}
@@ -96,8 +89,22 @@ async function weiterWachsen(){
 
 async function ernten(){
  const d={Erntebereit:false,Ernte_Benachrichtigt:false,Geduengt_1x:false,Geduengt_2x:false,"Duengen_nötig":true,Letzte_Aktion:"Geerntet"};
- if(mehrjaehrig(feld.Fruchtart)){d.Gesaet=true;d.Gesaet_Serverjahr=Number(status.jahr);d.Gesaet_Servermonat=status.monat;d.Gesaet_Servertag=Number(status.tag)}
- else{d.Gesaet=false;d.Gesaet_Serverjahr=null;d.Gesaet_Servermonat=null;d.Gesaet_Servertag=null;d.Gewalzt=false;d.Walzen_noetig=false}
+ if(mehrjaehrig(feld.Fruchtart)){
+   d.Gesaet=true;
+   d.Gesaet_Serverjahr=Number(status.jahr);
+   d.Gesaet_Servermonat=status.monat;
+   d.Gesaet_Servertag=Number(status.tag);
+ }else{
+   d.Gesaet=false;
+   d.Gesaet_Serverjahr=null;
+   d.Gesaet_Servermonat=null;
+   d.Gesaet_Servertag=null;
+   d.Gewalzt=false;
+   d.Walzen_noetig=false;
+   if(pfluegenNachErnteNoetig(feld.Fruchtart)){
+     d.Gepfluegt=false;
+   }
+ }
  await run(d)
 }
 async function laden(){const box=document.getElementById("inhalt");try{await ladeStatus();[felder,fruchtarten]=await Promise.all([api("Felder"),api("Fruchtarten")]);const users=await api("Users");feld=felder.find(f=>String(f.id)===String(FELD_ID));user=users.find(u=>String(u.id)===String(USER_ID));if(!feld){box.innerHTML="Feld nicht gefunden.";return}darf=(user&&user.Admin===true)||Number(feld.Hof_id)===USER_HOF_ID;await automatisieren();document.getElementById("titel").innerText="FELD "+text(feld.Feldnummer);anzeigen()}catch(e){box.innerHTML="<div class='msg'>Fehler:<br>"+e.message+"</div>"}}
