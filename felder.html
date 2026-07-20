@@ -45,8 +45,22 @@ function yn(v){return v?"✅":"❌"}
 async function automatisieren(){
  for(const f of felder){
   const d={};let save=false;
-  if(f.Gekalkt&&f.Gekalkt_Serverjahr&&Number(status.jahr)>Number(f.Gekalkt_Serverjahr)){d.Gekalkt=false;save=true}
-  if(f.Gepfluegt&&f.Gepfluegt_Serverjahr&&Number(status.jahr)>Number(f.Gepfluegt_Serverjahr)){d.Gepfluegt=false;save=true}
+  if(
+    f.Gekalkt===true &&
+    f.Gekalkt_Serverjahr &&
+    f.Gekalkt_Servermonat &&
+    f.Gekalkt_Servertag &&
+    zeitwert(status.jahr,status.monat,status.tag) >=
+      zeitwert(f.Gekalkt_Serverjahr,f.Gekalkt_Servermonat,f.Gekalkt_Servertag) + 36
+  ){d.Gekalkt=false;save=true}
+  if(
+    f.Gepfluegt===true &&
+    f.Gepfluegt_Serverjahr &&
+    f.Gepfluegt_Servermonat &&
+    f.Gepfluegt_Servertag &&
+    zeitwert(status.jahr,status.monat,status.tag) >=
+      zeitwert(f.Gepfluegt_Serverjahr,f.Gepfluegt_Servermonat,f.Gepfluegt_Servertag) + 36
+  ){d.Gepfluegt=false;save=true}
   const e=erntereif(f);if(f.Erntebereit!==e){d.Erntebereit=e;if(!e)d.Ernte_Benachrichtigt=false;save=true}
   if(save){await patch(f.id,d);Object.assign(f,d)}
  }
