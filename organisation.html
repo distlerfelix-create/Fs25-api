@@ -46,6 +46,9 @@ function zahl(v){
 function formatZahl(v){
   return Number(v||0).toLocaleString("de-DE",{maximumFractionDigits:2});
 }
+function rundeAuf100(v){
+  return Math.round(Number(v||0)/100)*100;
+}
 function flaechenNachHof(){
   const map=new Map();
   alleFelder.forEach(f=>{
@@ -72,7 +75,7 @@ function grundsteuerHtml(){
     <div class="steuer-summe">${formatZahl(gesamt)} ha</div>
     <table class="steuer-tabelle"><thead><tr><th>Hof</th><th>Felder</th><th>Fläche</th><th>Steuer</th></tr></thead><tbody>`;
   daten.forEach(x=>{
-    h+=`<tr><td>${hofName(x.hofId)}</td><td>${x.felder.join(", ")}</td><td>${formatZahl(x.flaeche)} ha</td><td>${formatZahl(x.flaeche*preis)} €</td></tr>`;
+    h+=`<tr><td>${hofName(x.hofId)}</td><td>${x.felder.join(", ")}</td><td>${formatZahl(x.flaeche)} ha</td><td>${formatZahl(rundeAuf100(x.flaeche*preis))} €</td></tr>`;
   });
   h+=`</tbody></table></div>`;
 
