@@ -2,17 +2,17 @@
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Admin Felder</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:760px;margin:auto;padding:20px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px}.titel{font-size:24px;font-weight:bold}.info{color:white;line-height:1.5;margin-top:8px}.search,input,select{width:100%;padding:13px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px}.search{margin-bottom:16px}.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px}.row input{width:26px;height:26px}button{width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;font-size:17px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:760px;margin:auto;padding:20px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px}.titel{font-size:24px;font-weight:bold}.info{color:white;line-height:1.5;margin-top:8px}.search,input,select{width:100%;padding:13px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:16px}.search{margin-bottom:16px}.row{display:flex;justify-content:space-between;align-items:center;color:white;margin-top:10px}.row input{width:26px;height:26px}button{width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;font-size:17px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}.aktionszeit{color:#ffaa33;font-size:13px;margin:3px 0 8px 4px;line-height:1.3}.status-vorschau{background:#090909;border:1px solid #333;border-radius:10px;padding:12px;margin-top:12px;color:white;line-height:1.45}
 </style></head>
 <body><div class="app"><button class="back" onclick="location.href='admin.html'">← Zurück</button><h1>FELDER ADMIN</h1><input id="suche" class="search" placeholder="Feld suchen..." oninput="anzeigen()"><div id="liste">Lade...</div></div>
 <script>
 const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co",SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR",USER_ID=localStorage.getItem("user_id");if(!USER_ID)location.href="login.html";
-let users=[],felder=[],fruchtarten=[],status={jahr:1,monat:"März",tag:1};
+let users=[],felder=[],fruchtarten=[],status={jahr:1,monat:"März",tag:1,zeit:""};
 function headers(){return{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
 async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return r.json()}
 async function patch(id,d){const r=await fetch(SUPABASE_URL+"/rest/v1/Felder?id=eq."+id,{method:"PATCH",headers:{...headers(),Prefer:"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
 async function del(id){const r=await fetch(SUPABASE_URL+"/rest/v1/Felder?id=eq."+id,{method:"DELETE",headers:headers()});if(!r.ok)throw new Error(await r.text())}
-async function ladeStatus(){const r=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=jahr,monat,tag",{headers:headers(),cache:"no-store"});if(r.ok){const d=await r.json();if(d[0])status=d[0]}}
+async function ladeStatus(){const r=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=jahr,monat,tag,zeit",{headers:headers(),cache:"no-store"});if(r.ok){const d=await r.json();if(d[0])status=d[0]}}
 
 function monatsNr(m){const x=String(m||"").toLowerCase();return{"januar":1,"februar":2,"märz":3,"maerz":3,"april":4,"mai":5,"juni":6,"juli":7,"august":8,"september":9,"oktober":10,"november":11,"dezember":12}[x]||1}
 function zeitwert(j,m,t){return(Number(j||1)-1)*36+(monatsNr(m)-1)*3+(Number(t||1)-1)}
@@ -23,6 +23,10 @@ function frucht(f){return fruchtarten.find(x=>String(x.Name).toLowerCase()===Str
 function erntereif(f){const o=frucht(f),dauer=Number(o&&o.Wachstumsdauer_Tage||0),tage=wachstumstage(f);return f.Gesaet===true&&dauer>0&&tage!==null&&tage>=dauer}
 function text(v){return v===null||v===undefined||v===""?"-":v}
 function checked(v){return v===true?"checked":""}
+function datumText(jahr,monat,tag,zeit){
+ if(!jahr||!monat||!tag)return "";
+ return `<div class="aktionszeit">📅 ${monat} · Jahr ${jahr} · Tag ${tag}${zeit?`<br>🕒 ${zeit} Uhr`:""}</div>`;
+}
 
 async function automatisieren(){
  for(const f of felder){
@@ -47,7 +51,13 @@ function anzeigen(){
  box.innerHTML="";
  daten.forEach(f=>{
   const div=document.createElement("div");div.className="card";
-  div.innerHTML=`<div class="titel">Feld ${text(f.Feldnummer)}</div><div class="info">Serverzeit: Jahr ${status.jahr} · ${status.monat} · Tag ${status.tag}<br>Erntereif laut Serverstatus: ${erntereif(f)?"Ja":"Nein"}<br>Wachstumstage: ${text(wachstumstage(f))}</div>
+  div.innerHTML=`<div class="titel">Feld ${text(f.Feldnummer)}</div><div class="info">Serverzeit: Jahr ${status.jahr} · ${status.monat} · Tag ${status.tag}${status.zeit?` · ${status.zeit}`:""}<br>Erntereif laut Serverstatus: ${erntereif(f)?"Ja":"Nein"}<br>Wachstumstage: ${text(wachstumstage(f))}</div>
+  <div class="status-vorschau">
+    ${f.Gekalkt?"✅ Gekalkt":"❌ Kalken notwendig"}${f.Gekalkt?datumText(f.Gekalkt_Serverjahr,f.Gekalkt_Servermonat,f.Gekalkt_Servertag,f.Gekalkt_Serverzeit):""}
+    ${f.Gepfluegt?"✅ Gepflügt":"❌ Pflügen notwendig"}${f.Gepfluegt?datumText(f.Gepfluegt_Serverjahr,f.Gepfluegt_Servermonat,f.Gepfluegt_Servertag,f.Gepfluegt_Serverzeit):""}
+    ${f.Gesaet?"✅ Gesät":"❌ Säen notwendig"}${f.Gesaet?datumText(f.Gesaet_Serverjahr,f.Gesaet_Servermonat,f.Gesaet_Servertag,f.Gesaet_Serverzeit):""}
+    ${f.Gewalzt&&!f.Walzen_noetig?"✅ Gewalzt":f.Walzen_noetig?"❌ Walzen notwendig":"➖ Walzen nicht notwendig"}${f.Gewalzt&&!f.Walzen_noetig?datumText(f.Gewalzt_Serverjahr,f.Gewalzt_Servermonat,f.Gewalzt_Servertag,f.Gewalzt_Serverzeit):""}
+  </div>
   <input id="nummer_${f.id}" value="${f.Feldnummer||""}">${fruchtSelect(f.id,f.Fruchtart)}
   <div class="row">Gekalkt <input id="gekalkt_${f.id}" type="checkbox" ${checked(f.Gekalkt)}></div>
   <div class="row">Gepflügt <input id="gepfluegt_${f.id}" type="checkbox" ${checked(f.Gepfluegt)}></div>
@@ -63,8 +73,45 @@ function anzeigen(){
 async function speichern(id){
  const f=felder.find(x=>Number(x.id)===Number(id)),m=document.getElementById("msg_"+id);
  try{
-  const gekalkt=document.getElementById("gekalkt_"+id).checked,gepfl=document.getElementById("gepfluegt_"+id).checked;
-  await patch(id,{Feldnummer:Number(document.getElementById("nummer_"+id).value||0),Fruchtart:document.getElementById("frucht_"+id).value,Gekalkt:gekalkt,Gekalkt_Serverjahr:gekalkt?(f.Gekalkt_Serverjahr||Number(status.jahr)):null,Gekalkt_Servermonat:gekalkt?(f.Gekalkt_Servermonat||status.monat):null,Gekalkt_Servertag:gekalkt?(f.Gekalkt_Servertag||Number(status.tag)):null,Gepfluegt:gepfl,Steine_sammeln_noetig:document.getElementById("steine_"+id).checked,Gesaet:document.getElementById("gesaet_"+id).checked,Walzen_noetig:document.getElementById("walzen_"+id).checked,Gewalzt:document.getElementById("gewalzt_"+id).checked,"Duengen_nötig":document.getElementById("duengen_"+id).checked});
+  const gekalkt=document.getElementById("gekalkt_"+id).checked;
+  const gepfl=document.getElementById("gepfluegt_"+id).checked;
+  const gesaet=document.getElementById("gesaet_"+id).checked;
+  const gewalzt=document.getElementById("gewalzt_"+id).checked;
+  const steineNoetig=document.getElementById("steine_"+id).checked;
+  const walzenNoetig=document.getElementById("walzen_"+id).checked;
+
+  const daten={
+    Feldnummer:Number(document.getElementById("nummer_"+id).value||0),
+    Fruchtart:document.getElementById("frucht_"+id).value,
+    Gekalkt:gekalkt,
+    Gekalkt_Serverjahr:gekalkt?(f.Gekalkt_Serverjahr||Number(status.jahr)):null,
+    Gekalkt_Servermonat:gekalkt?(f.Gekalkt_Servermonat||status.monat):null,
+    Gekalkt_Servertag:gekalkt?(f.Gekalkt_Servertag||Number(status.tag)):null,
+    Gekalkt_Serverzeit:gekalkt?(f.Gekalkt_Serverzeit||status.zeit||null):null,
+
+    Gepfluegt:gepfl,
+    Gepfluegt_Serverjahr:gepfl?(f.Gepfluegt_Serverjahr||Number(status.jahr)):null,
+    Gepfluegt_Servermonat:gepfl?(f.Gepfluegt_Servermonat||status.monat):null,
+    Gepfluegt_Servertag:gepfl?(f.Gepfluegt_Servertag||Number(status.tag)):null,
+    Gepfluegt_Serverzeit:gepfl?(f.Gepfluegt_Serverzeit||status.zeit||null):null,
+
+    Steine_sammeln_noetig:steineNoetig,
+    Gesaet:gesaet,
+    Gesaet_Serverjahr:gesaet?(f.Gesaet_Serverjahr||Number(status.jahr)):null,
+    Gesaet_Servermonat:gesaet?(f.Gesaet_Servermonat||status.monat):null,
+    Gesaet_Servertag:gesaet?(f.Gesaet_Servertag||Number(status.tag)):null,
+    Gesaet_Serverzeit:gesaet?(f.Gesaet_Serverzeit||status.zeit||null):null,
+
+    Walzen_noetig:walzenNoetig,
+    Gewalzt:gewalzt,
+    Gewalzt_Serverjahr:gewalzt?(f.Gewalzt_Serverjahr||Number(status.jahr)):null,
+    Gewalzt_Servermonat:gewalzt?(f.Gewalzt_Servermonat||status.monat):null,
+    Gewalzt_Servertag:gewalzt?(f.Gewalzt_Servertag||Number(status.tag)):null,
+    Gewalzt_Serverzeit:gewalzt?(f.Gewalzt_Serverzeit||status.zeit||null):null,
+
+    "Duengen_nötig":document.getElementById("duengen_"+id).checked
+  };
+  await patch(id,daten);
   m.innerText="Gespeichert.";await laden()
  }catch(e){m.innerText="Fehler:\n"+e.message}
 }
