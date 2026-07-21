@@ -28,7 +28,7 @@ async function ladeStatus(){const r=await fetch(SUPABASE_URL+"/rest/v1/Serversta
 function monatsNr(m){const x=String(m||"").toLowerCase();return{"januar":1,"februar":2,"märz":3,"maerz":3,"april":4,"mai":5,"juni":6,"juli":7,"august":8,"september":9,"oktober":10,"november":11,"dezember":12}[x]||1}
 function zeitwert(j,m,t){return(Number(j||1)-1)*36+(monatsNr(m)-1)*3+(Number(t||1)-1)}
 function normFrucht(n){return String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
-function mehrjaehrig(n){return["ackergras","bluhende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese"].includes(normFrucht(n))}
+function mehrjaehrig(n){return["ackergras","feldgras","fieldgrass","gras","klee","luzerne","wiese","pappel","pappeln"].includes(normFrucht(n))}
 function winterpause(f){const m=monatsNr(status.monat);return mehrjaehrig(f.Fruchtart)&&(m===12||m===1)}
 function frucht(f){return fruchtarten.find(x=>String(x.Name).toLowerCase()===String(f.Fruchtart||"").toLowerCase())}
 function wachstumstage(f){
@@ -53,14 +53,6 @@ async function automatisieren(){
     zeitwert(status.jahr,status.monat,status.tag) >=
       zeitwert(f.Gekalkt_Serverjahr,f.Gekalkt_Servermonat,f.Gekalkt_Servertag) + 36
   ){d.Gekalkt=false;save=true}
-  if(
-    f.Gepfluegt===true &&
-    f.Gepfluegt_Serverjahr &&
-    f.Gepfluegt_Servermonat &&
-    f.Gepfluegt_Servertag &&
-    zeitwert(status.jahr,status.monat,status.tag) >=
-      zeitwert(f.Gepfluegt_Serverjahr,f.Gepfluegt_Servermonat,f.Gepfluegt_Servertag) + 36
-  ){d.Gepfluegt=false;save=true}
   const e=erntereif(f);if(f.Erntebereit!==e){d.Erntebereit=e;if(!e)d.Ernte_Benachrichtigt=false;save=true}
   if(save){await patch(f.id,d);Object.assign(f,d)}
  }
