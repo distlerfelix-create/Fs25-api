@@ -17,7 +17,7 @@ async function ladeStatus(){const r=await fetch(SUPABASE_URL+"/rest/v1/Serversta
 function monatsNr(m){const x=String(m||"").toLowerCase();return{"januar":1,"februar":2,"märz":3,"maerz":3,"april":4,"mai":5,"juni":6,"juli":7,"august":8,"september":9,"oktober":10,"november":11,"dezember":12}[x]||1}
 function zeitwert(j,m,t){return(Number(j||1)-1)*36+(monatsNr(m)-1)*3+(Number(t||1)-1)}
 function norm(n){return String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()}
-function mehrjaehrig(n){return["ackergras","bluhende zwischenfrucht","gras","humusaktiv","klee","luzerne","wiese"].includes(norm(n))}
+function mehrjaehrig(n){return["ackergras","feldgras","fieldgrass","gras","klee","luzerne","wiese","pappel","pappeln"].includes(norm(n))}
 function wachstumstage(f){if(!f.Gesaet_Serverjahr||!f.Gesaet_Servermonat||!f.Gesaet_Servertag)return null;const von=zeitwert(f.Gesaet_Serverjahr,f.Gesaet_Servermonat,f.Gesaet_Servertag),bis=zeitwert(status.jahr,status.monat,status.tag);if(bis<von)return 0;if(!mehrjaehrig(f.Fruchtart))return bis-von;let n=0;for(let i=von;i<bis;i++){const m=Math.floor((i%36)/3)+1;if(m!==12&&m!==1)n++}return n}
 function frucht(f){return fruchtarten.find(x=>String(x.Name).toLowerCase()===String(f.Fruchtart||"").toLowerCase())}
 function erntereif(f){const o=frucht(f),dauer=Number(o&&o.Wachstumsdauer_Tage||0),tage=wachstumstage(f);return f.Gesaet===true&&dauer>0&&tage!==null&&tage>=dauer}
@@ -35,14 +35,6 @@ async function automatisieren(){
     zeitwert(status.jahr,status.monat,status.tag) >=
       zeitwert(f.Gekalkt_Serverjahr,f.Gekalkt_Servermonat,f.Gekalkt_Servertag) + 36
   ){d.Gekalkt=false;save=true}
-  if(
-    f.Gepfluegt===true &&
-    f.Gepfluegt_Serverjahr &&
-    f.Gepfluegt_Servermonat &&
-    f.Gepfluegt_Servertag &&
-    zeitwert(status.jahr,status.monat,status.tag) >=
-      zeitwert(f.Gepfluegt_Serverjahr,f.Gepfluegt_Servermonat,f.Gepfluegt_Servertag) + 36
-  ){d.Gepfluegt=false;save=true}
   const e=erntereif(f);if(f.Erntebereit!==e){d.Erntebereit=e;if(!e)d.Ernte_Benachrichtigt=false;save=true}
   if(save){await patch(f.id,d);Object.assign(f,d)}
  }
@@ -72,7 +64,7 @@ async function speichern(id){
  const f=felder.find(x=>Number(x.id)===Number(id)),m=document.getElementById("msg_"+id);
  try{
   const gekalkt=document.getElementById("gekalkt_"+id).checked,gepfl=document.getElementById("gepfluegt_"+id).checked;
-  await patch(id,{Feldnummer:Number(document.getElementById("nummer_"+id).value||0),Fruchtart:document.getElementById("frucht_"+id).value,Gekalkt:gekalkt,Gekalkt_Serverjahr:gekalkt?(f.Gekalkt_Serverjahr||Number(status.jahr)):null,Gekalkt_Servermonat:gekalkt?(f.Gekalkt_Servermonat||status.monat):null,Gekalkt_Servertag:gekalkt?(f.Gekalkt_Servertag||Number(status.tag)):null,Gepfluegt:gepfl,Gepfluegt_Serverjahr:gepfl?(f.Gepfluegt_Serverjahr||Number(status.jahr)):null,Gepfluegt_Servermonat:gepfl?(f.Gepfluegt_Servermonat||status.monat):null,Gepfluegt_Servertag:gepfl?(f.Gepfluegt_Servertag||Number(status.tag)):null,Steine_sammeln_noetig:document.getElementById("steine_"+id).checked,Gesaet:document.getElementById("gesaet_"+id).checked,Walzen_noetig:document.getElementById("walzen_"+id).checked,Gewalzt:document.getElementById("gewalzt_"+id).checked,"Duengen_nötig":document.getElementById("duengen_"+id).checked});
+  await patch(id,{Feldnummer:Number(document.getElementById("nummer_"+id).value||0),Fruchtart:document.getElementById("frucht_"+id).value,Gekalkt:gekalkt,Gekalkt_Serverjahr:gekalkt?(f.Gekalkt_Serverjahr||Number(status.jahr)):null,Gekalkt_Servermonat:gekalkt?(f.Gekalkt_Servermonat||status.monat):null,Gekalkt_Servertag:gekalkt?(f.Gekalkt_Servertag||Number(status.tag)):null,Gepfluegt:gepfl,Steine_sammeln_noetig:document.getElementById("steine_"+id).checked,Gesaet:document.getElementById("gesaet_"+id).checked,Walzen_noetig:document.getElementById("walzen_"+id).checked,Gewalzt:document.getElementById("gewalzt_"+id).checked,"Duengen_nötig":document.getElementById("duengen_"+id).checked});
   m.innerText="Gespeichert.";await laden()
  }catch(e){m.innerText="Fehler:\n"+e.message}
 }
