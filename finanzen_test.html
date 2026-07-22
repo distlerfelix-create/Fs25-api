@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanzen – Testseite</title>
+
+<style>
+*{box-sizing:border-box}
+
+:root{
+  --bg:#000;
+  --card:#111;
+  --card2:#050505;
+  --green:#00ff22;
+  --green-dark:#008800;
+  --green-border:#008000;
+  --orange:#ffaa33;
+  --white:#fff;
+  --muted:#aaa;
+  --red:#ff4040;
+  --blue:#33aaff;
+}
+
+body{
+  margin:0;
+  overflow-x:hidden;
+  background:var(--bg);
+  color:var(--white);
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:760px;
+  margin:auto;
+  padding:20px;
+}
+
+.back{
+  width:100%;
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 22px;
+  border-radius:12px;
+  margin-bottom:28px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+h1{
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:34px;
+  margin:15px 0 8px;
+}
+
+.subtitle{
+  text-align:center;
+  color:var(--orange);
+  margin-bottom:28px;
+  line-height:1.5;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--green-border);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:16px;
+  box-shadow:0 0 10px rgba(0,255,0,.18);
+}
+
+.card h2{
+  color:var(--green);
+  margin:0 0 14px;
+  font-size:22px;
+}
+
+.info{
+  color:white;
+  line-height:1.5;
+}
+
+.muted{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.label{
+  color:var(--orange);
+  font-size:14px;
+  margin-top:8px;
+}
+
+.value{
+  color:white;
+  font-size:20px;
+  margin-top:3px;
+  overflow-wrap:anywhere;
+}
+
+.big{
+  color:var(--green);
+  font-size:28px;
+  font-weight:bold;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+.stat{
+  background:var(--card2);
+  border:1px solid #006600;
+  border-radius:11px;
+  padding:12px;
+  min-width:0;
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+button{
+  border:none;
+  border-radius:11px;
+  padding:14px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.green{
+  background:var(--green-dark);
+  color:white;
+}
+
+.blue{
+  background:#004488;
+  color:white;
+}
+
+.gray{
+  background:#333;
+  color:white;
+}
+
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.status{
+  margin-top:12px;
+  border-radius:10px;
+  padding:12px;
+  background:#050505;
+  border:1px solid #333;
+  color:white;
+  white-space:pre-line;
+  line-height:1.45;
+}
+
+.status.ok{
+  border-color:var(--green-border);
+  color:var(--green);
+}
+
+.status.error{
+  border-color:#990000;
+  color:var(--red);
+}
+
+.farm{
+  background:#050505;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:14px;
+  margin-top:10px;
+}
+
+.farm-title{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.farm-name{
+  color:var(--green);
+  font-size:20px;
+  font-weight:bold;
+}
+
+.badge{
+  display:inline-block;
+  border:1px solid #555;
+  border-radius:999px;
+  padding:4px 9px;
+  font-size:12px;
+  color:white;
+  white-space:nowrap;
+}
+
+.badge.ok{
+  border-color:#008800;
+  color:var(--green);
+}
+
+.badge.warn{
+  border-color:#aa6600;
+  color:var(--orange);
+}
+
+.money{
+  color:white;
+  font-size:22px;
+  font-weight:bold;
+}
+
+.positive{color:var(--green)}
+.negative{color:var(--red)}
+
+.table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:620px;
+  color:white;
+}
+
+th,td{
+  padding:10px 8px;
+  border-bottom:1px solid #333;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  color:var(--orange);
+  font-size:14px;
+}
+
+.empty{
+  color:#bbb;
+  text-align:center;
+  padding:18px 4px;
+}
+
+details{
+  margin-top:10px;
+}
+
+summary{
+  color:var(--orange);
+  cursor:pointer;
+}
+
+pre{
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  color:#ddd;
+  background:#000;
+  border:1px solid #333;
+  border-radius:10px;
+  padding:10px;
+  font-size:12px;
+}
+
+@media(max-width:560px){
+  .app{padding:12px}
+  h1{font-size:29px}
+  .grid{grid-template-columns:1fr 1fr}
+  .actions{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="history.back()">← Zurück</button>
+
+<h1>FINANZEN – TEST</h1>
+<div class="subtitle">
+  Getrennte Testseite für den Savegame- und Finanzimport.<br>
+  Geldbewegungen werden ausschließlich ingame durchgeführt.
+</div>
+
+<div class="card">
+  <h2>⚙️ Savegame-Import</h2>
+
+  <div class="actions">
+    <button id="importBtn" class="green" onclick="starteImport(false)">
+      farms.xml importieren
+    </button>
+
+    <button id="refreshBtn" class="blue" onclick="ladeAlles()">
+      Anzeige aktualisieren
+    </button>
+  </div>
+
+  <button id="forceBtn" class="gray" onclick="starteImport(true)" style="width:100%;margin-top:10px">
+    Testimport trotz gleichem Hash
+  </button>
+
+  <div id="importStatus" class="status">
+    Bereit.
+  </div>
+</div>
+
+<div class="card">
+  <h2>📥 Letzter Import</h2>
+  <div id="letzterImport" class="empty">Lade Importdaten...</div>
+</div>
+
+<div class="card">
+  <h2>🚜 Aktuelle Hofstände</h2>
+  <div id="hofStaende" class="empty">Lade Hofstände...</div>
+</div>
+
+<div class="card">
+  <h2>🏛️ Gemeinde-Finanzübersicht</h2>
+  <div id="gemeindeUebersicht" class="empty">Lade Gemeindeübersicht...</div>
+</div>
+
+<div class="card">
+  <h2>🏦 Gemeindekredite</h2>
+  <div id="kreditUebersicht" class="empty">Lade Kredite...</div>
+</div>
+
+<div class="card">
+  <h2>💸 Erkannte Überweisungen</h2>
+  <div class="muted">
+    Dieser Bereich bleibt leer, bis die separate Finanz-Auswertung eingerichtet ist.
+  </div>
+  <div id="ueberweisungen" class="empty">Lade Überweisungen...</div>
+</div>
+
+<div class="card">
+  <h2>📒 Gemeinde-Kassenbuch</h2>
+  <div id="kassenbuch" class="empty">Lade Kassenbuch...</div>
+</div>
+
+<div class="card">
+  <h2>🧪 Technische Prüfung</h2>
+  <div id="technik" class="empty">Lade Systemstatus...</div>
+</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+
+const EDGE_FUNCTION_NAME = "savegame-import";
+const EDGE_FUNCTION_URL =
+  SUPABASE_URL + "/functions/v1/" + EDGE_FUNCTION_NAME;
+
+const USER_ID = localStorage.getItem("user_id");
+
+function headers(){
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json"
+  };
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function euro(value){
+  return Number(value || 0).toLocaleString("de-DE",{
+    minimumFractionDigits:0,
+    maximumFractionDigits:2
+  }) + " €";
+}
+
+function zahl(value){
+  return Number(value || 0).toLocaleString("de-DE",{
+    maximumFractionDigits:2
+  });
+}
+
+function datum(value){
+  if(!value) return "-";
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return String(value);
+
+  return d.toLocaleDateString("de-DE") + " • " +
+    d.toLocaleTimeString("de-DE",{
+      hour:"2-digit",
+      minute:"2-digit",
+      second:"2-digit"
+    }) + " Uhr";
+}
+
+function statusKlasse(value){
+  const status = String(value || "").toLowerCase();
+
+  if(status.includes("verarbeitet") || status.includes("bestätigt") || status.includes("bestaetigt")){
+    return "ok";
+  }
+
+  if(status.includes("fehler") || status.includes("verworfen")){
+    return "warn";
+  }
+
+  return "warn";
+}
+
+async function api(tabelle, query="select=*"){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + encodeURIComponent(tabelle) + "?" + query,
+    {headers:headers()}
+  );
+
+  if(!res.ok){
+    throw new Error(tabelle + ": " + await res.text());
+  }
+
+  return await res.json();
+}
+
+async function apiOptional(tabelle, query="select=*"){
+  try{
+    return await api(tabelle, query);
+  }catch(error){
+    console.warn(error);
+    return [];
+  }
+}
+
+function setButtons(disabled){
+  document.getElementById("importBtn").disabled = disabled;
+  document.getElementById("forceBtn").disabled = disabled;
+  document.getElementById("refreshBtn").disabled = disabled;
+}
+
+async function starteImport(force){
+  const box = document.getElementById("importStatus");
+
+  setButtons(true);
+  box.className = "status";
+  box.innerText = force
+    ? "Erzwungener Testimport läuft..."
+    : "farms.xml wird vom G-Portal-Server geladen...";
+
+  try{
+    const res = await fetch(EDGE_FUNCTION_URL,{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        action:"import",
+        force:force === true
+      })
+    });
+
+    const text = await res.text();
+    let data;
+
+    try{
+      data = JSON.parse(text);
+    }catch{
+      throw new Error(text || "Ungültige Antwort der Edge Function.");
+    }
+
+    if(!res.ok || data.ok !== true){
+      throw new Error(data.error || "Import fehlgeschlagen.");
+    }
+
+    const db = data.database || {};
+    const nichtZugeordnet = Array.isArray(db.unmappedFarms)
+      ? db.unmappedFarms
+      : [];
+
+    let meldung = data.message || "Import abgeschlossen.";
+
+    meldung += "\n\nDatei: " + (data.file?.path || "-");
+    meldung += "\nHöfe: " + (data.file?.farmCount ?? "-");
+    meldung += "\nSnapshots: " + (db.snapshotCount ?? 0);
+    meldung += "\nImport-ID: " + (db.importId ?? "-");
+
+    if(nichtZugeordnet.length){
+      meldung += "\n\nNicht zugeordnet:\n- " +
+        nichtZugeordnet.join("\n- ");
+    }
+
+    box.className = "status ok";
+    box.innerText = meldung;
+
+    await ladeAlles();
+  }catch(error){
+    box.className = "status error";
+    box.innerText = "Fehler:\n" + error.message;
+  }finally{
+    setButtons(false);
+  }
+}
+
+async function ladeLetztenImport(){
+  const box = document.getElementById("letzterImport");
+
+  try{
+    const daten = await api(
+      "Finanz_Importe",
+      "select=*&order=Importiert_am.desc&limit=1"
+    );
+
+    if(!daten.length){
+      box.innerHTML = "<div class='empty'>Noch kein Import vorhanden.</div>";
+      return;
+    }
+
+    const i = daten[0];
+
+    box.innerHTML = `
+      <div class="grid">
+        <div class="stat">
+          <div class="label">Status</div>
+          <div class="value">
+            <span class="badge ${statusKlasse(i.Status)}">
+              ${escapeHtml(i.Status || "-")}
+            </span>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Import-ID</div>
+          <div class="value">${escapeHtml(i.id)}</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Importiert am</div>
+          <div class="value">${escapeHtml(datum(i.Importiert_am))}</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Dateigröße</div>
+          <div class="value">${zahl(i.Dateigroesse_Bytes)} Bytes</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Gefundene Höfe</div>
+          <div class="value">${zahl(i.Farm_Anzahl)}</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Serverdatum</div>
+          <div class="value">
+            ${escapeHtml(i.Server_Monat || "-")}
+            ${escapeHtml(i.Server_Tag || "-")} /
+            Jahr ${escapeHtml(i.Server_Jahr || "-")}
+          </div>
+        </div>
+      </div>
+
+      <div class="label">SHA-256 / Import-Hash</div>
+      <div class="value" style="font-size:13px">${escapeHtml(i.Import_Hash || "-")}</div>
+
+      ${i.Fehler ? `
+        <div class="status error">${escapeHtml(i.Fehler)}</div>
+      ` : ""}
+    `;
+  }catch(error){
+    box.innerHTML = "<div class='status error'>" +
+      escapeHtml(error.message) + "</div>";
+  }
+}
+
+async function ladeHofStaende(){
+  const box = document.getElementById("hofStaende");
+
+  try{
+    let daten = await apiOptional(
+      "Finanz_Hof_Gesamtuebersicht",
+      "select=*&order=Farm_id.asc"
+    );
+
+    if(!daten.length){
+      daten = await apiOptional(
+        "Finanz_Aktueller_Hofstand",
+        "select=*&order=Farm_id.asc"
+      );
+    }
+
+    if(!daten.length){
+      box.innerHTML = "<div class='empty'>Noch keine Snapshots vorhanden.</div>";
+      return;
+    }
+
+    box.innerHTML = daten.map(h => {
+      const zugeordnet = h.Hof_id !== null && h.Hof_id !== undefined;
+
+      return `
+        <div class="farm">
+          <div class="farm-title">
+            <div>
+              <div class="farm-name">
+                ${h.Ist_Gemeinde ? "🏛️" : "🚜"}
+                ${escapeHtml(h.Farm_Name || "Unbekannter Hof")}
+              </div>
+              <div class="muted">
+                Farm-ID ${escapeHtml(h.Farm_id)} ·
+                Hof-ID ${zugeordnet ? escapeHtml(h.Hof_id) : "-"}
+              </div>
+            </div>
+
+            <span class="badge ${zugeordnet || h.Ist_Gemeinde ? "ok" : "warn"}">
+              ${zugeordnet ? "zugeordnet" : h.Ist_Gemeinde ? "Gemeinde" : "ohne Hof-ID"}
+            </span>
+          </div>
+
+          <div class="grid" style="margin-top:12px">
+            <div class="stat">
+              <div class="label">Kontostand</div>
+              <div class="money">${euro(h.Kontostand)}</div>
+            </div>
+
+            <div class="stat">
+              <div class="label">Ingame-Kredit</div>
+              <div class="money">${euro(h.Ingame_Kredit)}</div>
+            </div>
+
+            <div class="stat">
+              <div class="label">Gemeindekredit</div>
+              <div class="value">${euro(h.Gemeindekredit || 0)}</div>
+            </div>
+
+            <div class="stat">
+              <div class="label">Offene Zinsen</div>
+              <div class="value">${euro(h.Offene_Zinsen || 0)}</div>
+            </div>
+
+            <div class="stat">
+              <div class="label">Einnahmen XML</div>
+              <div class="value positive">${euro(h.Einnahmen_Gesamt)}</div>
+            </div>
+
+            <div class="stat">
+              <div class="label">Ausgaben XML</div>
+              <div class="value negative">${euro(h.Ausgaben_Gesamt)}</div>
+            </div>
+          </div>
+
+          <div class="label">XML-Saldo</div>
+          <div class="value ${Number(h.Saldo_Gesamt || 0) >= 0 ? "positive" : "negative"}">
+            ${euro(h.Saldo_Gesamt)}
+          </div>
+
+          <div class="muted" style="margin-top:8px">
+            Stand: ${escapeHtml(h.Server_Monat || "-")}
+            ${escapeHtml(h.Server_Tag || "-")} ·
+            Jahr ${escapeHtml(h.Server_Jahr || "-")} ·
+            ${escapeHtml(h.Server_Uhrzeit || "-")}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }catch(error){
+    box.innerHTML = "<div class='status error'>" +
+      escapeHtml(error.message) + "</div>";
+  }
+}
+
+async function ladeGemeinde(){
+  const box = document.getElementById("gemeindeUebersicht");
+  const daten = await apiOptional("Gemeinde_Finanz_Uebersicht");
+
+  if(!daten.length){
+    box.innerHTML = `
+      <div class="empty">
+        Noch kein Gemeindekonto zugeordnet.<br><br>
+        Prüfe, ob die Organisation „Gemeinde“ erkannt wurde.
+      </div>
+    `;
+    return;
+  }
+
+  const g = daten[0];
+
+  box.innerHTML = `
+    <div class="grid">
+      <div class="stat">
+        <div class="label">Gemeindekonto laut XML</div>
+        <div class="big">${euro(g.Kontostand_XML)}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Ingame-Kredit</div>
+        <div class="value">${euro(g.Ingame_Kredit_XML)}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Offene Gemeindekredite</div>
+        <div class="value">${euro(g.Offene_Kreditsumme)}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Offene Zinsen</div>
+        <div class="value">${euro(g.Offene_Zinsen)}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Erhaltene Zinsen</div>
+        <div class="value positive">${euro(g.Erhaltene_Zinsen)}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Letzter XML-Import</div>
+        <div class="value">${escapeHtml(datum(g.Letzter_XML_Import))}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function ladeKredite(){
+  const box = document.getElementById("kreditUebersicht");
+  const daten = await apiOptional(
+    "Gemeinde_Kredit_Uebersicht",
+    "select=*&order=Aktualisiert_am.desc"
+  );
+
+  if(!daten.length){
+    box.innerHTML = "<div class='empty'>Noch keine Gemeindekredite vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML = daten.map(k => `
+    <div class="farm">
+      <div class="farm-title">
+        <div>
+          <div class="farm-name">${escapeHtml(k.Kreditnummer || "Kredit")}</div>
+          <div class="muted">${escapeHtml(k.Kreditnehmer_Name || "Hof " + k.Kreditnehmer_Hof_id)}</div>
+        </div>
+        <span class="badge ${statusKlasse(k.Status)}">${escapeHtml(k.Status || "-")}</span>
+      </div>
+
+      <div class="grid" style="margin-top:12px">
+        <div class="stat">
+          <div class="label">Kreditbetrag</div>
+          <div class="value">${euro(k.Kreditbetrag)}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Restschuld</div>
+          <div class="value">${euro(k.Restschuld)}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Zinssatz</div>
+          <div class="value">${zahl(k.Zinssatz)} %</div>
+        </div>
+        <div class="stat">
+          <div class="label">Offene Zinsen</div>
+          <div class="value">${euro(k.Offene_Zinsen)}</div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function ladeUeberweisungen(){
+  const box = document.getElementById("ueberweisungen");
+  const daten = await apiOptional(
+    "Finanz_Ueberweisungen",
+    "select=*&order=Erkannt_am.desc&limit=20"
+  );
+
+  if(!daten.length){
+    box.innerHTML = "<div class='empty'>Noch keine Überweisungen erkannt.</div>";
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Zeit</th>
+            <th>Von</th>
+            <th>An</th>
+            <th>Betrag</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${daten.map(u => `
+            <tr>
+              <td>${escapeHtml(datum(u.Erkannt_am))}</td>
+              <td>${escapeHtml(u.Sender_Name || "-")}</td>
+              <td>${escapeHtml(u.Empfaenger_Name || "-")}</td>
+              <td>${euro(u.Betrag)}</td>
+              <td>${escapeHtml(u.Status || "-")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function ladeKassenbuch(){
+  const box = document.getElementById("kassenbuch");
+  const daten = await apiOptional(
+    "Gemeinde_Kassenbuch",
+    "select=*&order=Buchungszeit.desc&limit=20"
+  );
+
+  if(!daten.length){
+    box.innerHTML = "<div class='empty'>Noch keine Kassenbuchungen vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Zeit</th>
+            <th>Kategorie</th>
+            <th>Richtung</th>
+            <th>Betrag</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${daten.map(k => `
+            <tr>
+              <td>${escapeHtml(datum(k.Buchungszeit))}</td>
+              <td>${escapeHtml(k.Kategorie || "-")}</td>
+              <td>${escapeHtml(k.Richtung || "-")}</td>
+              <td>${euro(k.Betrag)}</td>
+              <td>${escapeHtml(k.Status || "-")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function ladeTechnik(){
+  const box = document.getElementById("technik");
+
+  const [importe,snapshots,einstellungen] = await Promise.all([
+    apiOptional("Finanz_Importe","select=id"),
+    apiOptional("Finanz_Snapshots","select=id,Hof_id,Farm_Name"),
+    apiOptional("Finanz_Einstellungen","select=*")
+  ]);
+
+  const ohneHof = snapshots.filter(s =>
+    (s.Hof_id === null || s.Hof_id === undefined) &&
+    !String(s.Farm_Name || "").toLowerCase().includes("gemeinde")
+  );
+
+  box.innerHTML = `
+    <div class="grid">
+      <div class="stat">
+        <div class="label">Importläufe</div>
+        <div class="big">${importe.length}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Snapshots gesamt</div>
+        <div class="big">${snapshots.length}</div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Ohne Hof-Zuordnung</div>
+        <div class="big ${ohneHof.length ? "negative" : "positive"}">
+          ${ohneHof.length}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="label">Finanz-Einstellungen</div>
+        <div class="big">${einstellungen.length}</div>
+      </div>
+    </div>
+
+    ${ohneHof.length ? `
+      <div class="status error">
+        Nicht zugeordnete Höfe:
+        ${ohneHof.map(s => "\n- " + escapeHtml(s.Farm_Name)).join("")}
+      </div>
+    ` : `
+      <div class="status ok">
+        Alle normalen Höfe sind einer Hof-ID zugeordnet.
+      </div>
+    `}
+
+    <details>
+      <summary>Technische Hinweise anzeigen</summary>
+      <pre>Edge Function: ${escapeHtml(EDGE_FUNCTION_NAME)}
+Supabase-Projekt: ${escapeHtml(SUPABASE_URL)}
+Angemeldete lokale User-ID: ${escapeHtml(USER_ID || "-")}
+
+Diese Testseite führt keine Ingame-Geldbewegungen aus.
+Sie importiert und zeigt ausschließlich Finanzdaten.</pre>
+    </details>
+  `;
+}
+
+async function ladeAlles(){
+  setButtons(true);
+
+  await Promise.all([
+    ladeLetztenImport(),
+    ladeHofStaende(),
+    ladeGemeinde(),
+    ladeKredite(),
+    ladeUeberweisungen(),
+    ladeKassenbuch(),
+    ladeTechnik()
+  ]);
+
+  setButtons(false);
+}
+
+ladeAlles();
+</script>
+
+</body>
+</html>
