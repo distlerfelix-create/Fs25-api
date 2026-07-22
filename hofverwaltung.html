@@ -179,7 +179,7 @@ button{
 
 .tabs{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:repeat(4,1fr);
   gap:8px;
   margin-bottom:16px;
 }
@@ -249,8 +249,114 @@ button{
   box-shadow:0 0 14px rgba(255,0,0,.38);
 }
 
+
+.finanz-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.finanz-stat{
+  background:#090909;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:13px;
+  color:white;
+}
+
+.finanz-stat .finanz-label{
+  color:#ffaa33;
+  font-size:14px;
+  margin-bottom:5px;
+}
+
+.finanz-stat .finanz-wert{
+  color:#00ff22;
+  font-size:23px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+.finanz-stat .finanz-wert.rot{
+  color:#ff5555;
+}
+
+.finanz-stat .finanz-wert.weiss{
+  color:white;
+}
+
+.finanz-buchung{
+  background:#090909;
+  border:1px solid #333;
+  border-left:5px solid #008800;
+  border-radius:12px;
+  padding:13px;
+  margin-bottom:10px;
+}
+
+.finanz-buchung.ausgabe{
+  border-left-color:#cc2222;
+}
+
+.finanz-buchung.neutral{
+  border-left-color:#777;
+}
+
+.finanz-zeile{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.finanz-betrag{
+  font-size:19px;
+  font-weight:bold;
+  white-space:nowrap;
+}
+
+.finanz-betrag.einnahme{
+  color:#00ff22;
+}
+
+.finanz-betrag.ausgabe{
+  color:#ff5555;
+}
+
+.finanz-mini{
+  color:#aaa;
+  font-size:13px;
+  margin-top:6px;
+  line-height:1.45;
+}
+
+.finanz-hinweis{
+  background:#000;
+  border:1px solid #665500;
+  color:#ffaa33;
+  border-radius:11px;
+  padding:12px;
+  line-height:1.5;
+  margin-top:10px;
+}
+
+.finanz-filter{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:12px;
+}
+
 @media(max-width:560px){
-  .grid,.stats,.tabs,.memberStats{
+  .grid,.stats,.memberStats{
+    grid-template-columns:1fr;
+  }
+
+  .tabs{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .finanz-grid,.finanz-filter{
     grid-template-columns:1fr;
   }
 }
@@ -283,6 +389,7 @@ button{
   <button id="tabLager" class="active" onclick="tabWechseln('lager')">📦 Lager</button>
   <button id="tabMarkt" onclick="tabWechseln('markt')">🛒 Markt</button>
   <button id="tabRechnung" onclick="tabWechseln('rechnung')">🧾 Rechnung</button>
+  <button id="tabFinanzen" onclick="tabWechseln('finanzen')">💰 Finanzen</button>
 </div>
 
 <div id="sectionLager" class="section active">
@@ -423,6 +530,62 @@ button{
 
 </div>
 
+
+<div id="sectionFinanzen" class="section">
+
+  <div class="card">
+    <div class="titel">💰 Finanzübersicht</div>
+    <div id="finanzUebersicht">Lade Finanzdaten...</div>
+    <button class="blue" onclick="finanzenNeuLaden()">Finanzdaten aktualisieren</button>
+    <div id="finanzMsg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="titel">🏦 Gemeindekredit</div>
+    <div id="finanzKredite">Lade Kredite...</div>
+  </div>
+
+  <div class="card">
+    <div class="titel">📖 Finanzhistorie</div>
+
+    <div class="finanz-filter">
+      <div>
+        <label>Kategorie</label>
+        <select id="finanzKategorieFilter" onchange="renderFinanzHistorie()">
+          <option value="">Alle Kategorien</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Richtung</label>
+        <select id="finanzRichtungFilter" onchange="renderFinanzHistorie()">
+          <option value="">Alle Buchungen</option>
+          <option value="Einnahme">Nur Einnahmen</option>
+          <option value="Ausgabe">Nur Ausgaben</option>
+          <option value="Neutral">Nur neutrale Einträge</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="finanzHistorie">Lade Buchungen...</div>
+  </div>
+
+  <div class="card">
+    <div class="titel">💸 Erkannte Ingame-Überweisungen</div>
+    <div class="finanz-hinweis">
+      Überweisungen können in der Web-App nicht durchgeführt werden.
+      Sie werden ausschließlich ingame vorgenommen und hier nur erkannt und angezeigt.
+    </div>
+    <div id="finanzUeberweisungen" style="margin-top:12px">Lade Überweisungen...</div>
+  </div>
+
+  <div class="card">
+    <div class="titel">📥 Letzter Savegame-Import</div>
+    <div id="finanzImport">Lade Importstatus...</div>
+  </div>
+
+</div>
+
 <div class="card">
   <button class="dark" onclick="location.href='felder.html'">Zur Feldverwaltung</button>
   <button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button>
@@ -452,6 +615,12 @@ let rechnungen=[];
 let hofRechnungen=[];
 let strafregister=[];
 let serverStatus=null;
+
+let finanzStand=null;
+let finanzBuchungen=[];
+let finanzUeberweisungen=[];
+let finanzKredite=[];
+let finanzImport=null;
 
 const MONATE=["März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember","Januar","Februar"];
 
@@ -644,6 +813,47 @@ async function apiOptional(tabelle){
   }
 }
 
+async function apiQuery(tabelle,query){
+  const res=await fetch(
+    SUPABASE_URL+"/rest/v1/"+tabelle+"?"+query,
+    {
+      headers:headers(),
+      cache:"no-store"
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function apiQueryOptional(tabelle,query){
+  try{
+    return await apiQuery(tabelle,query);
+  }catch(e){
+    console.warn(tabelle,e);
+    return [];
+  }
+}
+
+function formatEuro(wert){
+  return Number(wert||0).toLocaleString("de-DE",{
+    minimumFractionDigits:0,
+    maximumFractionDigits:2
+  })+" €";
+}
+
+function htmlSicher(wert){
+  return String(wert??"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
 async function ladeServerstatus(){
   try{
     const res=await fetch(SUPABASE_URL+"/rest/v1/Serverstatus?id=eq.1&select=*",{
@@ -710,6 +920,8 @@ async function laden(){
       return;
     }
 
+    await ladeFinanzdaten();
+
     lager=alleLager
       .filter(l=>String(l.Hof_id)===String(user.Hof_id))
       .sort((a,b)=>String(a.Produkt||"").localeCompare(String(b.Produkt||"")));
@@ -742,6 +954,7 @@ async function laden(){
     renderListen();
     renderBewegungen();
     renderOffeneRechnungen();
+    renderFinanzen();
 
   }catch(err){
     kopf.innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";
@@ -941,6 +1154,345 @@ function renderOffeneRechnungen(){
 
     box.appendChild(div);
   });
+}
+
+
+async function ladeFinanzdaten(){
+  const hofId=Number(user.Hof_id);
+
+  const ergebnisse=await Promise.all([
+    apiQueryOptional(
+      "Finanz_Hof_Gesamtuebersicht",
+      "select=*&Hof_id=eq."+hofId+"&limit=1"
+    ),
+    apiQueryOptional(
+      "Finanz_Buchungen",
+      "select=*&Hof_id=eq."+hofId+"&order=Buchungszeit.desc&limit=100"
+    ),
+    apiQueryOptional(
+      "Finanz_Ueberweisungen",
+      "select=*&or=(Sender_Hof_id.eq."+hofId+",Empfaenger_Hof_id.eq."+hofId+")&order=Erkannt_am.desc&limit=50"
+    ),
+    apiQueryOptional(
+      "Gemeinde_Kredit_Uebersicht",
+      "select=*&Kreditnehmer_Hof_id=eq."+hofId+"&order=Aktualisiert_am.desc"
+    ),
+    apiQueryOptional(
+      "Finanz_Importe",
+      "select=*&order=Importiert_am.desc&limit=1"
+    )
+  ]);
+
+  finanzStand=ergebnisse[0]&&ergebnisse[0].length?ergebnisse[0][0]:null;
+  finanzBuchungen=ergebnisse[1]||[];
+  finanzUeberweisungen=ergebnisse[2]||[];
+  finanzKredite=ergebnisse[3]||[];
+  finanzImport=ergebnisse[4]&&ergebnisse[4].length?ergebnisse[4][0]:null;
+}
+
+function renderFinanzen(){
+  renderFinanzUebersicht();
+  renderFinanzKredite();
+  renderFinanzFilter();
+  renderFinanzHistorie();
+  renderFinanzUeberweisungen();
+  renderFinanzImport();
+}
+
+function renderFinanzUebersicht(){
+  const box=document.getElementById("finanzUebersicht");
+  if(!box)return;
+
+  if(!finanzStand){
+    box.innerHTML=`
+      <div class="leer">
+        Für diesen Hof wurden noch keine Finanzdaten gefunden.<br><br>
+        Möglicherweise ist der Hofname aus farms.xml noch keiner Hof-ID zugeordnet.
+      </div>
+    `;
+    return;
+  }
+
+  const netto=Number(
+    finanzStand.Finanzieller_Nettostand ??
+    (
+      Number(finanzStand.Kontostand||0)-
+      Number(finanzStand.Ingame_Kredit||0)-
+      Number(finanzStand.Gemeindekredit||0)-
+      Number(finanzStand.Offene_Zinsen||0)
+    )
+  );
+
+  box.innerHTML=`
+    <div class="finanz-grid">
+      <div class="finanz-stat">
+        <div class="finanz-label">Kontostand</div>
+        <div class="finanz-wert">${formatEuro(finanzStand.Kontostand)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Ingame-Kredit</div>
+        <div class="finanz-wert rot">${formatEuro(finanzStand.Ingame_Kredit)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Gemeindekredit</div>
+        <div class="finanz-wert rot">${formatEuro(finanzStand.Gemeindekredit)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Offene Zinsen</div>
+        <div class="finanz-wert rot">${formatEuro(finanzStand.Offene_Zinsen)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Einnahmen im XML-Zeitraum</div>
+        <div class="finanz-wert">${formatEuro(finanzStand.Einnahmen_Gesamt)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Ausgaben im XML-Zeitraum</div>
+        <div class="finanz-wert rot">${formatEuro(finanzStand.Ausgaben_Gesamt)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">XML-Saldo</div>
+        <div class="finanz-wert ${Number(finanzStand.Saldo_Gesamt||0)<0?"rot":""}">
+          ${formatEuro(finanzStand.Saldo_Gesamt)}
+        </div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Finanzieller Nettostand</div>
+        <div class="finanz-wert ${netto<0?"rot":""}">
+          ${formatEuro(netto)}
+        </div>
+      </div>
+    </div>
+
+    <div class="meta">
+      Serverstand:
+      ${htmlSicher(finanzStand.Server_Monat||"-")} ·
+      Tag ${htmlSicher(finanzStand.Server_Tag||"-")} ·
+      Jahr ${htmlSicher(finanzStand.Server_Jahr||"-")} ·
+      ${htmlSicher(finanzStand.Server_Uhrzeit||"-")}
+    </div>
+  `;
+}
+
+function renderFinanzKredite(){
+  const box=document.getElementById("finanzKredite");
+  if(!box)return;
+
+  if(!finanzKredite.length){
+    box.innerHTML="<div class='leer'>Kein Gemeindekredit vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML=finanzKredite.map(k=>`
+    <div class="item">
+      <span class="badge ${k.Status==="Abgeschlossen"?"badge-green":"badge-orange"}">
+        ${htmlSicher(k.Status||"-")}
+      </span>
+
+      <div class="titel">${htmlSicher(k.Kreditnummer||"Gemeindekredit")}</div>
+
+      <div class="finanz-grid">
+        <div class="finanz-stat">
+          <div class="finanz-label">Kreditbetrag</div>
+          <div class="finanz-wert weiss">${formatEuro(k.Kreditbetrag)}</div>
+        </div>
+
+        <div class="finanz-stat">
+          <div class="finanz-label">Restschuld</div>
+          <div class="finanz-wert rot">${formatEuro(k.Restschuld)}</div>
+        </div>
+
+        <div class="finanz-stat">
+          <div class="finanz-label">Zinssatz</div>
+          <div class="finanz-wert weiss">${formatZahl(k.Zinssatz)} %</div>
+        </div>
+
+        <div class="finanz-stat">
+          <div class="finanz-label">Offene Zinsen</div>
+          <div class="finanz-wert rot">${formatEuro(k.Offene_Zinsen)}</div>
+        </div>
+      </div>
+
+      <div class="info" style="margin-top:10px">
+        Zinsart: ${htmlSicher(k.Zinsart||"-")}<br>
+        Rate: ${formatEuro(k.Rate||0)}<br>
+        Verwendungszweck: ${htmlSicher(k.Verwendungszweck||"-")}
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderFinanzFilter(){
+  const select=document.getElementById("finanzKategorieFilter");
+  if(!select)return;
+
+  const aktuellerWert=select.value;
+  const kategorien=[...new Set(
+    finanzBuchungen.map(b=>String(b.Kategorie||"")).filter(Boolean)
+  )].sort((a,b)=>a.localeCompare(b,"de"));
+
+  select.innerHTML="<option value=''>Alle Kategorien</option>";
+
+  kategorien.forEach(k=>{
+    const option=document.createElement("option");
+    option.value=k;
+    option.textContent=k;
+    select.appendChild(option);
+  });
+
+  if(kategorien.includes(aktuellerWert)){
+    select.value=aktuellerWert;
+  }
+}
+
+function renderFinanzHistorie(){
+  const box=document.getElementById("finanzHistorie");
+  if(!box)return;
+
+  const kategorie=document.getElementById("finanzKategorieFilter")?.value||"";
+  const richtung=document.getElementById("finanzRichtungFilter")?.value||"";
+
+  const daten=finanzBuchungen.filter(b=>
+    (!kategorie||String(b.Kategorie)===kategorie) &&
+    (!richtung||String(b.Richtung)===richtung)
+  );
+
+  if(!daten.length){
+    box.innerHTML="<div class='leer'>Keine passenden Finanzbuchungen vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML=daten.map(b=>{
+    const istAusgabe=String(b.Richtung)==="Ausgabe";
+    const istEinnahme=String(b.Richtung)==="Einnahme";
+    const vorzeichen=istAusgabe?"−":istEinnahme?"+":"";
+
+    return `
+      <div class="finanz-buchung ${istAusgabe?"ausgabe":istEinnahme?"":"neutral"}">
+        <div class="finanz-zeile">
+          <div>
+            <b>${htmlSicher(b.Kategorie||"Buchung")}</b><br>
+            <span class="meta">${htmlSicher(b.Unterkategorie||b.Quelle||"-")}</span>
+          </div>
+
+          <div class="finanz-betrag ${istAusgabe?"ausgabe":istEinnahme?"einnahme":""}">
+            ${vorzeichen}${formatEuro(b.Betrag)}
+          </div>
+        </div>
+
+        <div class="info" style="margin-top:8px">
+          ${htmlSicher(b.Beschreibung||"-")}
+        </div>
+
+        <div class="finanz-mini">
+          ${datum(b.Buchungszeit||b.Erstellt_am)} ·
+          Quelle: ${htmlSicher(b.Quelle||"-")} ·
+          Sicherheit: ${htmlSicher(b.Sicherheitsstufe||"-")}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderFinanzUeberweisungen(){
+  const box=document.getElementById("finanzUeberweisungen");
+  if(!box)return;
+
+  if(!finanzUeberweisungen.length){
+    box.innerHTML="<div class='leer'>Noch keine Ingame-Überweisungen erkannt.</div>";
+    return;
+  }
+
+  box.innerHTML=finanzUeberweisungen.map(u=>{
+    const istSender=String(u.Sender_Hof_id)===String(user.Hof_id);
+    const partner=istSender?u.Empfaenger_Name:u.Sender_Name;
+
+    return `
+      <div class="finanz-buchung ${istSender?"ausgabe":""}">
+        <div class="finanz-zeile">
+          <div>
+            <b>${istSender?"Gesendet an":"Erhalten von"} ${htmlSicher(partner||"-")}</b><br>
+            <span class="meta">${htmlSicher(u.Status||"-")} · ${htmlSicher(u.Sicherheitsstufe||"-")}</span>
+          </div>
+
+          <div class="finanz-betrag ${istSender?"ausgabe":"einnahme"}">
+            ${istSender?"−":"+"}${formatEuro(u.Betrag)}
+          </div>
+        </div>
+
+        <div class="finanz-mini">
+          Erkannt: ${datum(u.Erkannt_am)}<br>
+          Abweichung: ${formatEuro(u.Abweichung||0)}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderFinanzImport(){
+  const box=document.getElementById("finanzImport");
+  if(!box)return;
+
+  if(!finanzImport){
+    box.innerHTML="<div class='leer'>Noch kein Savegame-Import vorhanden.</div>";
+    return;
+  }
+
+  box.innerHTML=`
+    <div class="finanz-grid">
+      <div class="finanz-stat">
+        <div class="finanz-label">Status</div>
+        <div class="finanz-wert weiss">${htmlSicher(finanzImport.Status||"-")}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Importiert am</div>
+        <div class="finanz-wert weiss" style="font-size:17px">
+          ${datum(finanzImport.Importiert_am)}
+        </div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Gefundene Höfe</div>
+        <div class="finanz-wert">${formatZahl(finanzImport.Farm_Anzahl||0)}</div>
+      </div>
+
+      <div class="finanz-stat">
+        <div class="finanz-label">Dateigröße</div>
+        <div class="finanz-wert weiss" style="font-size:17px">
+          ${formatZahl(finanzImport.Dateigroesse_Bytes||0)} Bytes
+        </div>
+      </div>
+    </div>
+
+    <div class="meta">
+      Datei: ${htmlSicher(finanzImport.Dateiname||"farms.xml")}<br>
+      Hash: ${htmlSicher(finanzImport.Import_Hash||"-")}
+    </div>
+
+    ${finanzImport.Fehler?`
+      <div class="finanz-hinweis">${htmlSicher(finanzImport.Fehler)}</div>
+    `:""}
+  `;
+}
+
+async function finanzenNeuLaden(){
+  const msg=document.getElementById("finanzMsg");
+  if(msg)msg.innerText="Finanzdaten werden aktualisiert...";
+
+  try{
+    await ladeFinanzdaten();
+    renderFinanzen();
+    if(msg)msg.innerText="Finanzdaten wurden aktualisiert.";
+  }catch(err){
+    if(msg)msg.innerText="Fehler:\n"+err.message;
+  }
 }
 
 function lagerInFormular(produkt){
