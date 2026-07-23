@@ -362,6 +362,83 @@ button{
   display:block;
 }
 
+
+/* Optimierung Finanzseite */
+#sectionFinanzen .card{
+  padding:16px;
+  margin-bottom:14px;
+}
+
+#sectionFinanzen .titel{
+  line-height:1.2;
+}
+
+#sectionFinanzen .finanz-stat{
+  padding:11px;
+}
+
+#sectionFinanzen .finanz-stat .finanz-label{
+  font-size:13px;
+}
+
+#sectionFinanzen .finanz-stat .finanz-wert{
+  font-size:21px;
+}
+
+#sectionFinanzen .item{
+  margin-bottom:9px;
+  padding:12px;
+}
+
+#sectionFinanzen .finanz-hinweis{
+  font-size:15px;
+  line-height:1.45;
+}
+
+#sectionFinanzen .meta{
+  overflow-wrap:anywhere;
+}
+
+#sectionFinanzen .finanz-monat-header .titel{
+  margin-bottom:0;
+}
+
+#sectionFinanzen .finanz-monat-header{
+  min-height:44px;
+}
+
+#sectionFinanzen .finanz-monat-content{
+  margin-top:12px;
+}
+
+.finanz-import-kompakt{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+@media(max-width:560px){
+  #sectionFinanzen .card{
+    padding:14px;
+  }
+
+  #sectionFinanzen .finanz-stat .finanz-wert{
+    font-size:19px;
+  }
+
+  .finanz-import-kompakt{
+    grid-template-columns:1fr 1fr;
+  }
+
+  #sectionFinanzen .finanz-zeile{
+    gap:8px;
+  }
+
+  #sectionFinanzen .finanz-betrag{
+    font-size:17px;
+  }
+}
+
 @media(max-width:560px){
   .grid,.stats,.memberStats{
     grid-template-columns:1fr;
@@ -601,7 +678,7 @@ button{
 
 </div>
 
-<div class="card">
+<div class="card" style="padding:14px">
   <button class="dark" onclick="location.href='felder.html'">Zur Feldverwaltung</button>
   <button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button>
 </div>
@@ -1361,7 +1438,7 @@ function renderFinanzUebersicht(){
   const monate=finanzMonatsDaten();
 
   box.innerHTML=`
-    <div class="finanz-grid">
+    <div class="finanz-import-kompakt">
       <div class="finanz-stat">
         <div class="finanz-label">Kontostand</div>
         <div class="finanz-wert">${formatEuro(finanzStand.Kontostand)}</div>
@@ -1622,21 +1699,21 @@ function renderFinanzImport(){
   }
 
   box.innerHTML=`
-    <div class="finanz-grid">
+    <div class="finanz-import-kompakt">
       <div class="finanz-stat">
         <div class="finanz-label">Status</div>
         <div class="finanz-wert weiss">${htmlSicher(finanzImport.Status||"-")}</div>
       </div>
 
       <div class="finanz-stat">
-        <div class="finanz-label">Importiert am</div>
+        <div class="finanz-label">Letzter Import</div>
         <div class="finanz-wert weiss" style="font-size:17px">
           ${datum(finanzImport.Importiert_am)}
         </div>
       </div>
 
       <div class="finanz-stat">
-        <div class="finanz-label">Gefundene Höfe</div>
+        <div class="finanz-label">Höfe</div>
         <div class="finanz-wert">${formatZahl(finanzImport.Farm_Anzahl||0)}</div>
       </div>
 
@@ -1646,11 +1723,6 @@ function renderFinanzImport(){
           ${formatZahl(finanzImport.Dateigroesse_Bytes||0)} Bytes
         </div>
       </div>
-    </div>
-
-    <div class="meta">
-      Datei: ${htmlSicher(finanzImport.Dateiname||"farms.xml")}<br>
-      Hash: ${htmlSicher(finanzImport.Import_Hash||"-")}
     </div>
 
     ${finanzImport.Fehler?`
