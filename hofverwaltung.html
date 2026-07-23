@@ -347,6 +347,21 @@ button{
   margin-bottom:12px;
 }
 
+
+.finanz-monat-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+.finanz-monat-content{
+  display:none;
+  margin-top:10px;
+}
+.finanz-monat-content.offen{
+  display:block;
+}
+
 @media(max-width:560px){
   .grid,.stats,.memberStats{
     grid-template-columns:1fr;
@@ -1391,8 +1406,12 @@ function renderFinanzUebersicht(){
 
       return `
         <div class="card" style="margin-top:14px;background:#080808">
-          <div class="titel">${finanzMonatsTitel(monat)}</div>
+          <div class="finanz-monat-header" onclick="toggleFinanzMonat('monat_${monat.offset}')">
+            <div class="titel">${finanzMonatsTitel(monat)}</div>
+            <div id="monat_${monat.offset}_icon">${monat.offset===0?"▲":"▼"}</div>
+          </div>
 
+          <div id="monat_${monat.offset}" class="finanz-monat-content ${monat.offset===0?"offen":""}">
           ${bereiche.map(b=>`
             <div class="item">
               <div class="titel" style="font-size:19px">${b.titel}</div>
@@ -1414,6 +1433,7 @@ function renderFinanzUebersicht(){
               </div>
             </div>
           `).join("")}
+          </div>
         </div>
       `;
     }).join("")}
@@ -1426,6 +1446,15 @@ function renderFinanzUebersicht(){
       ${htmlSicher(finanzStand.Server_Uhrzeit||"-")}
     </div>
   `;
+}
+
+
+function toggleFinanzMonat(id){
+  const el=document.getElementById(id);
+  const icon=document.getElementById(id+"_icon");
+  if(!el)return;
+  const offen=el.classList.toggle("offen");
+  if(icon) icon.textContent=offen?"▲":"▼";
 }
 
 function renderFinanzKredite(){
