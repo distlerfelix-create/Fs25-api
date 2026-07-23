@@ -1206,28 +1206,53 @@ function renderFinanzen(){
 }
 
 
-function finanzMonatsSummen(){
+function finanzMonatsReihenfolge(){
+  return [
+    "Januar","Februar","März","April","Mai","Juni",
+    "Juli","August","September","Oktober","November","Dezember"
+  ];
+}
+
+function finanzMonatZurueck(monat,anzahl){
+  const monate=finanzMonatsReihenfolge();
+  const index=monate.findIndex(m=>
+    m.toLowerCase()===String(monat||"").toLowerCase()
+  );
+
+  if(index<0)return "Unbekannt";
+
+  return monate[(index-anzahl+12*10)%12];
+}
+
+function finanzMonatsDaten(){
   const tage=finanzSnapshot?.Finanzdaten?.days||{};
-  const summen={};
+  const aktuellerMonat=finanzStand?.Server_Monat||serverStatus?.monat||"-";
+  const daten=[];
 
-  Object.values(tage).forEach(monat=>{
-    if(!monat||typeof monat!=="object")return;
-
-    Object.entries(monat).forEach(([schluessel,wert])=>{
-      summen[schluessel]=(summen[schluessel]||0)+Number(wert||0);
+  /*
+    In farms.xml gilt bei den Finanzwerten:
+    day="0" = aktueller Ingame-Monat
+    day="1" = Vormonat
+    day="2" = vor 2 Monaten
+    day="3" = vor 3 Monaten
+    day="4" = vor 4 Monaten
+  */
+  for(let offset=0;offset<=4;offset++){
+    daten.push({
+      offset:offset,
+      monat:finanzMonatZurueck(aktuellerMonat,offset),
+      werte:tage[String(offset)]||{}
     });
-  });
+  }
 
-  return summen;
+  return daten;
 }
 
 function finanzGruppenWert(summen,felder){
   return felder.reduce((sum,feld)=>sum+Number(summen[feld]||0),0);
 }
 
-function finanzBereiche(){
-  const s=finanzMonatsSummen();
-
+function finanzBereicheFuerMonat(s){
   return [
     {
       titel:"🚜 Fahrzeuge und Geräte",
@@ -1282,6 +1307,18 @@ function finanzBetrag(wert,ausgabe=false){
   return formatEuro(ausgabe?Math.abs(n):Math.max(0,n));
 }
 
+function finanzMonatsTitel(monatsDaten){
+  if(monatsDaten.offset===0){
+    return monatsDaten.monat+" – aktueller Monat";
+  }
+
+  if(monatsDaten.offset===1){
+    return monatsDaten.monat+" – Vormonat";
+  }
+
+  return monatsDaten.monat+" – vor "+monatsDaten.offset+" Monaten";
+}
+
 function renderFinanzUebersicht(){
   const box=document.getElementById("finanzUebersicht");
   if(!box)return;
@@ -1306,7 +1343,7 @@ function renderFinanzUebersicht(){
     )
   );
 
-  const bereiche=finanzBereiche();
+  const monate=finanzMonatsDaten();
 
   box.innerHTML=`
     <div class="finanz-grid">
@@ -1339,36 +1376,47 @@ function renderFinanzUebersicht(){
     </div>
 
     <div class="titel" style="margin-top:22px">
-      Finanzen der letzten 4 Ingame-Monate
+      Monatliche Finanzübersicht
     </div>
 
     <div class="finanz-hinweis">
-      Die farms.xml führt die Finanzwerte monatsweise.
-      Angezeigt werden die letzten vier abgeschlossenen Ingame-Monate
-      sowie – falls vorhanden – die Werte des laufenden Monats.
+      Die Monatsnamen werden mit dem aktuellen Servermonat verbunden.
+      Bei aktuellem Monat Januar bedeutet:
+      day 0 = Januar, day 1 = Dezember, day 2 = November,
+      day 3 = Oktober und day 4 = September.
     </div>
 
-    ${bereiche.map(b=>`
-      <div class="item">
-        <div class="titel" style="font-size:20px">${b.titel}</div>
+    ${monate.map(monat=>{
+      const bereiche=finanzBereicheFuerMonat(monat.werte);
 
-        <div class="finanz-grid">
-          <div class="finanz-stat">
-            <div class="finanz-label">Einnahmen</div>
-            <div class="finanz-wert">
-              ${finanzBetrag(b.einnahmen,false)}
-            </div>
-          </div>
+      return `
+        <div class="card" style="margin-top:14px;background:#080808">
+          <div class="titel">${finanzMonatsTitel(monat)}</div>
 
-          <div class="finanz-stat">
-            <div class="finanz-label">Ausgaben</div>
-            <div class="finanz-wert rot">
-              ${finanzBetrag(b.ausgaben,true)}
+          ${bereiche.map(b=>`
+            <div class="item">
+              <div class="titel" style="font-size:19px">${b.titel}</div>
+
+              <div class="finanz-grid">
+                <div class="finanz-stat">
+                  <div class="finanz-label">Einnahmen</div>
+                  <div class="finanz-wert">
+                    ${finanzBetrag(b.einnahmen,false)}
+                  </div>
+                </div>
+
+                <div class="finanz-stat">
+                  <div class="finanz-label">Ausgaben</div>
+                  <div class="finanz-wert rot">
+                    ${finanzBetrag(b.ausgaben,true)}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          `).join("")}
         </div>
-      </div>
-    `).join("")}
+      `;
+    }).join("")}
 
     <div class="meta">
       Serverstand:
