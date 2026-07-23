@@ -209,6 +209,91 @@ button{
   line-height:1.4;
 }
 
+
+.telegram-option{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  background:#000;
+  border:1px solid #006600;
+  border-radius:12px;
+  padding:14px;
+  margin-top:10px;
+  color:white;
+}
+
+.telegram-option-text{
+  flex:1;
+  line-height:1.4;
+}
+
+.telegram-option-title{
+  color:white;
+  font-size:17px;
+  font-weight:bold;
+}
+
+.telegram-option-desc{
+  color:#ffaa33;
+  font-size:13px;
+  margin-top:3px;
+}
+
+.telegram-switch{
+  position:relative;
+  width:54px;
+  height:30px;
+  flex:0 0 54px;
+}
+
+.telegram-switch input{
+  opacity:0;
+  width:0;
+  height:0;
+  margin:0;
+}
+
+.telegram-slider{
+  position:absolute;
+  inset:0;
+  cursor:pointer;
+  background:#444;
+  border-radius:30px;
+  transition:.2s;
+}
+
+.telegram-slider:before{
+  content:"";
+  position:absolute;
+  width:24px;
+  height:24px;
+  left:3px;
+  top:3px;
+  background:white;
+  border-radius:50%;
+  transition:.2s;
+}
+
+.telegram-switch input:checked + .telegram-slider{
+  background:#008800;
+}
+
+.telegram-switch input:checked + .telegram-slider:before{
+  transform:translateX(24px);
+}
+
+.telegram-master{
+  border-color:#ffaa33;
+}
+
+.telegram-note{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.45;
+  margin-top:12px;
+}
+
 @media(max-width:560px){
   .grid{grid-template-columns:1fr;}
 }
@@ -255,21 +340,109 @@ button{
 </div>
 
 <div class="card">
-  <h2>Telegram Online-Benachrichtigung</h2>
+  <h2>🔔 Telegram-Benachrichtigungen</h2>
+
   <div class="info">
-    Wenn diese Funktion aktiviert ist, bekommst du eine Telegram-Nachricht, sobald ein anderer Spieler auf den Server kommt.
+    Lege fest, welche Meldungen du über Telegram erhalten möchtest.
   </div>
 
-  <div class="statusBox">
-    Status:<br>
-    <b id="onlineBenachrichtigungStatus">Lade...</b>
+  <div class="telegram-option telegram-master">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">Alle Benachrichtigungen</div>
+      <div class="telegram-option-desc">Aktiviert oder deaktiviert alle Schalter gleichzeitig.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgAlle" onchange="telegramAlleUmschalten()">
+      <span class="telegram-slider"></span>
+    </label>
   </div>
 
-  <button id="onlineBenachrichtigungButton" class="blue" onclick="onlineBenachrichtigungUmschalten()">
-    Lade...
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">👤 Spieler online</div>
+      <div class="telegram-option-desc">Meldung, wenn ein anderer Spieler online kommt.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgOnline" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">💸 Ingame-Überweisungen</div>
+      <div class="telegram-option-desc">Erkannte Überweisungen mit deinem Hof.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgUeberweisung" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">🏦 Gemeindekredite</div>
+      <div class="telegram-option-desc">Neue oder geänderte Gemeindekredite.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgGemeinde" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">💰 Kreditrückzahlungen</div>
+      <div class="telegram-option-desc">Erkannte Rückzahlungen und Tilgungen.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgRueckzahlung" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">📈 Zinsen</div>
+      <div class="telegram-option-desc">Fällige oder verbuchte Kreditzinsen.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgZinsen" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">⚠️ Finanzwarnungen</div>
+      <div class="telegram-option-desc">Unklare Buchungen, negativer Kontostand oder andere Warnungen.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgWarnung" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <div class="telegram-option">
+    <div class="telegram-option-text">
+      <div class="telegram-option-title">📥 Savegame-Import</div>
+      <div class="telegram-option-desc">Zusammenfassung nach einem neuen Finanzimport.</div>
+    </div>
+    <label class="telegram-switch">
+      <input type="checkbox" id="tgImport" onchange="telegramMasterAktualisieren()">
+      <span class="telegram-slider"></span>
+    </label>
+  </div>
+
+  <button class="green" onclick="telegramSpeichern()">
+    💾 Telegram-Einstellungen speichern
   </button>
 
-  <div id="onlineBenachrichtigungMeldung" class="msg"></div>
+  <div class="telegram-note">
+    Die Einstellungen steuern nur zukünftige Telegram-Nachrichten.
+  </div>
+
+  <div id="telegramMeldung" class="msg"></div>
 </div>
 
 <div class="card">
@@ -609,28 +782,59 @@ async function apiOptional(tabelle){
   }
 }
 
-function onlineBenachrichtigungAktiv(){
-  return aktuellerUser && aktuellerUser.Telegram_Online_Benachrichtigung === true;
+function telegramSchalter(){
+  return [
+    "tgOnline",
+    "tgUeberweisung",
+    "tgGemeinde",
+    "tgRueckzahlung",
+    "tgZinsen",
+    "tgWarnung",
+    "tgImport"
+  ];
 }
 
-function onlineBenachrichtigungAnzeige(){
-  const aktiv = onlineBenachrichtigungAktiv();
-  const status = document.getElementById("onlineBenachrichtigungStatus");
-  const button = document.getElementById("onlineBenachrichtigungButton");
+function telegramAnzeige(){
+  document.getElementById("tgOnline").checked =
+    aktuellerUser.Telegram_Online_Benachrichtigung === true;
 
-  if(aktiv){
-    status.innerText = "🔔 Aktiviert";
-    button.innerText = "🔕 Online-Benachrichtigung deaktivieren";
-    button.className = "red";
-  }else{
-    status.innerText = "🔕 Deaktiviert";
-    button.innerText = "🔔 Online-Benachrichtigung aktivieren";
-    button.className = "green";
-  }
+  document.getElementById("tgUeberweisung").checked =
+    aktuellerUser.Telegram_Finanz_Ueberweisung === true;
+
+  document.getElementById("tgGemeinde").checked =
+    aktuellerUser.Telegram_Gemeindekredit === true;
+
+  document.getElementById("tgRueckzahlung").checked =
+    aktuellerUser.Telegram_Kreditrueckzahlung === true;
+
+  document.getElementById("tgZinsen").checked =
+    aktuellerUser.Telegram_Zinsen === true;
+
+  document.getElementById("tgWarnung").checked =
+    aktuellerUser.Telegram_Finanzwarnung === true;
+
+  document.getElementById("tgImport").checked =
+    aktuellerUser.Telegram_SavegameImport === true;
+
+  telegramMasterAktualisieren();
 }
 
-async function onlineBenachrichtigungUmschalten(){
-  const meldung = document.getElementById("onlineBenachrichtigungMeldung");
+function telegramMasterAktualisieren(){
+  const ids = telegramSchalter();
+  const alleAktiv = ids.every(id => document.getElementById(id).checked);
+  document.getElementById("tgAlle").checked = alleAktiv;
+}
+
+function telegramAlleUmschalten(){
+  const neuerWert = document.getElementById("tgAlle").checked;
+
+  telegramSchalter().forEach(id => {
+    document.getElementById(id).checked = neuerWert;
+  });
+}
+
+async function telegramSpeichern(){
+  const meldung = document.getElementById("telegramMeldung");
   meldung.innerText = "Speichere...";
 
   if(!aktuellerUser){
@@ -638,33 +842,55 @@ async function onlineBenachrichtigungUmschalten(){
     return;
   }
 
-  const neuerWert = !onlineBenachrichtigungAktiv();
+  const daten = {
+    Telegram_Online_Benachrichtigung:
+      document.getElementById("tgOnline").checked,
 
-  const res = await fetch(
-    SUPABASE_URL + "/rest/v1/Users?id=eq." + USER_ID,
-    {
-      method:"PATCH",
-      headers:{
-        ...headers(),
-        "Prefer":"return=minimal"
-      },
-      body:JSON.stringify({
-        Telegram_Online_Benachrichtigung: neuerWert
-      })
+    Telegram_Finanz_Ueberweisung:
+      document.getElementById("tgUeberweisung").checked,
+
+    Telegram_Gemeindekredit:
+      document.getElementById("tgGemeinde").checked,
+
+    Telegram_Kreditrueckzahlung:
+      document.getElementById("tgRueckzahlung").checked,
+
+    Telegram_Zinsen:
+      document.getElementById("tgZinsen").checked,
+
+    Telegram_Finanzwarnung:
+      document.getElementById("tgWarnung").checked,
+
+    Telegram_SavegameImport:
+      document.getElementById("tgImport").checked
+  };
+
+  try{
+    const res = await fetch(
+      SUPABASE_URL + "/rest/v1/Users?id=eq." + USER_ID,
+      {
+        method:"PATCH",
+        headers:{
+          ...headers(),
+          "Prefer":"return=minimal"
+        },
+        body:JSON.stringify(daten)
+      }
+    );
+
+    if(!res.ok){
+      throw new Error(await res.text());
     }
-  );
 
-  if(!res.ok){
-    meldung.innerText = "Einstellung konnte nicht gespeichert werden.\n" + await res.text();
-    return;
+    Object.assign(aktuellerUser,daten);
+    telegramAnzeige();
+
+    meldung.innerText = "Telegram-Einstellungen wurden gespeichert.";
+  }catch(err){
+    meldung.innerText =
+      "Telegram-Einstellungen konnten nicht gespeichert werden.\n" +
+      err.message;
   }
-
-  aktuellerUser.Telegram_Online_Benachrichtigung = neuerWert;
-  onlineBenachrichtigungAnzeige();
-
-  meldung.innerText = neuerWert
-    ? "Online-Benachrichtigung wurde aktiviert."
-    : "Online-Benachrichtigung wurde deaktiviert.";
 }
 
 async function ladeProfil(){
@@ -699,7 +925,7 @@ async function ladeProfil(){
     document.getElementById("admin").innerText =
       aktuellerUser.Admin === true ? "Ja" : "Nein";
 
-    onlineBenachrichtigungAnzeige();
+    telegramAnzeige();
     zeigeFuehrerscheinUndPunkte();
     zeigeLetzteVerstoesse();
 
