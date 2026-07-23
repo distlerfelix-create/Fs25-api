@@ -621,6 +621,7 @@ let finanzBuchungen=[];
 let finanzUeberweisungen=[];
 let finanzKredite=[];
 let finanzImport=null;
+let finanzSnapshot=null;
 
 const MONATE=["März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember","Januar","Februar"];
 
@@ -1180,6 +1181,10 @@ async function ladeFinanzdaten(){
     apiQueryOptional(
       "Finanz_Importe",
       "select=*&order=Importiert_am.desc&limit=1"
+    ),
+    apiQueryOptional(
+      "Finanz_Snapshots",
+      "select=*&Hof_id=eq."+hofId+"&order=Erstellt_am.desc&limit=1"
     )
   ]);
 
@@ -1188,6 +1193,7 @@ async function ladeFinanzdaten(){
   finanzUeberweisungen=ergebnisse[2]||[];
   finanzKredite=ergebnisse[3]||[];
   finanzImport=ergebnisse[4]&&ergebnisse[4].length?ergebnisse[4][0]:null;
+  finanzSnapshot=ergebnisse[5]&&ergebnisse[5].length?ergebnisse[5][0]:null;
 }
 
 function renderFinanzen(){
@@ -1197,6 +1203,83 @@ function renderFinanzen(){
   renderFinanzHistorie();
   renderFinanzUeberweisungen();
   renderFinanzImport();
+}
+
+
+function finanzMonatsSummen(){
+  const tage=finanzSnapshot?.Finanzdaten?.days||{};
+  const summen={};
+
+  Object.values(tage).forEach(monat=>{
+    if(!monat||typeof monat!=="object")return;
+
+    Object.entries(monat).forEach(([schluessel,wert])=>{
+      summen[schluessel]=(summen[schluessel]||0)+Number(wert||0);
+    });
+  });
+
+  return summen;
+}
+
+function finanzGruppenWert(summen,felder){
+  return felder.reduce((sum,feld)=>sum+Number(summen[feld]||0),0);
+}
+
+function finanzBereiche(){
+  const s=finanzMonatsSummen();
+
+  return [
+    {
+      titel:"🚜 Fahrzeuge und Geräte",
+      einnahmen:finanzGruppenWert(s,["soldVehicles","soldHandtools"]),
+      ausgaben:finanzGruppenWert(s,["newVehiclesCost","newHandtoolsCost","vehicleRunningCost","vehicleLeasingCost"])
+    },
+    {
+      titel:"🏭 Produktion und Grundstücke",
+      einnahmen:finanzGruppenWert(s,["soldProducts","propertyIncome","incomeBga"]),
+      ausgaben:finanzGruppenWert(s,["productionCosts","propertyMaintenance"])
+    },
+    {
+      titel:"🌾 Ernte und Betriebsmittel",
+      einnahmen:finanzGruppenWert(s,["harvestIncome","soldWood","soldBales","soldWool","soldMilk"]),
+      ausgaben:finanzGruppenWert(s,["purchaseSeeds","purchaseFertilizer","purchaseFuel","purchaseWater","purchaseBales","purchasePallets","purchaseSaplings"])
+    },
+    {
+      titel:"🌱 Felder",
+      einnahmen:finanzGruppenWert(s,["fieldSelling"]),
+      ausgaben:finanzGruppenWert(s,["fieldPurchase"])
+    },
+    {
+      titel:"🏗️ Gebäude und Bau",
+      einnahmen:finanzGruppenWert(s,["soldBuildings"]),
+      ausgaben:finanzGruppenWert(s,["constructionCost"])
+    },
+    {
+      titel:"🐄 Tiere",
+      einnahmen:finanzGruppenWert(s,["soldAnimals"]),
+      ausgaben:finanzGruppenWert(s,["newAnimalsCost"])
+    },
+    {
+      titel:"👷 Aufträge und Löhne",
+      einnahmen:finanzGruppenWert(s,["missionIncome"]),
+      ausgaben:finanzGruppenWert(s,["wagePayment"])
+    },
+    {
+      titel:"💸 Sonstiges",
+      einnahmen:Number(s.other||0)>0?Number(s.other||0):0,
+      ausgaben:Number(s.other||0)<0?Number(s.other||0):0
+    },
+    {
+      titel:"🏦 Ingame-Kreditzinsen",
+      einnahmen:0,
+      ausgaben:finanzGruppenWert(s,["loanInterest"])
+    }
+  ];
+}
+
+function finanzBetrag(wert,ausgabe=false){
+  const n=Number(wert||0);
+  return formatEuro(ausgabe?Math.abs(n):Math.max(0,n));
 }
 
 function renderFinanzUebersicht(){
@@ -1223,6 +1306,8 @@ function renderFinanzUebersicht(){
     )
   );
 
+  const bereiche=finanzBereiche();
+
   box.innerHTML=`
     <div class="finanz-grid">
       <div class="finanz-stat">
@@ -1246,29 +1331,44 @@ function renderFinanzUebersicht(){
       </div>
 
       <div class="finanz-stat">
-        <div class="finanz-label">Einnahmen im XML-Zeitraum</div>
-        <div class="finanz-wert">${formatEuro(finanzStand.Einnahmen_Gesamt)}</div>
-      </div>
-
-      <div class="finanz-stat">
-        <div class="finanz-label">Ausgaben im XML-Zeitraum</div>
-        <div class="finanz-wert rot">${formatEuro(finanzStand.Ausgaben_Gesamt)}</div>
-      </div>
-
-      <div class="finanz-stat">
-        <div class="finanz-label">XML-Saldo</div>
-        <div class="finanz-wert ${Number(finanzStand.Saldo_Gesamt||0)<0?"rot":""}">
-          ${formatEuro(finanzStand.Saldo_Gesamt)}
-        </div>
-      </div>
-
-      <div class="finanz-stat">
         <div class="finanz-label">Finanzieller Nettostand</div>
         <div class="finanz-wert ${netto<0?"rot":""}">
           ${formatEuro(netto)}
         </div>
       </div>
     </div>
+
+    <div class="titel" style="margin-top:22px">
+      Finanzen der letzten 4 Ingame-Monate
+    </div>
+
+    <div class="finanz-hinweis">
+      Die farms.xml führt die Finanzwerte monatsweise.
+      Angezeigt werden die letzten vier abgeschlossenen Ingame-Monate
+      sowie – falls vorhanden – die Werte des laufenden Monats.
+    </div>
+
+    ${bereiche.map(b=>`
+      <div class="item">
+        <div class="titel" style="font-size:20px">${b.titel}</div>
+
+        <div class="finanz-grid">
+          <div class="finanz-stat">
+            <div class="finanz-label">Einnahmen</div>
+            <div class="finanz-wert">
+              ${finanzBetrag(b.einnahmen,false)}
+            </div>
+          </div>
+
+          <div class="finanz-stat">
+            <div class="finanz-label">Ausgaben</div>
+            <div class="finanz-wert rot">
+              ${finanzBetrag(b.ausgaben,true)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join("")}
 
     <div class="meta">
       Serverstand:
