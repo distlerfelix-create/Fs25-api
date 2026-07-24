@@ -480,7 +480,7 @@ button{
 <div class="tabs">
   <button id="tabLager" class="active" onclick="tabWechseln('lager')">📦 Lager</button>
   <button id="tabMarkt" onclick="tabWechseln('markt')">🛒 Markt</button>
-  <button id="tabRechnung" onclick="tabWechseln('rechnung')">🧾 Rechnung</button>
+  <button onclick="location.href='rechnungen.html'">🧾 Rechnungen</button>
   <button id="tabFinanzen" onclick="tabWechseln('finanzen')">💰 Finanzen</button>
 </div>
 
@@ -578,50 +578,6 @@ button{
   </div>
 
 </div>
-
-<div id="sectionRechnung" class="section">
-
-  <div class="card">
-    <div class="titel">🧾 Rechnung erstellen</div>
-    <div class="meta">
-      Rechnungsnummer wird automatisch fortlaufend erstellt.<br>
-      Beispiel: RE-2026-0001
-    </div>
-
-    <label>Empfänger-Hof</label>
-    <select id="rechnungHof"></select>
-
-    <label>Produkt</label>
-    <select id="rechnungProdukt" onchange="rechnungProduktGewechselt()"></select>
-
-    <div class="grid">
-      <div>
-        <label>Menge</label>
-        <input id="rechnungMenge" type="number" min="0" value="0" oninput="rechnungBerechnen()">
-      </div>
-      <div>
-        <label>Einheit</label>
-        <input id="rechnungEinheit" value="Liter">
-      </div>
-    </div>
-
-    <label>Einzelpreis</label>
-    <input id="rechnungPreis" type="number" min="0" value="0" oninput="rechnungBerechnen()">
-
-    <div class="meta">Gesamtpreis: <b id="rechnungGesamt">0</b></div>
-
-    <button class="green" onclick="rechnungErstellen()">Rechnung speichern</button>
-    <button class="dark" onclick="location.href='rechnungen.html'">Zu den Rechnungen</button>
-    <div id="rechnungMsg" class="msg"></div>
-  </div>
-
-  <div class="card">
-    <div class="titel">Offene Rechnungen</div>
-    <div id="offeneRechnungenListe">Lade...</div>
-  </div>
-
-</div>
-
 
 <div id="sectionFinanzen" class="section">
 
@@ -761,19 +717,6 @@ async function patch(tabelle,id,daten){
   }
 }
 
-async function naechsteRechnungsnummer(){
-  const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/naechste_rechnungsnummer",{
-    method:"POST",
-    headers:headers(),
-    body:JSON.stringify({})
-  });
-
-  if(!res.ok){
-    throw new Error(await res.text());
-  }
-
-  return await res.json();
-}
 
 function text(w){
   return w===null||w===undefined||w===""?"-":w;
@@ -1046,7 +989,6 @@ async function laden(){
     renderLager();
     renderListen();
     renderBewegungen();
-    renderOffeneRechnungen();
     renderFinanzen();
 
   }catch(err){
@@ -1155,30 +1097,14 @@ function renderLager(){
 
 function renderListen(){
   const angebot=document.getElementById("angebotProdukt");
-  const rechnung=document.getElementById("rechnungProdukt");
-  const rechnungHof=document.getElementById("rechnungHof");
 
   angebot.innerHTML="<option value=''>Produkt auswählen</option>";
-  rechnung.innerHTML="<option value=''>Produkt auswählen</option>";
-  rechnungHof.innerHTML="<option value=''>Empfänger auswählen</option>";
 
   lager.filter(l=>l.Aktiv!==false).forEach(l=>{
-    const o1=document.createElement("option");
-    o1.value=l.Produkt;
-    o1.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);
-    angebot.appendChild(o1);
-
-    const o2=document.createElement("option");
-    o2.value=l.Produkt;
-    o2.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);
-    rechnung.appendChild(o2);
-  });
-
-  hoefe.filter(h=>String(h.id)!==String(user.Hof_id)).forEach(h=>{
-    const o=document.createElement("option");
-    o.value=h.id;
-    o.textContent=h.Name;
-    rechnungHof.appendChild(o);
+    const option=document.createElement("option");
+    option.value=l.Produkt;
+    option.textContent=l.Produkt+" | "+formatZahl(l.Menge)+" "+text(l.Einheit);
+    angebot.appendChild(option);
   });
 }
 
@@ -1205,44 +1131,6 @@ function renderBewegungen(){
         Bemerkung: ${text(b.Bemerkung)}
       </div>
       <div class="meta">${datum(b.created_at)}</div>
-    `;
-
-    box.appendChild(div);
-  });
-}
-
-function renderOffeneRechnungen(){
-  const box=document.getElementById("offeneRechnungenListe");
-
-  const offene=hofRechnungen.filter(r=>
-    r.Bezahlt!==true &&
-    r.Storniert!==true &&
-    r.Status!=="Bezahlt" &&
-    r.Status!=="Storniert"
-  ).slice(0,6);
-
-  if(offene.length===0){
-    box.innerHTML="<div class='leer'>Keine offenen Rechnungen.</div>";
-    return;
-  }
-
-  box.innerHTML="";
-
-  offene.forEach(r=>{
-    const div=document.createElement("div");
-    div.className="item warn";
-
-    div.innerHTML=`
-      <span class="badge badge-offen">OFFEN</span>
-      <div class="titel">${text(r.Rechnung_nr)}</div>
-      <div class="info">
-        Von: ${hofName(r.Von_Hof_id)}<br>
-        An: ${hofName(r.An_Hof_id)}<br>
-        Produkt: ${text(r.Produkt)}<br>
-        Menge: ${formatZahl(r.Menge)} ${text(r.Einheit)}<br>
-        Gesamtpreis: <b>${formatZahl(r.Gesamtpreis)}</b>
-      </div>
-      <button class="dark" onclick="location.href='rechnungen.html'">Rechnung öffnen</button>
     `;
 
     box.appendChild(div);
@@ -1928,129 +1816,8 @@ async function angebotErstellen(){
   }
 }
 
-function rechnungProduktGewechselt(){
-  const produkt=document.getElementById("rechnungProdukt").value;
-  const l=lagerEintrag(produkt);
 
-  if(!l)return;
 
-  document.getElementById("rechnungEinheit").value=l.Einheit||"Liter";
-  rechnungBerechnen();
-}
-
-function rechnungBerechnen(){
-  const menge=zahl(document.getElementById("rechnungMenge").value);
-  const preis=zahl(document.getElementById("rechnungPreis").value);
-  document.getElementById("rechnungGesamt").innerText=formatZahl(menge*preis);
-}
-
-async function rechnungErstellen(){
-  const msg=document.getElementById("rechnungMsg");
-  msg.innerText="";
-
-  const anHofId=document.getElementById("rechnungHof").value;
-  const produkt=document.getElementById("rechnungProdukt").value;
-  const menge=zahl(document.getElementById("rechnungMenge").value);
-  const einheit=document.getElementById("rechnungEinheit").value.trim()||"Liter";
-  const einzelpreis=zahl(document.getElementById("rechnungPreis").value);
-  const gesamt=menge*einzelpreis;
-
-  if(!anHofId){
-    msg.innerText="Bitte Empfänger-Hof auswählen.";
-    return;
-  }
-
-  if(!produkt){
-    msg.innerText="Bitte Produkt auswählen.";
-    return;
-  }
-
-  if(menge<=0||einzelpreis<=0){
-    msg.innerText="Bitte Menge und Preis eintragen.";
-    return;
-  }
-
-  const l=lagerEintrag(produkt);
-
-  if(!l||Number(l.Menge||0)<menge){
-    msg.innerText="Nicht genug Lagerbestand vorhanden.";
-    return;
-  }
-
-  try{
-    msg.innerText="Rechnungsnummer wird erstellt...";
-
-    const nr=await naechsteRechnungsnummer();
-
-    await post("Rechnungen",{
-      Rechnung_nr:nr,
-      Von_Hof_id:Number(user.Hof_id),
-      An_Hof_id:Number(anHofId),
-      Produkt:produkt,
-      Menge:menge,
-      Einheit:einheit,
-      Einzelpreis:einzelpreis,
-      Gesamtpreis:gesamt,
-      Status:"Offen",
-      Erstellt_von:USERNAME,
-      Bezahlt:false
-    });
-
-    await patch("Hof_Lager",l.id,{
-      Menge:Number(l.Menge||0)-menge
-    });
-
-    await post("Lagerbewegungen",{
-      Hof_id:Number(user.Hof_id),
-      Produkt:produkt,
-      Menge:-menge,
-      Aktion:"Rechnung erstellt",
-      Benutzer:USERNAME,
-      Bemerkung:"Rechnung "+nr
-    });
-
-    await post("Benachrichtigungen",{
-      Titel:"🧾 Neue Rechnung: "+nr,
-      Nachricht:
-        "Neue Rechnung von "+hof.Name+"\\n\\n"+
-        "Produkt: "+produkt+"\\n"+
-        "Menge: "+formatZahl(menge)+" "+einheit+"\\n"+
-        "Gesamtpreis: "+formatZahl(gesamt),
-      Typ:"Rechnung",
-      User_id:null,
-      Hof_id:Number(anHofId),
-      Gelesen:false,
-      Archiviert:false,
-      Erledigt:false,
-      Telegram_gesendet:false,
-      Erstellt_am:new Date().toISOString()
-    });
-
-    await post("Telegram_queue",{
-      Titel:"🧾 Neue Rechnung: "+nr,
-      Nachricht:
-        "Neue Rechnung von "+hof.Name+"\\n\\n"+
-        "Produkt: "+produkt+"\\n"+
-        "Menge: "+formatZahl(menge)+" "+einheit+"\\n"+
-        "Gesamtpreis: "+formatZahl(gesamt),
-      Typ:"Rechnung",
-      User_id:null,
-      Hof_id:Number(anHofId),
-      Organisation_id:null,
-      Chat_id:null,
-      Gesendet:false,
-      Erstellt_am:new Date().toISOString(),
-      Status:"Offen",
-      Fehler:null
-    });
-
-    msg.innerText="Rechnung wurde erstellt.\\n"+nr;
-    await laden();
-
-  }catch(err){
-    msg.innerText="Fehler:\\n"+err.message;
-  }
-}
 
 laden();
 </script>
