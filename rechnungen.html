@@ -5,7 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rechnungen</title>
 <style>
-*{box-sizing:border-box;}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}.info{color:white;font-size:17px;line-height:1.5;white-space:pre-line}.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line}.section-title{color:red;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px}button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.leer{color:white;text-align:center;margin-top:25px;font-size:18px}.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;text-align:center;color:white}.stat b{color:#00ff22;font-size:24px}.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px}.item.offen{border:2px solid #ffaa33;box-shadow:0 0 12px rgba(255,170,0,.22)}.item.bezahlt{border:1px solid #008800;opacity:.86}.item.storniert{border:1px solid #aa0000;opacity:.72}.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin-bottom:8px}.badge-offen{background:#cc7700}.badge-bezahlt{background:#008800}.badge-storno{background:#aa0000}.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:20}.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white;box-shadow:0 0 25px #003300}textarea,input,select{width:100%;padding:14px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}textarea{min-height:90px;resize:vertical}label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px}.rechnung-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rechnung-form-grid .voll{grid-column:1/-1}.summe{font-size:24px;color:#00ff22;font-weight:bold;text-align:center;margin-top:16px;padding:12px;border:1px solid #008000;border-radius:12px;background:#090909}@media(max-width:560px){.grid{grid-template-columns:1fr}.rechnung-form-grid{grid-template-columns:1fr}.rechnung-form-grid .voll{grid-column:auto}}
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}
+.app{width:100%;max-width:760px;margin:auto;padding:20px 15px 70px}
+.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}
+h1{color:white;text-align:center;font-family:Georgia,serif;font-size:38px;margin:20px 0 25px}
+.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 10px rgba(0,255,0,.18)}
+.titel{color:#00ff22;font-size:24px;font-weight:bold;margin-bottom:10px}
+.info{color:white;font-size:17px;line-height:1.5;white-space:pre-line}
+.meta{color:#ffaa33;font-size:15px;line-height:1.45;margin-top:10px;white-space:pre-line}
+.section-title{color:#ffaa33;font-family:Georgia,serif;font-size:20px;font-weight:bold;margin:28px 0 12px}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;font-size:18px;font-weight:bold}
+.green{background:#008800;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.blue{background:#004488;color:white}.orange{background:#cc7700;color:white}
+.leer{color:white;text-align:center;margin-top:25px;font-size:18px}
+.msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.stat{background:#090909;border:1px solid #006600;border-radius:12px;padding:12px;text-align:center;color:white}
+.stat b{color:#00ff22;font-size:24px}
+.item{background:#090909;border:1px solid #006600;border-radius:12px;padding:14px;margin-bottom:12px}
+.item.offen{border:2px solid #ffaa33}.item.gemeldet{border:2px solid #004488}.item.bezahlt{border:1px solid #008800;opacity:.9}.item.storniert{border:1px solid #aa0000;opacity:.75}
+.badge{display:inline-block;color:white;border-radius:20px;padding:4px 10px;font-size:13px;margin:0 6px 8px 0}
+.badge-offen{background:#cc7700}.badge-gemeldet{background:#004488}.badge-bezahlt{background:#008800}.badge-storno{background:#aa0000}
+.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;z-index:20}
+.popup{background:#111;border:2px solid #00aa22;border-radius:18px;padding:22px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;color:white}
+textarea,input,select{width:100%;padding:14px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}
+textarea{min-height:90px;resize:vertical}
+label{display:block;text-align:left;color:#ffaa33;font-weight:bold;margin-top:14px;margin-bottom:6px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.voll{grid-column:1/-1}
+.summe{font-size:24px;color:#00ff22;font-weight:bold;text-align:center;margin-top:16px;padding:12px;border:1px solid #008000;border-radius:12px;background:#090909}
+.hinweis{background:#000;border:1px solid #665500;border-radius:10px;padding:12px;color:#ffaa33;line-height:1.45}
+@media(max-width:560px){.grid,.form-grid{grid-template-columns:1fr}.voll{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -13,146 +42,212 @@
 <button class="back" onclick="location.href='hofverwaltung.html'">← Zurück</button>
 <h1>RECHNUNGEN</h1>
 <div id="kopf" class="card"><div class="info">Lade Rechnungen...</div></div>
-<div id="inhalt" style="display:none">
-<div class="card"><div class="titel">Übersicht</div><div class="grid"><div class="stat"><b id="statOffen">0</b><br>Offen</div><div class="stat"><b id="statBetrag">0</b><br>Offener Betrag</div><div class="stat"><b id="statBezahlt">0</b><br>Bezahlt</div></div></div><div class="card"><div class="titel">Eigene Rechnung schreiben</div><div class="info">Manuelle Rechnung ohne Vorlage erstellen.</div><button class="green" onclick="rechnungPopupOeffnen()">Neue Rechnung erstellen</button></div>
-<div class="section-title">OFFENE RECHNUNGEN</div><div id="offenListe">Lade...</div>
-<div class="section-title">BEZAHLTE RECHNUNGEN</div><div id="bezahltListe">Lade...</div>
-<div class="section-title">STORNIERTE RECHNUNGEN</div><div id="stornoListe">Lade...</div>
-<div class="card"><button class="dark" onclick="location.href='hofverwaltung.html'">Zur Hofverwaltung</button><button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button></div>
-</div></div>
 
-<div id="rechnungNeuBg" class="popup-bg"><div class="popup">
-<div class="titel">Neue Rechnung</div>
-<div class="rechnung-form-grid">
-<div><label>Rechnung von Hof</label><select id="neuVonHof"></select></div>
-<div><label>Rechnung an Hof</label><select id="neuAnHof"></select></div>
-<div class="voll"><label>Produkt / Leistung</label><input id="neuProdukt" placeholder="z. B. Lohnarbeit, Lieferung, Reparatur"></div>
-<div><label>Menge</label><input id="neuMenge" type="number" min="0" step="0.01" value="1" oninput="rechnungSummeAktualisieren()"></div>
-<div><label>Einheit</label><input id="neuEinheit" placeholder="z. B. Stück, ha, Std." value="Stück"></div>
-<div><label>Einzelpreis</label><input id="neuEinzelpreis" type="number" min="0" step="0.01" value="0" oninput="rechnungSummeAktualisieren()"></div>
-<div><label>Gesamtpreis</label><input id="neuGesamtpreis" type="number" min="0" step="0.01" value="0" oninput="rechnungGesamtManuell()"></div>
-<div class="voll"><label>Bemerkung</label><textarea id="neuBemerkung" placeholder="Freier Text zur Rechnung"></textarea></div>
+<div id="inhalt" style="display:none">
+  <div class="card">
+    <div class="titel">Übersicht</div>
+    <div class="grid">
+      <div class="stat"><b id="statOffen">0</b><br>Offen</div>
+      <div class="stat"><b id="statGemeldet">0</b><br>Zahlung gemeldet</div>
+      <div class="stat"><b id="statBezahlt">0</b><br>Bestätigt bezahlt</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="titel">Eigene Rechnung schreiben</div>
+    <div class="info">Du kannst nur Rechnungen von deinem eigenen Hof erstellen.</div>
+    <button class="green" onclick="rechnungPopupOeffnen()">Neue Rechnung erstellen</button>
+  </div>
+
+  <div class="section-title">OFFENE RECHNUNGEN</div>
+  <div id="offenListe">Lade...</div>
+
+  <div class="section-title">ZAHLUNG GEMELDET – BESTÄTIGUNG AUSSTEHEND</div>
+  <div id="gemeldetListe">Lade...</div>
+
+  <div class="section-title">BEZAHLTE RECHNUNGEN</div>
+  <div id="bezahltListe">Lade...</div>
+
+  <div class="section-title">STORNIERTE RECHNUNGEN</div>
+  <div id="stornoListe">Lade...</div>
+
+  <div class="card">
+    <button class="dark" onclick="location.href='hofverwaltung.html'">Zur Hofverwaltung</button>
+    <button class="dark" onclick="location.href='index.html'">Zur Home-Seite</button>
+  </div>
 </div>
-<div id="neuSumme" class="summe">Gesamt: 0</div>
-<button class="green" onclick="manuelleRechnungErstellen()">Rechnung erstellen</button>
-<button class="dark" onclick="rechnungPopupSchliessen()">Abbrechen</button>
-<div id="neuMsg" class="msg"></div>
-</div></div>
-<div id="detailBg" class="popup-bg"><div class="popup"><div class="titel" id="detailTitel">Rechnung</div><div id="detailInhalt" class="info"></div><label>Bemerkung</label><textarea id="bemerkungText" placeholder="Bemerkung zur Rechnung"></textarea><button class="green" onclick="bemerkungSpeichern()">Bemerkung speichern</button><button class="dark" onclick="schliesseDetails()">Schließen</button><div id="detailMsg" class="msg"></div></div></div>
+</div>
+
+<div id="rechnungNeuBg" class="popup-bg">
+<div class="popup">
+  <div class="titel">Neue Rechnung</div>
+  <div class="form-grid">
+    <div><label>Rechnung von Hof</label><select id="neuVonHof" disabled></select></div>
+    <div><label>Rechnung an Hof</label><select id="neuAnHof"></select></div>
+    <div class="voll"><label>Produkt / Leistung</label><input id="neuProdukt"></div>
+    <div><label>Menge</label><input id="neuMenge" type="number" min="0" step="0.01" value="1" oninput="summeAktualisieren()"></div>
+    <div><label>Einheit</label><input id="neuEinheit" value="Stück"></div>
+    <div><label>Einzelpreis</label><input id="neuEinzelpreis" type="number" min="0" step="0.01" value="0" oninput="summeAktualisieren()"></div>
+    <div><label>Gesamtpreis</label><input id="neuGesamtpreis" type="number" min="0" step="0.01" value="0"></div>
+    <div class="voll"><label>Bemerkung</label><textarea id="neuBemerkung"></textarea></div>
+  </div>
+  <div id="neuSumme" class="summe">Gesamt: 0 €</div>
+  <button class="green" onclick="manuelleRechnungErstellen()">Rechnung erstellen</button>
+  <button class="dark" onclick="rechnungPopupSchliessen()">Abbrechen</button>
+  <div id="neuMsg" class="msg"></div>
+</div>
+</div>
+
+<div id="detailBg" class="popup-bg">
+<div class="popup">
+  <div class="titel" id="detailTitel">Rechnung</div>
+  <div id="detailInhalt" class="info"></div>
+  <label>Bemerkung</label>
+  <textarea id="bemerkungText"></textarea>
+  <button class="green" onclick="bemerkungSpeichern()">Bemerkung speichern</button>
+  <button class="dark" onclick="schliesseDetails()">Schließen</button>
+  <div id="detailMsg" class="msg"></div>
+</div>
+</div>
+
 <script>
 const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
 const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
 const USER_ID=localStorage.getItem("user_id");
 const USERNAME=localStorage.getItem("username")||"Unbekannt";
-if(!USER_ID){location.href="login.html";}
-let user=null,userHof=null,istAdmin=false,users=[],hoefe=[],rechnungen=[],sichtbareRechnungen=[],aktuelleRechnung=null;
-function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
-async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json();}
-async function patch(t,id,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
-async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
-function text(w){return w===null||w===undefined||w===""?"-":w}
-function formatZahl(n){return Number(n||0).toLocaleString("de-DE")}
-function datum(d){if(!d)return"-";const x=new Date(d);if(isNaN(x.getTime()))return"-";return x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}
+if(!USER_ID)location.href="login.html";
+
+let user=null,userHof=null,users=[],hoefe=[],rechnungen=[],sichtbareRechnungen=[],aktuelleRechnung=null;
+
+function headers(){return{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
+async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers(),cache:"no-store"});if(!r.ok)throw new Error(await r.text());return await r.json()}
+async function patch(t,id,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
+async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
+function text(v){return v===null||v===undefined||v===""?"-":v}
+function zahl(v){const n=Number(String(v??0).replace(",","."));return Number.isFinite(n)?n:0}
+function euro(v){return Number(v||0).toLocaleString("de-DE",{minimumFractionDigits:0,maximumFractionDigits:2})+" €"}
+function datum(d){if(!d)return"-";const x=new Date(d);return isNaN(x.getTime())?"-":x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}
 function hofName(id){const h=hoefe.find(x=>String(x.id)===String(id));return h?h.Name:"-"}
-function istStorniert(r){return r.Storniert===true||r.storniert===true}
-function istBezahlt(r){return r.Bezahlt===true||r.bezahlt===true}
-function statusText(r){if(istStorniert(r))return"Storniert";if(istBezahlt(r))return"Bezahlt";return r.Status||"Offen"}
-function darfAktion(r){if(istAdmin)return true;return String(r.Von_Hof_id)===String(user.Hof_id)||String(r.An_Hof_id)===String(user.Hof_id)}
-function istAktiv(u){return u&&u.Aktiviert!==false}
+function istStorniert(r){return r.Storniert===true}
+function istGemeldet(r){return r.Zahlung_gemeldet===true&&!istBestaetigt(r)}
+function istBestaetigt(r){return r.Zahlung_bestaetigt===true||r.Bezahlt===true}
+function statusText(r){if(istStorniert(r))return"Storniert";if(istBestaetigt(r))return"Bezahlt bestätigt";if(istGemeldet(r))return"Zahlung gemeldet";return"Offen"}
+function rechnungsNummer(){return"RE-"+new Date().toISOString().replace(/\D/g,"").slice(0,14)}
+function istEmpfaenger(r){return String(r.An_Hof_id)===String(user.Hof_id)}
+function istErstellerHof(r){return String(r.Von_Hof_id)===String(user.Hof_id)}
+
 function chatIdVonUser(u){return u.Telegram_id||u.Telegram_chat_id||u.Chat_id||null}
-function eindeutigeEmpfaenger(liste){const map=new Map();liste.forEach(u=>{const chatId=chatIdVonUser(u);if(!u||!u.id||!chatId)return;if(!map.has(String(chatId)))map.set(String(chatId),u)});return Array.from(map.values())}
-function empfaengerHof(hofId){return eindeutigeEmpfaenger(users.filter(u=>istAktiv(u)&&String(u.Hof_id)===String(hofId)&&chatIdVonUser(u)))}
-async function telegramQueueFuerHof(titel,nachricht,hofId){const empfaenger=empfaengerHof(hofId);for(const u of empfaenger){await post("Telegram_queue",{Titel:titel,Nachricht:nachricht,Typ:"Rechnung",User_id:Number(u.id),Hof_id:u.Hof_id?Number(u.Hof_id):null,Organisation_id:null,Chat_id:Number(chatIdVonUser(u)),Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});}return empfaenger.length;}
+function empfaengerHof(hofId){const map=new Map();users.filter(u=>u.Aktiviert!==false&&String(u.Hof_id)===String(hofId)&&chatIdVonUser(u)).forEach(u=>map.set(String(u.id),u));return[...map.values()]}
+async function telegram(titel,nachricht,hofId){
+  if(!hofId)return;
+  await post("Benachrichtigungen",{Titel:titel,Nachricht:nachricht,Typ:"Rechnung",User_id:null,Hof_id:Number(hofId),Organisation_id:null,Gelesen:false,Archiviert:false,Erledigt:false,Telegram_gesendet:false,Erstellt_am:new Date().toISOString()});
+  for(const u of empfaengerHof(hofId)){
+    await post("Telegram_queue",{Titel:titel,Nachricht:nachricht,Typ:"Rechnung",User_id:Number(u.id),Hof_id:Number(hofId),Organisation_id:null,Chat_id:Number(chatIdVonUser(u)),Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});
+  }
+}
 
-function euroZahl(v){const n=Number(String(v??"0").replace(",","."));return Number.isFinite(n)?n:0}
-function rechnungsNummerErzeugen(){
-  const d=new Date();
-  return "RE-"+String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+String(d.getSeconds()).padStart(2,"0");
-}
-function rechnungPopupOeffnen(){
-  const von=document.getElementById("neuVonHof"),an=document.getElementById("neuAnHof");
-  von.innerHTML="";an.innerHTML='<option value="">Empfänger auswählen</option>';
-  hoefe.forEach(h=>{
-    const a=document.createElement("option");a.value=h.id;a.textContent=h.Name;von.appendChild(a);
-    const b=document.createElement("option");b.value=h.id;b.textContent=h.Name;an.appendChild(b);
-  });
-  if(!istAdmin){von.disabled=true;von.value=String(user.Hof_id);}else{von.disabled=false;if(user&&user.Hof_id)von.value=String(user.Hof_id);}
-  document.getElementById("neuProdukt").value="";
-  document.getElementById("neuMenge").value="1";
-  document.getElementById("neuEinheit").value="Stück";
-  document.getElementById("neuEinzelpreis").value="0";
-  document.getElementById("neuGesamtpreis").value="0";
-  document.getElementById("neuBemerkung").value="";
-  document.getElementById("neuMsg").innerText="";
-  rechnungSummeAktualisieren();
-  document.getElementById("rechnungNeuBg").style.display="flex";
-}
-function rechnungPopupSchliessen(){document.getElementById("rechnungNeuBg").style.display="none";}
-function rechnungSummeAktualisieren(){
-  const menge=euroZahl(document.getElementById("neuMenge").value);
-  const einzel=euroZahl(document.getElementById("neuEinzelpreis").value);
-  const gesamt=Math.round((menge*einzel+Number.EPSILON)*100)/100;
-  document.getElementById("neuGesamtpreis").value=gesamt.toFixed(2);
-  document.getElementById("neuSumme").innerText="Gesamt: "+gesamt.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function rechnungGesamtManuell(){
-  const gesamt=euroZahl(document.getElementById("neuGesamtpreis").value);
-  document.getElementById("neuSumme").innerText="Gesamt: "+gesamt.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-async function manuelleRechnungErstellen(){
-  const msg=document.getElementById("neuMsg");msg.innerText="";
-  const vonHofId=document.getElementById("neuVonHof").value;
-  const anHofId=document.getElementById("neuAnHof").value;
-  const produkt=document.getElementById("neuProdukt").value.trim();
-  const menge=euroZahl(document.getElementById("neuMenge").value);
-  const einheit=document.getElementById("neuEinheit").value.trim()||"Stück";
-  const einzelpreis=euroZahl(document.getElementById("neuEinzelpreis").value);
-  const gesamtpreis=euroZahl(document.getElementById("neuGesamtpreis").value);
-  const bemerkung=document.getElementById("neuBemerkung").value.trim();
-
-  if(!vonHofId){msg.innerText="Bitte Absender-Hof auswählen.";return;}
-  if(!anHofId){msg.innerText="Bitte Empfänger-Hof auswählen.";return;}
-  if(String(vonHofId)===String(anHofId)){msg.innerText="Absender und Empfänger dürfen nicht derselbe Hof sein.";return;}
-  if(!produkt){msg.innerText="Bitte Produkt oder Leistung eintragen.";return;}
-  if(menge<=0){msg.innerText="Die Menge muss größer als 0 sein.";return;}
-  if(gesamtpreis<0){msg.innerText="Der Gesamtpreis darf nicht negativ sein.";return;}
-  if(!istAdmin&&String(vonHofId)!==String(user.Hof_id)){msg.innerText="Du darfst nur Rechnungen von deinem eigenen Hof erstellen.";return;}
-
+async function laden(){
+  const kopf=document.getElementById("kopf");
   try{
-    msg.innerText="Rechnung wird erstellt...";
-    const rechnungNr=rechnungsNummerErzeugen();
-    await post("Rechnungen",{
-      Rechnung_nr:rechnungNr,
-      Von_Hof_id:Number(vonHofId),
-      An_Hof_id:Number(anHofId),
-      Produkt:produkt,
-      Menge:menge,
-      Einheit:einheit,
-      Einzelpreis:einzelpreis,
-      Gesamtpreis:gesamtpreis,
-      Bemerkung:bemerkung,
-      Bezahlt:false,
-      Storniert:false,
-      Status:"Offen",
-      Erstellt_von:USERNAME
-    });
-    const titel="🧾 Neue Rechnung: "+rechnungNr;
-    const nachricht="Neue Rechnung erhalten.\n\nVon: "+hofName(vonHofId)+"\nAn: "+hofName(anHofId)+"\nProdukt/Leistung: "+produkt+"\nMenge: "+formatZahl(menge)+" "+einheit+"\nGesamtbetrag: "+formatZahl(gesamtpreis);
-    await telegramUndBenachrichtigung(null,titel,nachricht,anHofId);
-    rechnungPopupSchliessen();
-    await laden();
-  }catch(err){msg.innerText="Fehler:\n"+err.message;}
+    [users,hoefe,rechnungen]=await Promise.all([api("Users"),api("Hoefe"),api("Rechnungen")]);
+    user=users.find(u=>String(u.id)===String(USER_ID));
+    if(!user){localStorage.clear();location.href="login.html";return}
+    userHof=hoefe.find(h=>String(h.id)===String(user.Hof_id));
+    if(!userHof){kopf.innerHTML="<div class='info'>Du bist keinem Hof zugeordnet.</div>";return}
+    sichtbareRechnungen=rechnungen.filter(r=>String(r.Von_Hof_id)===String(user.Hof_id)||String(r.An_Hof_id)===String(user.Hof_id)).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+    kopf.innerHTML=`<div class="titel">${userHof.Name}</div><div class="info">Angemeldet als: <b>${text(user.Vorname||user["PSN-Username"])}</b><br>Du siehst nur Rechnungen deines Hofes.</div>`;
+    document.getElementById("inhalt").style.display="block";
+    render();
+  }catch(e){kopf.innerHTML="<div class='info'>Fehler:<br><br>"+e.message+"</div>"}
 }
 
-async function laden(){const kopf=document.getElementById("kopf");try{users=await api("Users");hoefe=await api("Hoefe");rechnungen=await api("Rechnungen");user=users.find(u=>String(u.id)===String(USER_ID));if(!user){localStorage.clear();location.href="login.html";return;}istAdmin=user.Admin===true;userHof=hoefe.find(h=>String(h.id)===String(user.Hof_id));if(!userHof&&!istAdmin){kopf.innerHTML="<div class='info'>Du bist keinem Hof zugeordnet.</div>";return;}sichtbareRechnungen=rechnungen.filter(r=>{if(istAdmin)return true;return String(r.Von_Hof_id)===String(user.Hof_id)||String(r.An_Hof_id)===String(user.Hof_id)});sichtbareRechnungen.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));kopf.innerHTML=`<div class="titel">${istAdmin?"Admin-Ansicht":userHof.Name}</div><div class="info">Angemeldet als: <b>${text(user.Vorname||user["PSN-Username"])}</b><br>Sichtbar: ${istAdmin?"Alle Rechnungen":"Rechnungen deines Hofes"}</div>`;document.getElementById("inhalt").style.display="block";render();}catch(err){kopf.innerHTML="<div class='info'>Fehler:<br><br>"+err.message+"</div>";}}
-function render(){const offen=sichtbareRechnungen.filter(r=>!istBezahlt(r)&&!istStorniert(r));const bezahlt=sichtbareRechnungen.filter(r=>istBezahlt(r)&&!istStorniert(r));const storno=sichtbareRechnungen.filter(r=>istStorniert(r));const offenerBetrag=offen.reduce((sum,r)=>sum+Number(r.Gesamtpreis||0),0);document.getElementById("statOffen").innerText=offen.length;document.getElementById("statBetrag").innerText=formatZahl(offenerBetrag);document.getElementById("statBezahlt").innerText=bezahlt.length;renderListe("offenListe",offen,"offen");renderListe("bezahltListe",bezahlt,"bezahlt");renderListe("stornoListe",storno,"storniert");}
-function renderListe(id,liste,typ){const box=document.getElementById(id);if(liste.length===0){box.innerHTML="<div class='leer'>Keine Einträge.</div>";return;}box.innerHTML="";liste.forEach(r=>{const div=document.createElement("div");div.className="item "+typ;const badgeClass=typ==="offen"?"badge-offen":typ==="bezahlt"?"badge-bezahlt":"badge-storno";let buttons=`<button class="blue" onclick="detailsOeffnen(${r.id})">Details</button>`;if(!istBezahlt(r)&&!istStorniert(r)&&darfAktion(r)){buttons+=`<button class="green" onclick="rechnungBezahlt(${r.id})">Als bezahlt markieren</button>`;buttons+=`<button class="red" onclick="rechnungStornieren(${r.id})">Stornieren</button>`;}div.innerHTML=`<span class="badge ${badgeClass}">${statusText(r)}</span><div class="titel">${text(r.Rechnung_nr)}</div><div class="info">Von: ${hofName(r.Von_Hof_id)}<br>An: ${hofName(r.An_Hof_id)}<br><br>Produkt: ${text(r.Produkt)}<br>Menge: ${formatZahl(r.Menge)} ${text(r.Einheit)}<br>Einzelpreis: ${formatZahl(r.Einzelpreis)}<br>Gesamtpreis: <b>${formatZahl(r.Gesamtpreis)}</b></div><div class="meta">Erstellt: ${datum(r.created_at)}<br>Bezahlt am: ${datum(r.Bezahlt_am)}<br>Erstellt von: ${text(r.Erstellt_von)}</div>${buttons}`;box.appendChild(div);});}
-async function telegramUndBenachrichtigung(r,titel,nachricht,hofId){if(!hofId)return 0;await post("Benachrichtigungen",{Titel:titel,Nachricht:nachricht,Typ:"Rechnung",User_id:null,Hof_id:Number(hofId),Organisation_id:null,Gelesen:false,Archiviert:false,Erledigt:false,Telegram_gesendet:false,Erstellt_am:new Date().toISOString()});return await telegramQueueFuerHof(titel,nachricht,hofId);}
-async function rechnungBezahlt(id){const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));if(!r)return;if(!confirm("Rechnung wirklich als bezahlt markieren?"))return;try{await patch("Rechnungen",id,{Bezahlt:true,Bezahlt_am:new Date().toISOString(),Status:"Bezahlt"});const titel="✅ Rechnung bezahlt: "+text(r.Rechnung_nr);const nachricht="Rechnung wurde bezahlt.\n\n"+"Rechnung: "+text(r.Rechnung_nr)+"\n"+"Von: "+hofName(r.Von_Hof_id)+"\n"+"An: "+hofName(r.An_Hof_id)+"\n"+"Betrag: "+formatZahl(r.Gesamtpreis);await telegramUndBenachrichtigung(r,titel,nachricht,r.Von_Hof_id);if(String(r.An_Hof_id)!==String(r.Von_Hof_id)){await telegramUndBenachrichtigung(r,titel,nachricht,r.An_Hof_id);}await laden();}catch(err){alert("Fehler:\n"+err.message);}}
-async function rechnungStornieren(id){const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));if(!r)return;if(!confirm("Rechnung wirklich stornieren?"))return;try{await patch("Rechnungen",id,{Storniert:true,Status:"Storniert"});const titel="❌ Rechnung storniert: "+text(r.Rechnung_nr);const nachricht="Rechnung wurde storniert.\n\n"+"Rechnung: "+text(r.Rechnung_nr)+"\n"+"Von: "+hofName(r.Von_Hof_id)+"\n"+"An: "+hofName(r.An_Hof_id)+"\n"+"Betrag: "+formatZahl(r.Gesamtpreis);await telegramUndBenachrichtigung(r,titel,nachricht,r.Von_Hof_id);if(String(r.An_Hof_id)!==String(r.Von_Hof_id)){await telegramUndBenachrichtigung(r,titel,nachricht,r.An_Hof_id);}await laden();}catch(err){alert("Fehler:\n"+err.message);}}
-function detailsOeffnen(id){const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));if(!r)return;aktuelleRechnung=r;document.getElementById("detailTitel").innerText=text(r.Rechnung_nr);document.getElementById("detailInhalt").innerText="Status: "+statusText(r)+"\n"+"Von: "+hofName(r.Von_Hof_id)+"\n"+"An: "+hofName(r.An_Hof_id)+"\n\n"+"Produkt: "+text(r.Produkt)+"\n"+"Menge: "+formatZahl(r.Menge)+" "+text(r.Einheit)+"\n"+"Einzelpreis: "+formatZahl(r.Einzelpreis)+"\n"+"Gesamtpreis: "+formatZahl(r.Gesamtpreis)+"\n\n"+"Erstellt: "+datum(r.created_at)+"\n"+"Bezahlt am: "+datum(r.Bezahlt_am)+"\n"+"Erstellt von: "+text(r.Erstellt_von);document.getElementById("bemerkungText").value=r.Bemerkung||"";document.getElementById("detailMsg").innerText="";document.getElementById("detailBg").style.display="flex";}
-function schliesseDetails(){document.getElementById("detailBg").style.display="none";aktuelleRechnung=null;}
-async function bemerkungSpeichern(){const msg=document.getElementById("detailMsg");msg.innerText="";if(!aktuelleRechnung)return;try{await patch("Rechnungen",aktuelleRechnung.id,{Bemerkung:document.getElementById("bemerkungText").value.trim()});msg.innerText="Bemerkung gespeichert.";await laden();}catch(err){msg.innerText="Fehler:\n"+err.message;}}
+function render(){
+  const offen=sichtbareRechnungen.filter(r=>!istStorniert(r)&&!istGemeldet(r)&&!istBestaetigt(r));
+  const gemeldet=sichtbareRechnungen.filter(r=>!istStorniert(r)&&istGemeldet(r));
+  const bezahlt=sichtbareRechnungen.filter(r=>!istStorniert(r)&&istBestaetigt(r));
+  const storno=sichtbareRechnungen.filter(istStorniert);
+  statOffen.innerText=offen.length;statGemeldet.innerText=gemeldet.length;statBezahlt.innerText=bezahlt.length;
+  renderListe("offenListe",offen,"offen");
+  renderListe("gemeldetListe",gemeldet,"gemeldet");
+  renderListe("bezahltListe",bezahlt,"bezahlt");
+  renderListe("stornoListe",storno,"storniert");
+}
+
+function renderListe(id,liste,klasse){
+  const box=document.getElementById(id);
+  if(!liste.length){box.innerHTML="<div class='leer'>Keine Einträge.</div>";return}
+  box.innerHTML=liste.map(r=>{
+    const badge=klasse==="offen"?"badge-offen":klasse==="gemeldet"?"badge-gemeldet":klasse==="bezahlt"?"badge-bezahlt":"badge-storno";
+    let actions=`<button class="blue" onclick="detailsOeffnen(${r.id})">Details</button>`;
+    if(!istStorniert(r)&&!istBestaetigt(r)&&istEmpfaenger(r)&&!istGemeldet(r))actions+=`<button class="orange" onclick="zahlungMelden(${r.id})">Als bezahlt melden</button>`;
+    if(!istStorniert(r)&&istGemeldet(r)&&istErstellerHof(r))actions+=`<button class="green" onclick="zahlungBestaetigen(${r.id})">Zahlung bestätigen</button>`;
+    if(!istStorniert(r)&&!istBestaetigt(r)&&istErstellerHof(r))actions+=`<button class="red" onclick="rechnungStornieren(${r.id})">Stornieren</button>`;
+    return `<div class="item ${klasse}">
+      <span class="badge ${badge}">${statusText(r)}</span>
+      <div class="titel">${text(r.Rechnung_nr)}</div>
+      <div class="info">Von: ${hofName(r.Von_Hof_id)}<br>An: ${hofName(r.An_Hof_id)}<br><br>Produkt: ${text(r.Produkt)}<br>Menge: ${zahl(r.Menge).toLocaleString("de-DE")} ${text(r.Einheit)}<br>Gesamtpreis: <b>${euro(r.Gesamtpreis)}</b></div>
+      <div class="meta">Erstellt: ${datum(r.created_at)}<br>Zahlung gemeldet: ${datum(r.Zahlung_gemeldet_am)}<br>Zahlung bestätigt: ${datum(r.Zahlung_bestaetigt_am)}<br>Erstellt von: ${text(r.Erstellt_von)}</div>
+      ${actions}
+    </div>`;
+  }).join("");
+}
+
+function rechnungPopupOeffnen(){
+  neuVonHof.innerHTML=`<option value="${user.Hof_id}">${userHof.Name}</option>`;
+  neuAnHof.innerHTML='<option value="">Empfänger auswählen</option>'+hoefe.filter(h=>String(h.id)!==String(user.Hof_id)).map(h=>`<option value="${h.id}">${h.Name}</option>`).join("");
+  neuProdukt.value="";neuMenge.value=1;neuEinheit.value="Stück";neuEinzelpreis.value=0;neuGesamtpreis.value=0;neuBemerkung.value="";neuMsg.innerText="";summeAktualisieren();rechnungNeuBg.style.display="flex";
+}
+function rechnungPopupSchliessen(){rechnungNeuBg.style.display="none"}
+function summeAktualisieren(){const gesamt=Math.round(zahl(neuMenge.value)*zahl(neuEinzelpreis.value)*100)/100;neuGesamtpreis.value=gesamt.toFixed(2);neuSumme.innerText="Gesamt: "+euro(gesamt)}
+
+async function manuelleRechnungErstellen(){
+  neuMsg.innerText="";
+  const an=neuAnHof.value,produkt=neuProdukt.value.trim(),menge=zahl(neuMenge.value),einzel=zahl(neuEinzelpreis.value),gesamt=zahl(neuGesamtpreis.value);
+  if(!an){neuMsg.innerText="Bitte Empfänger auswählen.";return}
+  if(!produkt||menge<=0||gesamt<0){neuMsg.innerText="Bitte gültige Rechnungsdaten eingeben.";return}
+  try{
+    const nr=rechnungsNummer();
+    await post("Rechnungen",{Rechnung_nr:nr,Von_Hof_id:Number(user.Hof_id),An_Hof_id:Number(an),Produkt:produkt,Menge:menge,Einheit:neuEinheit.value.trim()||"Stück",Einzelpreis:einzel,Gesamtpreis:gesamt,Bemerkung:neuBemerkung.value.trim(),Bezahlt:false,Storniert:false,Status:"Offen",Zahlung_gemeldet:false,Zahlung_bestaetigt:false,Erstellt_von:USERNAME});
+    await telegram("🧾 Neue Rechnung: "+nr,"Neue Rechnung von "+userHof.Name+"\nBetrag: "+euro(gesamt),an);
+    rechnungPopupSchliessen();await laden();
+  }catch(e){neuMsg.innerText="Fehler:\n"+e.message}
+}
+
+async function zahlungMelden(id){
+  const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));
+  if(!r||!istEmpfaenger(r)||!confirm("Zahlung als durchgeführt melden?"))return;
+  try{
+    await patch("Rechnungen",id,{Zahlung_gemeldet:true,Zahlung_gemeldet_am:new Date().toISOString(),Zahlung_gemeldet_von:Number(USER_ID),Status:"Zahlung gemeldet"});
+    await telegram("💰 Zahlung gemeldet: "+r.Rechnung_nr,"Der Empfänger-Hof "+userHof.Name+" hat die Zahlung gemeldet.\nBetrag: "+euro(r.Gesamtpreis)+"\nBitte Zahlung bestätigen.",r.Von_Hof_id);
+    await laden();
+  }catch(e){alert("Fehler:\n"+e.message)}
+}
+
+async function zahlungBestaetigen(id){
+  const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));
+  if(!r||!istErstellerHof(r)||!confirm("Eingang der Zahlung bestätigen?"))return;
+  try{
+    await patch("Rechnungen",id,{Zahlung_bestaetigt:true,Zahlung_bestaetigt_am:new Date().toISOString(),Zahlung_bestaetigt_von:Number(USER_ID),Zahlung_bestaetigt_durch_admin:false,Bezahlt:true,Bezahlt_am:new Date().toISOString(),Status:"Bezahlt"});
+    await telegram("✅ Zahlung bestätigt: "+r.Rechnung_nr,"Der Ersteller-Hof hat den Zahlungseingang bestätigt.\nBetrag: "+euro(r.Gesamtpreis),r.An_Hof_id);
+    await laden();
+  }catch(e){alert("Fehler:\n"+e.message)}
+}
+
+async function rechnungStornieren(id){
+  const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));
+  if(!r||!istErstellerHof(r)||!confirm("Rechnung wirklich stornieren?"))return;
+  try{await patch("Rechnungen",id,{Storniert:true,Status:"Storniert"});await telegram("❌ Rechnung storniert: "+r.Rechnung_nr,"Die Rechnung wurde vom Ersteller-Hof storniert.",r.An_Hof_id);await laden()}catch(e){alert("Fehler:\n"+e.message)}
+}
+
+function detailsOeffnen(id){
+  const r=sichtbareRechnungen.find(x=>Number(x.id)===Number(id));if(!r)return;aktuelleRechnung=r;
+  detailTitel.innerText=text(r.Rechnung_nr);
+  detailInhalt.innerText="Status: "+statusText(r)+"\nVon: "+hofName(r.Von_Hof_id)+"\nAn: "+hofName(r.An_Hof_id)+"\n\nProdukt: "+text(r.Produkt)+"\nMenge: "+zahl(r.Menge).toLocaleString("de-DE")+" "+text(r.Einheit)+"\nEinzelpreis: "+euro(r.Einzelpreis)+"\nGesamtpreis: "+euro(r.Gesamtpreis)+"\n\nZahlung gemeldet: "+datum(r.Zahlung_gemeldet_am)+"\nZahlung bestätigt: "+datum(r.Zahlung_bestaetigt_am);
+  bemerkungText.value=r.Bemerkung||"";detailMsg.innerText="";detailBg.style.display="flex";
+}
+function schliesseDetails(){detailBg.style.display="none";aktuelleRechnung=null}
+async function bemerkungSpeichern(){if(!aktuelleRechnung)return;try{await patch("Rechnungen",aktuelleRechnung.id,{Bemerkung:bemerkungText.value.trim()});detailMsg.innerText="Bemerkung gespeichert.";await laden()}catch(e){detailMsg.innerText="Fehler:\n"+e.message}}
+
 laden();
 </script>
 </body>
