@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – Überweisungen</title>
+
+<style>
+*{box-sizing:border-box}
+
+:root{
+  --bg:#000;
+  --card:#111;
+  --inner:#050505;
+  --green:#00ff22;
+  --green-dark:#008800;
+  --orange:#ffaa33;
+  --white:#fff;
+  --muted:#aaa;
+  --red:#ff5555;
+  --blue:#0a5ca8;
+  --border:#008000;
+}
+
+body{
+  margin:0;
+  overflow-x:hidden;
+  background:var(--bg);
+  color:var(--green);
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  width:100%;
+  max-width:820px;
+  margin:auto;
+  padding:16px;
+}
+
+.back{
+  width:100%;
+  background:#222;
+  color:white;
+  border:1px solid #555;
+  padding:14px 20px;
+  border-radius:12px;
+  margin-bottom:24px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+h1{
+  margin:10px 0 24px;
+  color:white;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:34px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 0 10px rgba(0,255,0,.18);
+}
+
+h2{
+  margin:0 0 14px;
+  color:var(--green);
+  font-size:22px;
+}
+
+.info{
+  color:white;
+  line-height:1.5;
+}
+
+.hinweis{
+  color:var(--orange);
+  background:#000;
+  border:1px solid #665500;
+  border-radius:11px;
+  padding:12px;
+  line-height:1.45;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+label{
+  display:block;
+  margin:0 0 5px;
+  color:var(--orange);
+  font-size:14px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #008000;
+  border-radius:10px;
+  background:#000;
+  color:white;
+  font-size:16px;
+}
+
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+button{
+  width:100%;
+  margin-top:10px;
+  padding:13px;
+  border:0;
+  border-radius:11px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.green{background:var(--green-dark);color:white}
+.blue{background:var(--blue);color:white}
+.red{background:#aa0000;color:white}
+.dark{background:#333;color:white}
+
+.msg{
+  margin-top:12px;
+  color:var(--orange);
+  text-align:center;
+  font-weight:bold;
+  white-space:pre-line;
+}
+
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.stat{
+  background:#000;
+  border:1px solid #006600;
+  border-radius:11px;
+  padding:11px;
+  text-align:center;
+  color:white;
+}
+
+.stat b{
+  display:block;
+  color:var(--green);
+  font-size:24px;
+  margin-bottom:4px;
+}
+
+.transfer{
+  background:var(--inner);
+  border:1px solid #333;
+  border-left:5px solid #777;
+  border-radius:12px;
+  padding:13px;
+  margin-top:11px;
+}
+
+.transfer.sicher{border-left-color:#008800}
+.transfer.warn{border-left-color:#cc7700}
+.transfer.falsch{border-left-color:#aa0000}
+
+.transfer-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.transfer-route{
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  line-height:1.4;
+}
+
+.amount{
+  white-space:nowrap;
+  color:var(--green);
+  font-size:20px;
+  font-weight:bold;
+}
+
+.meta{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+}
+
+.badge{
+  display:inline-block;
+  border-radius:999px;
+  padding:4px 9px;
+  margin:6px 5px 0 0;
+  font-size:12px;
+  font-weight:bold;
+  color:white;
+  border:1px solid #555;
+}
+
+.badge.green{border-color:#008800;color:var(--green);background:transparent}
+.badge.orange{border-color:#aa6600;color:var(--orange);background:transparent}
+.badge.red{border-color:#aa0000;color:var(--red);background:transparent}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+
+.empty{
+  color:white;
+  text-align:center;
+  padding:18px 5px;
+}
+
+.editor{
+  display:none;
+}
+
+.editor.active{
+  display:block;
+}
+
+hr{
+  border:0;
+  border-top:1px solid #333;
+  margin:16px 0;
+}
+
+@media(max-width:650px){
+  .grid,.stat-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .actions{
+    grid-template-columns:1fr;
+  }
+
+  .transfer-head{
+    flex-direction:column;
+  }
+
+  .amount{
+    white-space:normal;
+  }
+}
+
+@media(max-width:420px){
+  .grid,.stat-grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<button class="back" onclick="location.href='admin.html'">← Zurück zum Adminbereich</button>
+
+<h1>ÜBERWEISUNGEN</h1>
+
+<div id="adminPruefung" class="card">
+  <div class="info">Prüfe Adminrechte...</div>
+</div>
+
+<div id="hauptinhalt" style="display:none">
+
+  <div class="card">
+    <h2>💸 Erkannte Ingame-Überweisungen</h2>
+
+    <div class="hinweis">
+      Diese Seite korrigiert nur die Zuordnung und Dokumentation einer erkannten
+      Ingame-Überweisung. Es wird kein Geld in der Web-App bewegt.
+    </div>
+
+    <div class="stat-grid" style="margin-top:12px">
+      <div class="stat"><b id="statGesamt">0</b>Gesamt</div>
+      <div class="stat"><b id="statErkannt">0</b>Erkannt</div>
+      <div class="stat"><b id="statBestaetigt">0</b>Bestätigt</div>
+      <div class="stat"><b id="statVerworfen">0</b>Verworfen</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔎 Filter</h2>
+
+    <div class="grid">
+      <div>
+        <label>Status</label>
+        <select id="filterStatus" onchange="renderListe()">
+          <option value="">Alle Status</option>
+          <option value="Erkannt">Erkannt</option>
+          <option value="Bestaetigt">Bestätigt</option>
+          <option value="Korrigiert">Korrigiert</option>
+          <option value="Unklar">Unklar</option>
+          <option value="Verworfen">Verworfen</option>
+          <option value="Zugeordnet">Zugeordnet</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Hof</label>
+        <select id="filterHof" onchange="renderListe()">
+          <option value="">Alle Höfe</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Suche</label>
+        <input id="filterSuche" placeholder="Name, Betrag, Hinweis..." oninput="renderListe()">
+      </div>
+
+      <div>
+        <label>Sortierung</label>
+        <select id="filterSortierung" onchange="renderListe()">
+          <option value="neu">Neueste zuerst</option>
+          <option value="alt">Älteste zuerst</option>
+          <option value="betrag_desc">Höchster Betrag</option>
+          <option value="betrag_asc">Niedrigster Betrag</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="blue" onclick="ladeDaten()">Anzeige aktualisieren</button>
+    <div id="listenMsg" class="msg"></div>
+  </div>
+
+  <div id="editorCard" class="card editor">
+    <h2>✏️ Überweisung bearbeiten</h2>
+
+    <input type="hidden" id="editId">
+
+    <div class="grid">
+      <div>
+        <label>Sender-Hof</label>
+        <select id="editSenderHof" onchange="senderNameUebernehmen()"></select>
+      </div>
+
+      <div>
+        <label>Empfänger-Hof</label>
+        <select id="editEmpfaengerHof" onchange="empfaengerNameUebernehmen()"></select>
+      </div>
+
+      <div>
+        <label>Sendername</label>
+        <input id="editSenderName">
+      </div>
+
+      <div>
+        <label>Empfängername</label>
+        <input id="editEmpfaengerName">
+      </div>
+
+      <div>
+        <label>Betrag</label>
+        <input id="editBetrag" type="number" min="0" step="0.01">
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select id="editStatus">
+          <option value="Erkannt">Erkannt</option>
+          <option value="Bestaetigt">Bestätigt</option>
+          <option value="Korrigiert">Korrigiert</option>
+          <option value="Unklar">Unklar</option>
+          <option value="Verworfen">Verworfen</option>
+          <option value="Zugeordnet">Zugeordnet</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Sicherheitsstufe</label>
+        <select id="editSicherheit">
+          <option value="Sicher">Sicher</option>
+          <option value="Wahrscheinlich">Wahrscheinlich</option>
+          <option value="Ungeklaert">Ungeklärt</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Abweichung</label>
+        <input id="editAbweichung" type="number" min="0" step="0.01">
+      </div>
+    </div>
+
+    <label style="margin-top:12px">Admin-Hinweis / Korrekturgrund</label>
+    <textarea id="editHinweis" placeholder="Warum wurde die Überweisung korrigiert?"></textarea>
+
+    <div class="actions">
+      <button class="green" onclick="speichereUeberweisung()">Änderungen speichern</button>
+      <button class="dark" onclick="editorSchliessen()">Abbrechen</button>
+    </div>
+
+    <button class="red" onclick="alsVerworfenSpeichern()">Als falsch erkannt markieren</button>
+
+    <div id="editMsg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Überweisungsliste</h2>
+    <div id="liste">Lade Überweisungen...</div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY = "sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID = localStorage.getItem("user_id");
+
+if(!USER_ID){
+  location.href = "login.html";
+}
+
+let aktuellerUser = null;
+let ueberweisungen = [];
+let hoefe = [];
+
+function headers(){
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json"
+  };
+}
+
+function htmlSicher(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function euro(value){
+  return Number(value || 0).toLocaleString("de-DE",{
+    minimumFractionDigits:0,
+    maximumFractionDigits:2
+  }) + " €";
+}
+
+function datum(value){
+  if(!value)return "-";
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime()))return String(value);
+
+  return d.toLocaleDateString("de-DE") + " " +
+    d.toLocaleTimeString("de-DE",{
+      hour:"2-digit",
+      minute:"2-digit"
+    });
+}
+
+async function apiQuery(tabelle,query){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/" + tabelle + "?" + query,
+    {
+      headers:headers(),
+      cache:"no-store"
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return await res.json();
+}
+
+async function pruefeAdmin(){
+  const box = document.getElementById("adminPruefung");
+
+  try{
+    const users = await apiQuery(
+      "Users",
+      "select=*&id=eq." + encodeURIComponent(USER_ID) + "&limit=1"
+    );
+
+    aktuellerUser = users[0];
+
+    if(!aktuellerUser || aktuellerUser.Admin !== true){
+      box.innerHTML = "<div class='empty'>Kein Admin-Zugriff.</div>";
+      return;
+    }
+
+    box.innerHTML =
+      "<div class='info'>Angemeldet als <b>" +
+      htmlSicher(aktuellerUser.Vorname || aktuellerUser["PSN-Username"] || "Admin") +
+      "</b></div>";
+
+    document.getElementById("hauptinhalt").style.display = "block";
+    await ladeDaten();
+  }catch(error){
+    box.innerHTML =
+      "<div class='msg'>Adminprüfung fehlgeschlagen:\n" +
+      htmlSicher(error.message) +
+      "</div>";
+  }
+}
+
+async function ladeDaten(){
+  const msg = document.getElementById("listenMsg");
+  msg.innerText = "Lade Daten...";
+
+  try{
+    const [transferData,hofData] = await Promise.all([
+      apiQuery(
+        "Finanz_Ueberweisungen",
+        "select=*&order=Erkannt_am.desc"
+      ),
+      apiQuery(
+        "Hoefe",
+        "select=*&order=Name.asc"
+      )
+    ]);
+
+    ueberweisungen = transferData || [];
+    hoefe = hofData || [];
+
+    fuelleHofFilter();
+    fuelleEditorHofListen();
+    renderStatistik();
+    renderListe();
+
+    msg.innerText = "Daten wurden aktualisiert.";
+  }catch(error){
+    msg.innerText = "Fehler:\n" + error.message;
+  }
+}
+
+function hofName(id){
+  const hof = hoefe.find(h => String(h.id) === String(id));
+  return hof ? hof.Name : "-";
+}
+
+function fuelleHofFilter(){
+  const select = document.getElementById("filterHof");
+  const aktuellerWert = select.value;
+
+  select.innerHTML = "<option value=''>Alle Höfe</option>";
+
+  hoefe.forEach(hof => {
+    const option = document.createElement("option");
+    option.value = hof.id;
+    option.textContent = hof.Name;
+    select.appendChild(option);
+  });
+
+  select.value = aktuellerWert;
+}
+
+function fuelleEditorHofListen(){
+  ["editSenderHof","editEmpfaengerHof"].forEach(id => {
+    const select = document.getElementById(id);
+    select.innerHTML = "<option value=''>Keine Hof-Zuordnung</option>";
+
+    hoefe.forEach(hof => {
+      const option = document.createElement("option");
+      option.value = hof.id;
+      option.textContent = hof.Name;
+      select.appendChild(option);
+    });
+  });
+}
+
+function renderStatistik(){
+  document.getElementById("statGesamt").innerText = ueberweisungen.length;
+
+  document.getElementById("statErkannt").innerText =
+    ueberweisungen.filter(u => String(u.Status) === "Erkannt").length;
+
+  document.getElementById("statBestaetigt").innerText =
+    ueberweisungen.filter(u =>
+      ["Bestaetigt","Zugeordnet","Korrigiert"].includes(String(u.Status))
+    ).length;
+
+  document.getElementById("statVerworfen").innerText =
+    ueberweisungen.filter(u => String(u.Status) === "Verworfen").length;
+}
+
+function gefilterteDaten(){
+  const status = document.getElementById("filterStatus").value;
+  const hofId = document.getElementById("filterHof").value;
+  const suche = document.getElementById("filterSuche").value
+    .trim()
+    .toLowerCase();
+  const sortierung = document.getElementById("filterSortierung").value;
+
+  let daten = ueberweisungen.filter(u => {
+    const statusPasst = !status || String(u.Status) === status;
+
+    const hofPasst = !hofId ||
+      String(u.Sender_Hof_id) === String(hofId) ||
+      String(u.Empfaenger_Hof_id) === String(hofId);
+
+    const suchText = [
+      u.Sender_Name,
+      u.Empfaenger_Name,
+      u.Betrag,
+      u.Hinweis,
+      u.Status,
+      u.Sicherheitsstufe
+    ].join(" ").toLowerCase();
+
+    const suchePasst = !suche || suchText.includes(suche);
+
+    return statusPasst && hofPasst && suchePasst;
+  });
+
+  daten = [...daten];
+
+  if(sortierung === "alt"){
+    daten.sort((a,b) => new Date(a.Erkannt_am) - new Date(b.Erkannt_am));
+  }else if(sortierung === "betrag_desc"){
+    daten.sort((a,b) => Number(b.Betrag || 0) - Number(a.Betrag || 0));
+  }else if(sortierung === "betrag_asc"){
+    daten.sort((a,b) => Number(a.Betrag || 0) - Number(b.Betrag || 0));
+  }else{
+    daten.sort((a,b) => new Date(b.Erkannt_am) - new Date(a.Erkannt_am));
+  }
+
+  return daten;
+}
+
+function transferKlasse(u){
+  if(String(u.Status) === "Verworfen")return "falsch";
+  if(String(u.Sicherheitsstufe) === "Sicher")return "sicher";
+  return "warn";
+}
+
+function badgeKlasse(value){
+  const text = String(value || "").toLowerCase();
+
+  if(text.includes("sicher") || text.includes("bestaetigt") || text.includes("zugeordnet")){
+    return "green";
+  }
+
+  if(text.includes("verworfen")){
+    return "red";
+  }
+
+  return "orange";
+}
+
+function renderListe(){
+  const box = document.getElementById("liste");
+  const daten = gefilterteDaten();
+
+  if(!daten.length){
+    box.innerHTML = "<div class='empty'>Keine passenden Überweisungen gefunden.</div>";
+    return;
+  }
+
+  box.innerHTML = daten.map(u => `
+    <div class="transfer ${transferKlasse(u)}">
+      <div class="transfer-head">
+        <div class="transfer-route">
+          ${htmlSicher(u.Sender_Name || hofName(u.Sender_Hof_id))}
+          <br>➡️<br>
+          ${htmlSicher(u.Empfaenger_Name || hofName(u.Empfaenger_Hof_id))}
+        </div>
+
+        <div class="amount">${euro(u.Betrag)}</div>
+      </div>
+
+      <div>
+        <span class="badge ${badgeKlasse(u.Status)}">${htmlSicher(u.Status || "-")}</span>
+        <span class="badge ${badgeKlasse(u.Sicherheitsstufe)}">${htmlSicher(u.Sicherheitsstufe || "-")}</span>
+        ${u.Manuell_bearbeitet === true
+          ? "<span class='badge orange'>manuell bearbeitet</span>"
+          : ""}
+      </div>
+
+      <div class="meta">
+        Erkannt: ${htmlSicher(datum(u.Erkannt_am))}<br>
+        Import: ${htmlSicher(u.Vorher_Import_id || "-")} → ${htmlSicher(u.Import_id || "-")}<br>
+        Abweichung: ${euro(u.Abweichung || 0)}<br>
+        Sender other: ${euro(u.Sender_Other_Aenderung || 0)} ·
+        Empfänger other: ${euro(u.Empfaenger_Other_Aenderung || 0)}
+        ${u.Hinweis ? "<br>Hinweis: " + htmlSicher(u.Hinweis) : ""}
+      </div>
+
+      <div class="actions">
+        <button class="blue" onclick="oeffneEditor(${Number(u.id)})">Bearbeiten</button>
+        <button class="green" onclick="schnellBestaetigen(${Number(u.id)})">Bestätigen</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function oeffneEditor(id){
+  const u = ueberweisungen.find(x => Number(x.id) === Number(id));
+
+  if(!u){
+    return;
+  }
+
+  document.getElementById("editId").value = u.id;
+  document.getElementById("editSenderHof").value = u.Sender_Hof_id ?? "";
+  document.getElementById("editEmpfaengerHof").value = u.Empfaenger_Hof_id ?? "";
+  document.getElementById("editSenderName").value = u.Sender_Name || "";
+  document.getElementById("editEmpfaengerName").value = u.Empfaenger_Name || "";
+  document.getElementById("editBetrag").value = Number(u.Betrag || 0);
+  document.getElementById("editStatus").value = u.Status || "Erkannt";
+  document.getElementById("editSicherheit").value = u.Sicherheitsstufe || "Ungeklaert";
+  document.getElementById("editAbweichung").value = Number(u.Abweichung || 0);
+  document.getElementById("editHinweis").value = u.Hinweis || "";
+  document.getElementById("editMsg").innerText = "";
+
+  document.getElementById("editorCard").classList.add("active");
+  document.getElementById("editorCard").scrollIntoView({
+    behavior:"smooth",
+    block:"start"
+  });
+}
+
+function editorSchliessen(){
+  document.getElementById("editorCard").classList.remove("active");
+  document.getElementById("editMsg").innerText = "";
+}
+
+function senderNameUebernehmen(){
+  const id = document.getElementById("editSenderHof").value;
+  if(id){
+    document.getElementById("editSenderName").value = hofName(id);
+  }
+}
+
+function empfaengerNameUebernehmen(){
+  const id = document.getElementById("editEmpfaengerHof").value;
+  if(id){
+    document.getElementById("editEmpfaengerName").value = hofName(id);
+  }
+}
+
+async function patchUeberweisung(id,daten){
+  const res = await fetch(
+    SUPABASE_URL + "/rest/v1/Finanz_Ueberweisungen?id=eq." + encodeURIComponent(id),
+    {
+      method:"PATCH",
+      headers:{
+        ...headers(),
+        "Prefer":"return=minimal"
+      },
+      body:JSON.stringify(daten)
+    }
+  );
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+}
+
+async function speichereUeberweisung(){
+  const msg = document.getElementById("editMsg");
+  msg.innerText = "Speichere...";
+
+  const id = Number(document.getElementById("editId").value);
+  const betrag = Number(document.getElementById("editBetrag").value);
+
+  if(!id){
+    msg.innerText = "Keine Überweisung ausgewählt.";
+    return;
+  }
+
+  if(!Number.isFinite(betrag) || betrag <= 0){
+    msg.innerText = "Bitte einen gültigen Betrag eingeben.";
+    return;
+  }
+
+  const senderHofId = document.getElementById("editSenderHof").value;
+  const empfaengerHofId = document.getElementById("editEmpfaengerHof").value;
+
+  if(senderHofId && empfaengerHofId && String(senderHofId) === String(empfaengerHofId)){
+    msg.innerText = "Sender und Empfänger dürfen nicht derselbe Hof sein.";
+    return;
+  }
+
+  const daten = {
+    Sender_Hof_id: senderHofId ? Number(senderHofId) : null,
+    Sender_Name: document.getElementById("editSenderName").value.trim() || null,
+    Empfaenger_Hof_id: empfaengerHofId ? Number(empfaengerHofId) : null,
+    Empfaenger_Name: document.getElementById("editEmpfaengerName").value.trim() || null,
+    Betrag: betrag,
+    Status: document.getElementById("editStatus").value,
+    Sicherheitsstufe: document.getElementById("editSicherheit").value,
+    Abweichung: Number(document.getElementById("editAbweichung").value || 0),
+    Hinweis: document.getElementById("editHinweis").value.trim() || null,
+    Manuell_bearbeitet: true
+  };
+
+  try{
+    await patchUeberweisung(id,daten);
+    msg.innerText = "Überweisung wurde gespeichert.";
+    await ladeDaten();
+    editorSchliessen();
+  }catch(error){
+    msg.innerText = "Fehler:\n" + error.message;
+  }
+}
+
+async function schnellBestaetigen(id){
+  if(!confirm("Überweisung als bestätigt markieren?")){
+    return;
+  }
+
+  try{
+    await patchUeberweisung(id,{
+      Status:"Bestaetigt",
+      Sicherheitsstufe:"Sicher",
+      Manuell_bearbeitet:true
+    });
+
+    await ladeDaten();
+  }catch(error){
+    document.getElementById("listenMsg").innerText =
+      "Bestätigung fehlgeschlagen:\n" + error.message;
+  }
+}
+
+async function alsVerworfenSpeichern(){
+  const id = Number(document.getElementById("editId").value);
+
+  if(!id){
+    return;
+  }
+
+  if(!confirm("Diese Überweisung wirklich als falsch erkannt markieren?")){
+    return;
+  }
+
+  const hinweis = document.getElementById("editHinweis").value.trim();
+
+  try{
+    await patchUeberweisung(id,{
+      Status:"Verworfen",
+      Sicherheitsstufe:"Ungeklaert",
+      Hinweis: hinweis || "Vom Admin als falsch erkannt verworfen.",
+      Manuell_bearbeitet:true
+    });
+
+    await ladeDaten();
+    editorSchliessen();
+  }catch(error){
+    document.getElementById("editMsg").innerText =
+      "Fehler:\n" + error.message;
+  }
+}
+
+pruefeAdmin();
+</script>
+</body>
+</html>
