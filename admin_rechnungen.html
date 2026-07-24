@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – Rechnungen</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:820px;margin:auto;padding:18px}.back{width:100%;background:#222;color:white;border:1px solid #555;padding:14px;border-radius:12px;font-size:18px;margin-bottom:22px}h1{color:white;text-align:center;font-family:Georgia,serif}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:16px;margin-bottom:15px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}input,select,textarea{width:100%;padding:12px;border:1px solid #008000;border-radius:10px;background:#000;color:white;font-size:16px}label{display:block;color:#ffaa33;margin:8px 0 5px}.item{background:#050505;border:1px solid #006600;border-radius:12px;padding:13px;margin-top:10px;color:white}.head{display:flex;justify-content:space-between;gap:10px}.betrag{color:#00ff22;font-weight:bold;font-size:19px}.meta{color:#aaa;font-size:13px;line-height:1.45;margin-top:7px}.badge{display:inline-block;padding:4px 9px;border-radius:20px;color:white;font-size:12px;margin:5px 5px 5px 0}.offen{background:#cc7700}.gemeldet{background:#004488}.bezahlt{background:#008800}.storno{background:#aa0000}button{width:100%;padding:13px;border:0;border-radius:11px;margin-top:9px;font-size:16px;font-weight:bold}.green{background:#008800;color:white}.red{background:#aa0000;color:white}.blue{background:#004488;color:white}.dark{background:#333;color:white}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.msg{color:#ffaa33;text-align:center;white-space:pre-line;margin-top:10px}.leer{color:white;text-align:center;padding:20px}.popup-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:15px;z-index:20}.popup{width:100%;max-width:650px;max-height:90vh;overflow:auto;background:#111;border:2px solid #008000;border-radius:16px;padding:18px}@media(max-width:560px){.grid,.actions{grid-template-columns:1fr}.head{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+<button class="back" onclick="location.href='admin.html'">← Zurück zum Adminbereich</button>
+<h1>ADMIN RECHNUNGEN</h1>
+<div id="pruefung" class="card">Prüfe Adminrechte...</div>
+<div id="inhalt" style="display:none">
+  <div class="card">
+    <div class="grid">
+      <div><label>Status</label><select id="filterStatus" onchange="render()"><option value="">Alle</option><option>Offen</option><option>Zahlung gemeldet</option><option>Bezahlt</option><option>Storniert</option></select></div>
+      <div><label>Hof</label><select id="filterHof" onchange="render()"><option value="">Alle Höfe</option></select></div>
+      <div><label>Suche</label><input id="filterSuche" oninput="render()" placeholder="Nummer, Produkt, Hof..."></div>
+      <div><label>Sortierung</label><select id="sort" onchange="render()"><option value="neu">Neueste zuerst</option><option value="alt">Älteste zuerst</option><option value="betrag">Höchster Betrag</option></select></div>
+    </div>
+    <button class="blue" onclick="laden()">Aktualisieren</button>
+    <div id="msg" class="msg"></div>
+  </div>
+  <div class="card"><div id="liste">Lade Rechnungen...</div></div>
+</div>
+</div>
+
+<div id="editBg" class="popup-bg"><div class="popup">
+<h2>Rechnung bearbeiten</h2>
+<input id="editId" type="hidden">
+<div class="grid">
+<div><label>Von Hof</label><select id="editVon"></select></div>
+<div><label>An Hof</label><select id="editAn"></select></div>
+<div><label>Rechnungsnummer</label><input id="editNr"></div>
+<div><label>Produkt / Leistung</label><input id="editProdukt"></div>
+<div><label>Menge</label><input id="editMenge" type="number" step="0.01"></div>
+<div><label>Einheit</label><input id="editEinheit"></div>
+<div><label>Einzelpreis</label><input id="editEinzel" type="number" step="0.01"></div>
+<div><label>Gesamtpreis</label><input id="editGesamt" type="number" step="0.01"></div>
+</div>
+<label>Bemerkung</label><textarea id="editBemerkung"></textarea>
+<label>Status</label><select id="editStatus"><option>Offen</option><option>Zahlung gemeldet</option><option>Bezahlt</option><option>Storniert</option></select>
+<div class="actions"><button class="green" onclick="speichern()">Speichern</button><button class="dark" onclick="schliessen()">Abbrechen</button></div>
+<button class="green" onclick="adminBestaetigen()">Zahlung als Admin bestätigen</button>
+<button class="red" onclick="adminStornieren()">Rechnung stornieren</button>
+<div id="editMsg" class="msg"></div>
+</div></div>
+
+<script>
+const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co";
+const SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR";
+const USER_ID=localStorage.getItem("user_id");
+if(!USER_ID)location.href="login.html";
+let user=null,users=[],hoefe=[],rechnungen=[];
+
+function headers(){return{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
+async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers(),cache:"no-store"});if(!r.ok)throw new Error(await r.text());return await r.json()}
+async function patch(id,d){const r=await fetch(SUPABASE_URL+"/rest/v1/Rechnungen?id=eq."+id,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
+function euro(v){return Number(v||0).toLocaleString("de-DE",{maximumFractionDigits:2})+" €"}
+function datum(d){if(!d)return"-";const x=new Date(d);return isNaN(x.getTime())?"-":x.toLocaleDateString("de-DE")+" "+x.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}
+function hofName(id){return hoefe.find(h=>String(h.id)===String(id))?.Name||"-"}
+function status(r){if(r.Storniert===true)return"Storniert";if(r.Zahlung_bestaetigt===true||r.Bezahlt===true)return"Bezahlt";if(r.Zahlung_gemeldet===true)return"Zahlung gemeldet";return"Offen"}
+function badge(s){return s==="Bezahlt"?"bezahlt":s==="Zahlung gemeldet"?"gemeldet":s==="Storniert"?"storno":"offen"}
+
+async function pruefen(){
+  users=await api("Users");user=users.find(u=>String(u.id)===String(USER_ID));
+  if(!user||user.Admin!==true){pruefung.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";return}
+  pruefung.innerHTML="<b>Admin:</b> "+(user.Vorname||user["PSN-Username"]||"-");
+  inhalt.style.display="block";await laden();
+}
+async function laden(){
+  msg.innerText="Lade...";
+  [hoefe,rechnungen]=await Promise.all([api("Hoefe"),api("Rechnungen")]);
+  filterHof.innerHTML='<option value="">Alle Höfe</option>'+hoefe.map(h=>`<option value="${h.id}">${h.Name}</option>`).join("");
+  [editVon,editAn].forEach(s=>s.innerHTML=hoefe.map(h=>`<option value="${h.id}">${h.Name}</option>`).join(""));
+  render();msg.innerText="";
+}
+function render(){
+  const fs=filterStatus.value,fh=filterHof.value,q=filterSuche.value.toLowerCase(),so=sort.value;
+  let arr=rechnungen.filter(r=>(!fs||status(r)===fs)&&(!fh||String(r.Von_Hof_id)===fh||String(r.An_Hof_id)===fh)&&(!q||[r.Rechnung_nr,r.Produkt,hofName(r.Von_Hof_id),hofName(r.An_Hof_id)].join(" ").toLowerCase().includes(q)));
+  arr=[...arr].sort((a,b)=>so==="alt"?new Date(a.created_at)-new Date(b.created_at):so==="betrag"?Number(b.Gesamtpreis)-Number(a.Gesamtpreis):new Date(b.created_at)-new Date(a.created_at));
+  if(!arr.length){liste.innerHTML="<div class='leer'>Keine Rechnungen gefunden.</div>";return}
+  liste.innerHTML=arr.map(r=>`<div class="item"><div class="head"><b>${r.Rechnung_nr||"-"}</b><span class="betrag">${euro(r.Gesamtpreis)}</span></div><span class="badge ${badge(status(r))}">${status(r)}</span><div>Von: ${hofName(r.Von_Hof_id)}<br>An: ${hofName(r.An_Hof_id)}<br>Produkt: ${r.Produkt||"-"}</div><div class="meta">Erstellt: ${datum(r.created_at)}<br>Gemeldet: ${datum(r.Zahlung_gemeldet_am)}<br>Bestätigt: ${datum(r.Zahlung_bestaetigt_am)}</div><button class="blue" onclick="oeffnen(${r.id})">Bearbeiten</button></div>`).join("");
+}
+function oeffnen(id){
+  const r=rechnungen.find(x=>Number(x.id)===Number(id));if(!r)return;
+  editId.value=r.id;editVon.value=r.Von_Hof_id;editAn.value=r.An_Hof_id;editNr.value=r.Rechnung_nr||"";editProdukt.value=r.Produkt||"";editMenge.value=r.Menge||0;editEinheit.value=r.Einheit||"";editEinzel.value=r.Einzelpreis||0;editGesamt.value=r.Gesamtpreis||0;editBemerkung.value=r.Bemerkung||"";editStatus.value=status(r);editMsg.innerText="";editBg.style.display="flex";
+}
+function schliessen(){editBg.style.display="none"}
+async function speichern(){
+  const id=Number(editId.value),s=editStatus.value;
+  const d={Von_Hof_id:Number(editVon.value),An_Hof_id:Number(editAn.value),Rechnung_nr:editNr.value.trim(),Produkt:editProdukt.value.trim(),Menge:Number(editMenge.value||0),Einheit:editEinheit.value.trim(),Einzelpreis:Number(editEinzel.value||0),Gesamtpreis:Number(editGesamt.value||0),Bemerkung:editBemerkung.value.trim(),Status:s,Storniert:s==="Storniert",Zahlung_gemeldet:s==="Zahlung gemeldet"||s==="Bezahlt",Zahlung_bestaetigt:s==="Bezahlt",Bezahlt:s==="Bezahlt"};
+  try{await patch(id,d);editMsg.innerText="Gespeichert.";schliessen();await laden()}catch(e){editMsg.innerText="Fehler:\n"+e.message}
+}
+async function adminBestaetigen(){
+  const id=Number(editId.value);if(!confirm("Zahlung als Admin bestätigen?"))return;
+  try{await patch(id,{Zahlung_gemeldet:true,Zahlung_bestaetigt:true,Zahlung_bestaetigt_am:new Date().toISOString(),Zahlung_bestaetigt_von:Number(USER_ID),Zahlung_bestaetigt_durch_admin:true,Bezahlt:true,Bezahlt_am:new Date().toISOString(),Status:"Bezahlt"});schliessen();await laden()}catch(e){editMsg.innerText="Fehler:\n"+e.message}
+}
+async function adminStornieren(){
+  const id=Number(editId.value);if(!confirm("Rechnung stornieren?"))return;
+  try{await patch(id,{Storniert:true,Status:"Storniert"});schliessen();await laden()}catch(e){editMsg.innerText="Fehler:\n"+e.message}
+}
+pruefen();
+</script>
+</body>
+</html>
