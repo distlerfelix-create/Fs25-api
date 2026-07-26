@@ -24,13 +24,20 @@ function mehrjaehrig(n){return["ackergras","feldgras","fieldgrass","gras","klee"
 function pfluegenNachErnteNoetig(n){return["mais","kornmais","kornermais","koernermais","grain maize","grainmaize","silagemais","silage maize","silagemaize","kartoffel","kartoffeln","zuckerrube","zuckerruben","zuckerrohr"].includes(norm(n))}
 function winter(){const m=monatsNr(status.monat);return mehrjaehrig(feld.Fruchtart)&&(m===12||m===1)}
 function frucht(){return fruchtarten.find(x=>String(x.Name).toLowerCase()===String(feld.Fruchtart||"").toLowerCase())}
-function wachstumstage(){
- if(!feld.Gesaet_Serverjahr||!feld.Gesaet_Servermonat||!feld.Gesaet_Servertag)return null;
- const von=zeitwert(feld.Gesaet_Serverjahr,feld.Gesaet_Servermonat,feld.Gesaet_Servertag),bis=zeitwert(status.jahr,status.monat,status.tag);
- if(bis<von)return 0;if(!mehrjaehrig(feld.Fruchtart))return bis-von;
- let n=0;for(let i=von;i<bis;i++){const m=Math.floor((i%36)/3)+1;if(m!==12&&m!==1)n++}return n
+function monatswert(j,m){return(Number(j||1)-1)*12+(monatsNr(m)-1)}
+function wachstumsmonate(){
+ if(!feld.Gesaet_Serverjahr||!feld.Gesaet_Servermonat)return null;
+ const von=monatswert(feld.Gesaet_Serverjahr,feld.Gesaet_Servermonat);
+ const bis=monatswert(status.jahr,status.monat);
+ if(bis<von)return 0;
+ let n=0;
+ for(let i=von;i<bis;i++){
+   const m=(i%12)+1;
+   if(!mehrjaehrig(feld.Fruchtart)||(m!==12&&m!==1))n++;
+ }
+ return n;
 }
-function ernte(){const f=frucht(),d=Number(f&&f.Wachstumsdauer_Tage||0),t=wachstumstage();return feld.Gesaet===true&&d>0&&t!==null&&t>=d}
+function ernte(){const f=frucht(),d=Number(f&&f.Wachstumsdauer_Tage||0),m=wachstumsmonate();return feld.Gesaet===true&&d>0&&m!==null&&m>=d}
 function duengen(){return feld["Duengen_nötig"]===true||feld.Duengen_noetig===true}
 function text(v){return v===null||v===undefined||v===""?"-":v}
 function aktionsDatum(jahr,monat,tag,zeit){
@@ -58,10 +65,10 @@ async function automatisieren(){
 function badges(){let h="";if(winter())h+='<span class="badge borange">❄️ Winterpause</span>';else if(ernte())h+='<span class="badge bgreen">🌾 Erntereif</span>';if(duengen())h+='<span class="badge borange">💩 Düngen nötig</span>';if(feld.Steine_sammeln_noetig)h+='<span class="badge borange">🪨 Steine sammeln</span>';if(feld.Walzen_noetig)h+='<span class="badge borange">🛞 Walzen nötig</span>';return h}
 function fruchtSelect(){let h='<select id="frucht">';fruchtarten.filter(f=>f.Aktiv!==false).forEach(f=>h+=`<option ${String(f.Name)===String(feld.Fruchtart)?"selected":""}>${f.Name}</option>`);return h+"</select>"}
 function anzeigen(){
- const box=document.getElementById("inhalt"),f=frucht(),dauer=Number(f&&f.Wachstumsdauer_Tage||0),tage=wachstumstage();
+ const box=document.getElementById("inhalt"),f=frucht(),dauer=Number(f&&f.Wachstumsdauer_Tage||0),monate=wachstumsmonate();
  let h=`<div class="card ${ernte()?"ernte":""} ${(duengen()||feld.Steine_sammeln_noetig||feld.Walzen_noetig)?"warn":""}"><h2>Übersicht</h2>${badges()}
  <div class="label">Frucht</div><div class="value">${text(feld.Fruchtart)}</div><div class="label">Serverzeit</div><div class="value">Jahr ${status.jahr} · ${status.monat} · Tag ${status.tag}</div>
- <div class="label">Wachstum</div><div class="value">${text(tage)} / ${dauer||"-"} Wachstumstage</div><div class="label">Erntebereit</div><div class="value">${ernte()?"✅ Ja":"❌ Nein"}</div></div>
+ <div class="label">Wachstum</div><div class="value">${text(monate)} / ${dauer||"-"} Wachstumsmonate</div><div class="label">Erntebereit</div><div class="value">${ernte()?"✅ Ja":"❌ Nein"}</div></div>
  <div class="card"><h2>Feldstatus</h2><div class="status">
  ${statusEintrag(feld.Gekalkt?"Gekalkt":"Kalken notwendig",feld.Gekalkt,feld.Gekalkt_Serverjahr,feld.Gekalkt_Servermonat,feld.Gekalkt_Servertag,feld.Gekalkt_Serverzeit)}
  ${statusEintrag(feld.Gepfluegt?"Gepflügt":"Pflügen notwendig",feld.Gepfluegt,feld.Gepfluegt_Serverjahr,feld.Gepfluegt_Servermonat,feld.Gepfluegt_Servertag,feld.Gepfluegt_Serverzeit)}
