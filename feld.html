@@ -2,7 +2,7 @@
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Feld Detail</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:700px;margin:auto;padding:20px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px}.card.warn{border:2px solid #ffaa00}.card.ernte{border:2px solid #00cc44}.label{color:#ffaa33;margin-top:12px}.value,.status{color:white;font-size:18px;line-height:1.55;margin-top:4px}select{width:100%;padding:13px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}button{width:100%;padding:14px;margin-top:10px;border:0;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.orange{background:#cc7700;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.badge{display:inline-block;padding:5px 10px;border-radius:20px;color:white;font-size:13px;font-weight:bold;margin:4px}.bgreen{background:#008800}.borange{background:#cc7700}.bred{background:#aa0000}.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}.status-eintrag{padding:10px 0;border-bottom:1px solid #2a2a2a}.status-eintrag:last-child{border-bottom:0}.status-datum{color:#ffaa33;font-size:14px;margin:4px 0 0 30px;line-height:1.35}
+*{box-sizing:border-box}body{margin:0;background:#000;color:#00ff22;font-family:Arial,sans-serif}.app{max-width:700px;margin:auto;padding:20px}.back{background:#222;color:white;border:1px solid #555;padding:14px 22px;border-radius:12px;margin-bottom:25px;font-size:18px}h1{color:white;text-align:center;font-family:Georgia,serif}.card{background:#111;border:1px solid #008000;border-radius:14px;padding:18px;margin-bottom:16px}.card.warn{border:2px solid #ffaa00}.card.ernte{border:2px solid #00cc44}.label{color:#ffaa33;margin-top:12px}.value,.status{color:white;font-size:18px;line-height:1.55;margin-top:4px}select{width:100%;padding:13px;margin-top:8px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:17px}button{width:100%;padding:14px;margin-top:10px;border:0;border-radius:12px;font-size:18px;font-weight:bold}.green{background:#008800;color:white}.orange{background:#cc7700;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}.badge{display:inline-block;padding:5px 10px;border-radius:20px;color:white;font-size:13px;font-weight:bold;margin:4px}.bgreen{background:#008800}.borange{background:#cc7700}.bred{background:#aa0000}.msg{color:#ffaa33;text-align:center;margin-top:10px;white-space:pre-line}.status-eintrag{padding:10px 0;border-bottom:1px solid #2a2a2a}.status-eintrag:last-child{border-bottom:0}.status-datum{color:#ffaa33;font-size:14px;margin:4px 0 0 30px;line-height:1.35}.wachstum-box{margin-top:8px}.wachstum-kopf{display:flex;justify-content:space-between;gap:10px;color:white;font-size:17px}.wachstum-rest{color:#ffaa33;font-size:14px;margin-top:6px}.fortschritt{width:100%;height:18px;background:#050505;border:1px solid #008000;border-radius:20px;overflow:hidden;margin-top:8px}.fortschritt-innen{height:100%;background:#00aa22;transition:width .3s ease}.fortschritt-fertig{background:#00ff22}
 </style></head>
 <body><div class="app"><button class="back" onclick="location.href='felder.html'">← Zurück</button><h1 id="titel">FELD</h1><div id="inhalt">Lade...</div></div>
 <script>
@@ -40,6 +40,15 @@ function wachstumsmonate(){
 function ernte(){const f=frucht(),d=Number(f&&f.Wachstumsdauer_Tage||0),m=wachstumsmonate();return feld.Gesaet===true&&d>0&&m!==null&&m>=d}
 function duengen(){return feld["Duengen_nötig"]===true||feld.Duengen_noetig===true}
 function text(v){return v===null||v===undefined||v===""?"-":v}
+function wachstumsAnzeige(monate,dauer){
+ const aktuell=Math.max(0,Number(monate||0));
+ const gesamt=Math.max(0,Number(dauer||0));
+ if(!gesamt)return `<div class="wachstum-box"><div class="wachstum-kopf"><span>Wachstumsphase</span><strong>-</strong></div><div class="fortschritt"><div class="fortschritt-innen" style="width:0%"></div></div><div class="wachstum-rest">Keine Wachstumsdauer hinterlegt</div></div>`;
+ const prozent=Math.min(100,Math.max(0,(aktuell/gesamt)*100));
+ const rest=Math.max(0,gesamt-aktuell);
+ const restText=rest===0?"Erntereif":`Noch ${rest} ${rest===1?"Monat":"Monate"}`;
+ return `<div class="wachstum-box"><div class="wachstum-kopf"><span>Wachstumsphase</span><strong>${Math.min(aktuell,gesamt)} von ${gesamt}</strong></div><div class="fortschritt"><div class="fortschritt-innen ${prozent>=100?"fortschritt-fertig":""}" style="width:${prozent}%"></div></div><div class="wachstum-rest">${restText}</div></div>`;
+}
 function aktionsDatum(jahr,monat,tag,zeit){
  if(!jahr||!monat||!tag)return "";
  return `<div class="status-datum">📅 ${monat} · Jahr ${jahr} · Tag ${tag}${zeit?`<br>🕒 ${zeit} Uhr`:""}</div>`;
@@ -68,7 +77,7 @@ function anzeigen(){
  const box=document.getElementById("inhalt"),f=frucht(),dauer=Number(f&&f.Wachstumsdauer_Tage||0),monate=wachstumsmonate();
  let h=`<div class="card ${ernte()?"ernte":""} ${(duengen()||feld.Steine_sammeln_noetig||feld.Walzen_noetig)?"warn":""}"><h2>Übersicht</h2>${badges()}
  <div class="label">Frucht</div><div class="value">${text(feld.Fruchtart)}</div><div class="label">Serverzeit</div><div class="value">Jahr ${status.jahr} · ${status.monat} · Tag ${status.tag}</div>
- <div class="label">Wachstum</div><div class="value">${text(monate)} / ${dauer||"-"} Wachstumsmonate</div><div class="label">Erntebereit</div><div class="value">${ernte()?"✅ Ja":"❌ Nein"}</div></div>
+ <div class="label">Wachstum</div>${wachstumsAnzeige(monate,dauer)}<div class="label">Erntebereit</div><div class="value">${ernte()?"✅ Ja":"❌ Nein"}</div></div>
  <div class="card"><h2>Feldstatus</h2><div class="status">
  ${statusEintrag(feld.Gekalkt?"Gekalkt":"Kalken notwendig",feld.Gekalkt,feld.Gekalkt_Serverjahr,feld.Gekalkt_Servermonat,feld.Gekalkt_Servertag,feld.Gekalkt_Serverzeit)}
  ${statusEintrag(feld.Gepfluegt?"Gepflügt":"Pflügen notwendig",feld.Gepfluegt,feld.Gepfluegt_Serverjahr,feld.Gepfluegt_Servermonat,feld.Gepfluegt_Servertag,feld.Gepfluegt_Serverzeit)}
