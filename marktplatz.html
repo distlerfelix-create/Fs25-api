@@ -106,11 +106,17 @@ async function api(tabelle){
   return await res.json();
 }
 
-async function post(tabelle,daten){
+async function post(tabelle,daten,returnRepresentation=false){
   const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle, {
-    method:"POST", headers:{...headers(),"Prefer":"return=minimal"}, body:JSON.stringify(daten)
+    method:"POST",
+    headers:{
+      ...headers(),
+      "Prefer":returnRepresentation?"return=representation":"return=minimal"
+    },
+    body:JSON.stringify(daten)
   });
   if(!res.ok) throw new Error(await res.text());
+  return returnRepresentation ? await res.json() : null;
 }
 
 async function patch(tabelle,id,daten){
@@ -362,20 +368,46 @@ async function bestellen(){
 
   try{
     msg.innerText = "Bestellung wird erstellt...";
-    await post("Auftraege", {
+    const erstellteAuftraege = await post("Auftraege", {
       Vorlage_id: ausgewaehltesAngebot.id,
+      Angebot_id: ausgewaehltesAngebot.id,
       Titel: "Bestellung: " + produkt,
       Beschreibung: beschreibung,
       Typ: "Marktplatz",
       Hof: aktuellerHof(),
       Organisation: "",
-      Status: "Offen",
+      Status: "Neu",
       Erstellt_von: aktuellerUser(),
       Belohnung: gesamtpreis,
       Erstellt_am: new Date().toISOString(),
       Auftragstyp:"Bestellung",
-      Ziel_id:ausgewaehltesAngebot.id
-    });
+      Ziel_id:ausgewaehltesAngebot.id,
+      Besteller_Hof_id:Number(aktuellerHofId()),
+      Anbieter_Hof_id:Number(zielHofId),
+      Bestellung_Menge:menge,
+      Bestellung_Inhalt:Number(ausgewaehltesAngebot.Inhalt||0),
+      Bestellung_Einheit:einheit,
+      Bestellung_Verpackungseinheit:
+        ausgewaehltesAngebot.Verpackungseinheit||"Einheit",
+      Bestellung_Einzelpreis:preis,
+      Bestellung_Gesamtpreis:gesamtpreis
+    }, true);
+
+    const erstellterAuftrag =
+      erstellteAuftraege && erstellteAuftraege.length
+        ? erstellteAuftraege[0]
+        : null;
+
+    if(erstellterAuftrag){
+      await post("Auftrag_Kommentare",{
+        Auftrag_id:Number(erstellterAuftrag.id),
+        User_id:Number(localStorage.getItem("user_id")||0)||null,
+        Benutzername:aktuellerUser(),
+        Typ:"System",
+        Kommentar:"🛒 Marktplatz-Bestellung wurde erstellt. Status: Neu.",
+        Erstellt_am:new Date().toISOString()
+      });
+    }
     await patch("Angebote", ausgewaehltesAngebot.id, {
       Bestand: bestand - menge,
       Aktiv: (bestand - menge) > 0
