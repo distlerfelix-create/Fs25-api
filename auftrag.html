@@ -19,7 +19,7 @@ button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;fo
 .green{background:#008800;color:white}.blue{background:#004488;color:white}.orange{background:#cc7700;color:white}.red{background:#aa0000;color:white}.dark{background:#333;color:white}
 .msg{color:#ffaa33;text-align:center;margin-top:12px;font-weight:bold;white-space:pre-line}.leer{color:white;text-align:center;margin-top:40px;font-size:18px}
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.badge{padding:6px 11px;border-radius:20px;color:white;font-size:13px;font-weight:bold}
-.offen{background:#008800}.angenommen{background:#b59b00}.bearbeitung{background:#004488}.erledigt{background:#008800}.abgelehnt{background:#aa0000}.prioHoch{background:#aa0000}.prioMittel{background:#cc7700}.prioNiedrig{background:#008800}
+.neu{background:#555}.offen{background:#555}.angenommen{background:#b59b00}.bearbeitung{background:#004488}.zustellung{background:#663399}.zugestellt{background:#008899}.erledigt{background:#008800}.abgelehnt{background:#aa0000}.prioHoch{background:#aa0000}.prioMittel{background:#cc7700}.prioNiedrig{background:#008800}
 .verlauf-item{background:#090909;border-left:4px solid #008800;border-radius:10px;padding:12px;margin-bottom:10px}.verlauf-item.system{border-left-color:#ffaa33}.verlauf-meta{color:#ffaa33;font-size:13px;margin-bottom:6px}.verlauf-text{color:white;line-height:1.45;white-space:pre-line}
 .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.action-grid button{margin-top:0}.timeline{display:grid;gap:8px}.timeline-item{background:#090909;border:1px solid #333;border-radius:10px;padding:10px;color:white}.timeline-item b{color:#ffaa33}
 @media(max-width:560px){.action-grid{grid-template-columns:1fr}}
@@ -39,19 +39,97 @@ const USERNAME=localStorage.getItem("username")||"Unbekannt";
 if(!USER_ID){location.href="login.html";}
 const AUFTRAG_ID=new URLSearchParams(location.search).get("id");
 
-let auftrag=null,user=null,users=[],kommentare=[],istAdmin=false,bearbeitenOffen=false;
+let auftrag=null,user=null,users=[],kommentare=[],istAdmin=false,bearbeitenOffen=false,hoefe=[],rechnungen=[],serverStatus=null;
 function headers(){return{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
 async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json()}
 async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
+async function postReturn(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=representation"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return await r.json()}
 async function patchAuftrag(d){const r=await fetch(SUPABASE_URL+"/rest/v1/Auftraege?id=eq."+AUFTRAG_ID,{method:"PATCH",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
 function text(v){return v===null||v===undefined||v===""?"-":v}
 function datum(v){if(!v)return"-";const d=new Date(v);if(isNaN(d.getTime()))return"-";return d.toLocaleDateString("de-DE")+" "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}
-function statusNormal(s){const x=String(s||"Offen").toLowerCase();if(x==="in arbeit"||x==="in bearbeitung")return"In Bearbeitung";if(x==="abgeschlossen"||x==="erledigt")return"Erledigt";if(x==="angenommen")return"Angenommen";if(x==="abgelehnt")return"Abgelehnt";return"Offen"}
-function statusKlasse(s){s=statusNormal(s);if(s==="Angenommen")return"angenommen";if(s==="In Bearbeitung")return"bearbeitung";if(s==="Erledigt")return"erledigt";if(s==="Abgelehnt")return"abgelehnt";return"offen"}
-function statusIcon(s){s=statusNormal(s);if(s==="Angenommen")return"🟡";if(s==="In Bearbeitung")return"🔵";if(s==="Erledigt")return"✅";if(s==="Abgelehnt")return"❌";return"🟢"}
+function statusNormal(s){
+  const x=String(s||"Neu").trim().toLowerCase();
+  if(x==="offen"||x==="neu")return"Neu";
+  if(x==="angenommen")return"Angenommen";
+  if(x==="abgelehnt")return"Abgelehnt";
+  if(x==="in arbeit"||x==="in bearbeitung")return"In Bearbeitung";
+  if(x==="in zustellung")return"In Zustellung";
+  if(x==="zugestellt"||x==="zugestellt und rechnung gestellt")return"Zugestellt und Rechnung gestellt";
+  if(x==="erledigt"||x==="abgeschlossen"||x==="erledigt und bezahlt")return"Erledigt und bezahlt";
+  return"Neu";
+}
+function statusKlasse(s){
+  s=statusNormal(s);
+  if(s==="Angenommen")return"angenommen";
+  if(s==="In Bearbeitung")return"bearbeitung";
+  if(s==="In Zustellung")return"zustellung";
+  if(s==="Zugestellt und Rechnung gestellt")return"zugestellt";
+  if(s==="Erledigt und bezahlt")return"erledigt";
+  if(s==="Abgelehnt")return"abgelehnt";
+  return"neu";
+}
+function statusIcon(s){
+  s=statusNormal(s);
+  if(s==="Angenommen")return"🟡";
+  if(s==="In Bearbeitung")return"🔵";
+  if(s==="In Zustellung")return"🚚";
+  if(s==="Zugestellt und Rechnung gestellt")return"🧾";
+  if(s==="Erledigt und bezahlt")return"✅";
+  if(s==="Abgelehnt")return"❌";
+  return"🆕";
+}
 function prioKlasse(p){if(p==="Hoch")return"prioHoch";if(p==="Niedrig")return"prioNiedrig";return"prioMittel"}
 function prioIcon(p){if(p==="Hoch")return"🔴";if(p==="Niedrig")return"🟢";return"🟡"}
 function istEinsatz(){return auftrag&&(auftrag.Auftragstyp==="Einsatz"||auftrag.Typ==="Einsatz")}
+function istBestellung(){return auftrag&&(auftrag.Auftragstyp==="Bestellung"||auftrag.Typ==="Marktplatz")}
+function hofName(id){const h=hoefe.find(x=>String(x.id)===String(id));return h?h.Name:"-"}
+function euro(v){return Number(v||0).toLocaleString("de-AT",{minimumFractionDigits:0,maximumFractionDigits:2})+" €"}
+function rechnungBezahlt(){
+  if(!auftrag||!auftrag.Rechnung_id)return false;
+  const r=rechnungen.find(x=>String(x.id)===String(auftrag.Rechnung_id));
+  return !!(r&&(r.Zahlung_bestaetigt===true||r.Bezahlt===true));
+}
+function rechnungsNummer(){return"RE-"+new Date().toISOString().replace(/\D/g,"").slice(0,14)}
+async function rechnungAutomatischErstellen(){
+  if(!istBestellung())return null;
+  if(auftrag.Rechnung_id)return auftrag.Rechnung_id;
+  if(!auftrag.Anbieter_Hof_id||!auftrag.Besteller_Hof_id){
+    throw new Error("Bei dieser Bestellung fehlen Anbieter- oder Besteller-Hof.");
+  }
+  const nr=rechnungsNummer();
+  const menge=Number(auftrag.Bestellung_Menge||1);
+  const einzelpreis=Number(auftrag.Bestellung_Einzelpreis||auftrag.Belohnung||0);
+  const gesamtpreis=Number(auftrag.Bestellung_Gesamtpreis||auftrag.Belohnung||0);
+  const created=await postReturn("Rechnungen",{
+    Rechnung_nr:nr,
+    Von_Hof_id:Number(auftrag.Anbieter_Hof_id),
+    An_Hof_id:Number(auftrag.Besteller_Hof_id),
+    Produkt:auftrag.Titel||"Marktplatz-Bestellung",
+    Menge:menge,
+    Einheit:auftrag.Bestellung_Verpackungseinheit||auftrag.Bestellung_Einheit||"Einheit",
+    Einzelpreis:einzelpreis,
+    Gesamtpreis:gesamtpreis,
+    Bemerkung:"Automatisch aus Marktplatz-Bestellung #"+auftrag.id+" erstellt.",
+    Bezahlt:false,
+    Storniert:false,
+    Status:"Offen",
+    Zahlung_gemeldet:false,
+    Zahlung_bestaetigt:false,
+    Erstellt_von:userName(),
+    Server_Monat:serverStatus?.Monat??serverStatus?.monat??null,
+    Server_Tag:Number(serverStatus?.Tag??serverStatus?.tag??0)||null,
+    Server_Jahr:Number(serverStatus?.Jahr??serverStatus?.jahr??0)||null,
+    Faellig_nach_Monaten:1
+  });
+  const rechnung=created&&created.length?created[0]:null;
+  if(!rechnung)throw new Error("Rechnung konnte nicht erstellt werden.");
+  await patchAuftrag({
+    Rechnung_id:Number(rechnung.id),
+    Rechnung_erstellt_am:new Date().toISOString()
+  });
+  await verlaufEintrag("System","🧾 Rechnung "+nr+" wurde automatisch erstellt.");
+  return rechnung.id;
+}
 function userName(){return user?(user.Vorname||user["PSN-Username"]||USERNAME):USERNAME}
 async function verlaufEintrag(typ,kommentar){await post("Auftrag_Kommentare",{Auftrag_id:Number(AUFTRAG_ID),User_id:Number(USER_ID),Benutzername:userName(),Typ:typ,Kommentar:kommentar,Erstellt_am:new Date().toISOString()})}
 async function wichtigeMeldung(titel,nachricht){
@@ -61,8 +139,8 @@ async function wichtigeMeldung(titel,nachricht){
 async function laden(){
   const box=document.getElementById("inhalt");
   try{
-    const [auftraegeDaten,userDaten,kommentarDaten]=await Promise.all([api("Auftraege"),api("Users"),api("Auftrag_Kommentare")]);
-    auftrag=auftraegeDaten.find(a=>String(a.id)===String(AUFTRAG_ID));user=userDaten.find(u=>String(u.id)===String(USER_ID));users=userDaten;
+    const [auftraegeDaten,userDaten,kommentarDaten,hofDaten,rechnungDaten,serverDaten]=await Promise.all([api("Auftraege"),api("Users"),api("Auftrag_Kommentare"),api("Hoefe"),api("Rechnungen"),api("Serverstatus")]);
+    auftrag=auftraegeDaten.find(a=>String(a.id)===String(AUFTRAG_ID));user=userDaten.find(u=>String(u.id)===String(USER_ID));users=userDaten;hoefe=hofDaten||[];rechnungen=rechnungDaten||[];serverStatus=(serverDaten||[]).find(s=>Number(s.id)===1)||(serverDaten||[])[0]||null;
     kommentare=(kommentarDaten||[]).filter(k=>String(k.Auftrag_id)===String(AUFTRAG_ID)).sort((a,b)=>new Date(a.Erstellt_am||0)-new Date(b.Erstellt_am||0));
     if(!auftrag){box.innerHTML="<div class='leer'>Auftrag nicht gefunden.</div>";return}
     istAdmin=user&&user.Admin===true;
@@ -84,12 +162,20 @@ function anzeigen(){
     <div class="label">Erstellt von</div><div class="value">${text(auftrag.Erstellt_von)}</div>
     <div class="label">Hof</div><div class="value">${text(auftrag.Hof)}</div>
     <div class="label">Organisation</div><div class="value">${text(auftrag.Organisation)}</div>
+    ${istBestellung()?`
+      <div class="label">Besteller-Hof</div><div class="value">${hofName(auftrag.Besteller_Hof_id)}</div>
+      <div class="label">Anbieter-Hof</div><div class="value">${hofName(auftrag.Anbieter_Hof_id)}</div>
+      <div class="label">Bestellwert</div><div class="value">${euro(auftrag.Bestellung_Gesamtpreis||auftrag.Belohnung)}</div>
+      <div class="label">Rechnung</div><div class="value">${auftrag.Rechnung_id?"Rechnung #"+auftrag.Rechnung_id:"Noch nicht erstellt"}</div>
+    `:""}
   </div>
   <div class="card"><h2>Aktionen</h2><div class="action-grid">`;
-  if(s==="Offen")html+=`<button class="orange" onclick="statusSetzen('Angenommen')">Annehmen</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
+  if(s==="Neu")html+=`<button class="orange" onclick="statusSetzen('Angenommen')">Annehmen</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
   if(s==="Angenommen")html+=`<button class="blue" onclick="statusSetzen('In Bearbeitung')">In Bearbeitung</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
-  if(s==="In Bearbeitung")html+=`<button class="green" onclick="statusSetzen('Erledigt')">Erledigt</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
-  if(s==="Erledigt"||s==="Abgelehnt")html+=`<button class="dark" onclick="statusSetzen('Offen')">Wieder öffnen</button>`;
+  if(s==="In Bearbeitung")html+=`<button class="orange" onclick="statusSetzen('In Zustellung')">In Zustellung</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
+  if(s==="In Zustellung")html+=`<button class="green" onclick="statusSetzen('Zugestellt und Rechnung gestellt')">Zugestellt + Rechnung erstellen</button>`;
+  if(s==="Zugestellt und Rechnung gestellt")html+=`<button class="green" onclick="statusSetzen('Erledigt und bezahlt')">Erledigt und bezahlt</button>`;
+  if(s==="Erledigt und bezahlt"||s==="Abgelehnt")html+=`<button class="dark" onclick="statusSetzen('Neu')">Wieder öffnen</button>`;
   html+=`</div><button class="dark" onclick="formularUmschalten()">${bearbeitenOffen?"Bearbeiten schließen":"Auftrag bearbeiten"}</button>${istAdmin?`<button class="red" onclick="auftragLoeschen()">Auftrag löschen</button>`:""}</div>`;
   if(bearbeitenOffen)html+=formular();
   html+=timelineHtml()+kommentarHtml();
@@ -97,10 +183,12 @@ function anzeigen(){
 }
 function timelineHtml(){
   return `<div class="card"><h2>🕒 Zeitachse</h2><div class="timeline">
-    <div class="timeline-item"><b>📋 Erstellt</b><br>${datum(auftrag.Erstellt_am||auftrag.created_at)} · ${text(auftrag.Erstellt_von)}</div>
+    <div class="timeline-item"><b>🆕 Neu</b><br>${datum(auftrag.Erstellt_am||auftrag.created_at)} · ${text(auftrag.Erstellt_von)}</div>
     <div class="timeline-item"><b>🟡 Angenommen</b><br>${datum(auftrag.Angenommen_am)} · ${text(auftrag.Bearbeiter_Name||auftrag.Angenommen_von)}</div>
     <div class="timeline-item"><b>🔵 In Bearbeitung</b><br>${datum(auftrag.In_Bearbeitung_am)}</div>
-    <div class="timeline-item"><b>✅ Erledigt</b><br>${datum(auftrag.Erledigt_am)}</div>
+    <div class="timeline-item"><b>🚚 In Zustellung</b><br>${datum(auftrag.In_Zustellung_am)}</div>
+    <div class="timeline-item"><b>🧾 Zugestellt und Rechnung gestellt</b><br>${datum(auftrag.Zugestellt_am)} · Rechnung ${text(auftrag.Rechnung_id)}</div>
+    <div class="timeline-item"><b>✅ Erledigt und bezahlt</b><br>${datum(auftrag.Erledigt_bezahlt_am||auftrag.Erledigt_am)}</div>
     <div class="timeline-item"><b>❌ Abgelehnt</b><br>${datum(auftrag.Abgelehnt_am)}</div>
   </div></div>`;
 }
@@ -120,34 +208,79 @@ function formular(){
     <div class="label">Kategorie</div><input id="kategorie" value="${text(auftrag.Kategorie||"Sonstiges")}">
     <div class="label">Belohnung</div><input id="belohnung" type="number" value="${auftrag.Belohnung||0}">
     <div class="label">Priorität</div><select id="prioritaet"><option ${auftrag.Prioritaet==="Hoch"?"selected":""}>Hoch</option><option ${!auftrag.Prioritaet||auftrag.Prioritaet==="Mittel"?"selected":""}>Mittel</option><option ${auftrag.Prioritaet==="Niedrig"?"selected":""}>Niedrig</option></select>
-    <div class="label">Status</div><select id="status"><option ${s==="Offen"?"selected":""}>Offen</option><option ${s==="Angenommen"?"selected":""}>Angenommen</option><option ${s==="In Bearbeitung"?"selected":""}>In Bearbeitung</option><option ${s==="Erledigt"?"selected":""}>Erledigt</option><option ${s==="Abgelehnt"?"selected":""}>Abgelehnt</option></select>
+    <div class="label">Status</div><select id="status">
+      <option ${s==="Neu"?"selected":""}>Neu</option>
+      <option ${s==="Angenommen"?"selected":""}>Angenommen</option>
+      <option ${s==="Abgelehnt"?"selected":""}>Abgelehnt</option>
+      <option ${s==="In Bearbeitung"?"selected":""}>In Bearbeitung</option>
+      <option ${s==="In Zustellung"?"selected":""}>In Zustellung</option>
+      <option ${s==="Zugestellt und Rechnung gestellt"?"selected":""}>Zugestellt und Rechnung gestellt</option>
+      <option ${s==="Erledigt und bezahlt"?"selected":""}>Erledigt und bezahlt</option>
+    </select>
     <button class="green" onclick="speichern()">Speichern</button><div id="meldung" class="msg"></div></div>`;
 }
 async function speichern(){
   const m=document.getElementById("meldung");m.innerText="Speichere...";
   try{
     const neu=document.getElementById("status").value,alt=statusNormal(auftrag.Status),daten={Titel:document.getElementById("titel").value.trim(),Beschreibung:document.getElementById("beschreibung").value.trim(),Kategorie:document.getElementById("kategorie").value.trim(),Belohnung:Number(document.getElementById("belohnung").value||0),Prioritaet:document.getElementById("prioritaet").value,Status:neu};
-    if(neu!==alt)Object.assign(daten,statusDaten(neu));
+    if(neu!==alt){
+      if(neu==="Zugestellt und Rechnung gestellt"&&istBestellung())await rechnungAutomatischErstellen();
+      if(neu==="Erledigt und bezahlt"&&istBestellung()&&!rechnungBezahlt())throw new Error("Die zugehörige Rechnung ist noch nicht als bezahlt bestätigt.");
+      Object.assign(daten,statusDaten(neu));
+    }
     await patchAuftrag(daten);if(neu!==alt)await verlaufEintrag("Status",statusKommentar(neu));
     bearbeitenOffen=false;await laden();
   }catch(e){m.innerText="Fehler: "+e.message}
 }
 function statusDaten(neu){
   const jetzt=new Date().toISOString();
-  if(neu==="Offen")return{Bearbeiter_User_id:null,Bearbeiter_Name:null,Angenommen_von:null,Angenommen_am:null,In_Bearbeitung_am:null,Erledigt_am:null,Abgelehnt_am:null};
-  if(neu==="Angenommen")return{Bearbeiter_User_id:Number(USER_ID),Bearbeiter_Name:userName(),Angenommen_von:userName(),Angenommen_am:jetzt,Abgelehnt_am:null};
-  if(neu==="In Bearbeitung")return{Bearbeiter_User_id:Number(auftrag.Bearbeiter_User_id||USER_ID),Bearbeiter_Name:auftrag.Bearbeiter_Name||userName(),Angenommen_von:auftrag.Angenommen_von||userName(),Angenommen_am:auftrag.Angenommen_am||jetzt,In_Bearbeitung_am:jetzt,Abgelehnt_am:null};
-  if(neu==="Erledigt")return{Erledigt_am:jetzt,Abgelehnt_am:null};
-  if(neu==="Abgelehnt")return{Abgelehnt_am:jetzt,Erledigt_am:null};
+  if(neu==="Neu")return{
+    Bearbeiter_User_id:null,Bearbeiter_Name:null,Angenommen_von:null,
+    Angenommen_am:null,In_Bearbeitung_am:null,In_Zustellung_am:null,
+    Zugestellt_am:null,Erledigt_am:null,Erledigt_bezahlt_am:null,
+    Abgelehnt_am:null
+  };
+  if(neu==="Angenommen")return{
+    Bearbeiter_User_id:Number(USER_ID),Bearbeiter_Name:userName(),
+    Angenommen_von:userName(),Angenommen_am:auftrag.Angenommen_am||jetzt,
+    Abgelehnt_am:null
+  };
+  if(neu==="In Bearbeitung")return{
+    Bearbeiter_User_id:Number(auftrag.Bearbeiter_User_id||USER_ID),
+    Bearbeiter_Name:auftrag.Bearbeiter_Name||userName(),
+    Angenommen_von:auftrag.Angenommen_von||userName(),
+    Angenommen_am:auftrag.Angenommen_am||jetzt,
+    In_Bearbeitung_am:jetzt,Abgelehnt_am:null
+  };
+  if(neu==="In Zustellung")return{In_Zustellung_am:jetzt,Abgelehnt_am:null};
+  if(neu==="Zugestellt und Rechnung gestellt")return{Zugestellt_am:jetzt,Abgelehnt_am:null};
+  if(neu==="Erledigt und bezahlt")return{Erledigt_am:jetzt,Erledigt_bezahlt_am:jetzt,Abgelehnt_am:null};
+  if(neu==="Abgelehnt")return{Abgelehnt_am:jetzt,Erledigt_am:null,Erledigt_bezahlt_am:null};
   return{};
 }
-function statusKommentar(neu){if(neu==="Angenommen")return"🟡 "+userName()+" hat den Auftrag angenommen.";if(neu==="In Bearbeitung")return"🔵 "+userName()+" hat die Bearbeitung gestartet.";if(neu==="Erledigt")return"✅ "+userName()+" hat den Auftrag erledigt.";if(neu==="Abgelehnt")return"❌ "+userName()+" hat den Auftrag abgelehnt.";return"🟢 "+userName()+" hat den Auftrag wieder geöffnet."}
+function statusKommentar(neu){
+  if(neu==="Angenommen")return"🟡 "+userName()+" hat die Bestellung angenommen.";
+  if(neu==="In Bearbeitung")return"🔵 "+userName()+" hat die Bearbeitung gestartet.";
+  if(neu==="In Zustellung")return"🚚 "+userName()+" hat die Bestellung in Zustellung gesetzt.";
+  if(neu==="Zugestellt und Rechnung gestellt")return"🧾 Bestellung wurde zugestellt und die Rechnung wurde erstellt.";
+  if(neu==="Erledigt und bezahlt")return"✅ Bestellung ist erledigt und bezahlt.";
+  if(neu==="Abgelehnt")return"❌ "+userName()+" hat die Bestellung abgelehnt.";
+  return"🆕 "+userName()+" hat den Auftrag wieder auf Neu gesetzt.";
+}
 async function statusSetzen(neu){
   try{
-    await patchAuftrag({Status:neu,...statusDaten(neu)});await verlaufEintrag("Status",statusKommentar(neu));
-    if(["Angenommen","Erledigt","Abgelehnt"].includes(neu))await wichtigeMeldung(statusIcon(neu)+" Auftrag "+neu.toLowerCase()+": "+auftrag.Titel,statusKommentar(neu));
+    if(neu==="Zugestellt und Rechnung gestellt"&&istBestellung()){
+      await rechnungAutomatischErstellen();
+    }
+    if(neu==="Erledigt und bezahlt"&&istBestellung()&&!rechnungBezahlt()){
+      throw new Error("Die zugehörige Rechnung ist noch nicht als bezahlt bestätigt.");
+    }
+    await patchAuftrag({Status:neu,...statusDaten(neu)});
+    await verlaufEintrag("Status",statusKommentar(neu));
+    await wichtigeMeldung(statusIcon(neu)+" "+neu+": "+auftrag.Titel,statusKommentar(neu));
     await laden();
-  }catch(e){alert("Fehler:\n"+e.message)}
+  }catch(e){alert("Fehler:
+"+e.message)}
 }
 async function kommentarSenden(){
   const m=document.getElementById("kommentarMsg"),feld=document.getElementById("neuerKommentar"),kommentar=feld.value.trim();m.innerText="";
