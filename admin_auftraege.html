@@ -12,32 +12,77 @@ button{width:100%;margin-top:10px;padding:14px;border:none;border-radius:12px;fo
 </style></head>
 <body><div class="app">
 <button class="back" onclick="location.href='admin.html'">← Zurück</button><h1>AUFTRÄGE</h1>
-<div class="tabs"><button class="dark" onclick="filter='offen';anzeigen()">Offen</button><button class="dark" onclick="filter='angenommen';anzeigen()">Angenommen</button><button class="dark" onclick="filter='bearbeitung';anzeigen()">Bearbeitung</button><button class="dark" onclick="filter='erledigt';anzeigen()">Erledigt</button><button class="dark" onclick="filter='abgelehnt';anzeigen()">Abgelehnt</button></div>
+<div class="tabs">
+<button class="dark" onclick="filter='neu';anzeigen()">Neu</button>
+<button class="dark" onclick="filter='angenommen';anzeigen()">Angenommen</button>
+<button class="dark" onclick="filter='bearbeitung';anzeigen()">Bearbeitung</button>
+<button class="dark" onclick="filter='zustellung';anzeigen()">Zustellung</button>
+<button class="dark" onclick="filter='zugestellt';anzeigen()">Zugestellt + Rechnung</button>
+<button class="dark" onclick="filter='erledigt';anzeigen()">Erledigt + bezahlt</button>
+<button class="dark" onclick="filter='abgelehnt';anzeigen()">Abgelehnt</button>
+</div>
 <input id="suche" placeholder="Auftrag suchen..." oninput="anzeigen()"><div id="liste">Lade...</div></div>
 <script>
 const SUPABASE_URL="https://iddfyhsxsdjgestwxcei.supabase.co",SUPABASE_KEY="sb_publishable_j0vVUcU3niZMXL4loB6QWQ_bWg0mloR",USER_ID=localStorage.getItem("user_id"),USERNAME=localStorage.getItem("username")||"Admin";
 if(!USER_ID)location.href="login.html";
-let users=[],auftraege=[],filter="offen";
+let users=[],auftraege=[],hoefe=[],rechnungen=[],serverStatus=null,filter="neu";
 function headers(){return{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
 async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json()}
 async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),Prefer:"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
+async function postReturn(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),Prefer:"return=representation"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return await r.json()}
 async function patch(t,id,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"PATCH",headers:{...headers(),Prefer:"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
 async function del(t,id){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?id=eq."+id,{method:"DELETE",headers:{...headers(),Prefer:"return=minimal"}});if(!r.ok)throw new Error(await r.text())}
 function text(v){return v===null||v===undefined||v===""?"-":v}
-function statusNormal(s){s=String(s||"Offen").toLowerCase();if(s==="in arbeit"||s==="in bearbeitung")return"In Bearbeitung";if(s==="erledigt"||s==="abgeschlossen")return"Erledigt";if(s==="angenommen")return"Angenommen";if(s==="abgelehnt")return"Abgelehnt";return"Offen"}
+function statusNormal(s){s=String(s||"Neu").toLowerCase();if(s==="offen"||s==="neu")return"Neu";if(s==="angenommen")return"Angenommen";if(s==="abgelehnt")return"Abgelehnt";if(s==="in arbeit"||s==="in bearbeitung")return"In Bearbeitung";if(s==="in zustellung")return"In Zustellung";if(s==="zugestellt"||s==="zugestellt und rechnung gestellt")return"Zugestellt und Rechnung gestellt";if(s==="erledigt"||s==="abgeschlossen"||s==="erledigt und bezahlt")return"Erledigt und bezahlt";return"Neu"}
 function userName(u){return u?(u.Vorname||u["PSN-Username"]||u.Username||"Spieler"):"-"}
+function istBestellung(a){return a&&(a.Auftragstyp==="Bestellung"||a.Typ==="Marktplatz")}
+function rechnungsNummer(){return"RE-"+new Date().toISOString().replace(/\D/g,"").slice(0,14)}
+function rechnungBezahlt(a){
+  if(!a||!a.Rechnung_id)return false;
+  const r=rechnungen.find(x=>String(x.id)===String(a.Rechnung_id));
+  return !!(r&&(r.Zahlung_bestaetigt===true||r.Bezahlt===true));
+}
+async function rechnungAutomatischErstellen(a){
+  if(!istBestellung(a))return null;
+  if(a.Rechnung_id)return a.Rechnung_id;
+  if(!a.Anbieter_Hof_id||!a.Besteller_Hof_id)throw new Error("Anbieter- oder Besteller-Hof fehlt.");
+  const nr=rechnungsNummer();
+  const created=await postReturn("Rechnungen",{
+    Rechnung_nr:nr,
+    Von_Hof_id:Number(a.Anbieter_Hof_id),
+    An_Hof_id:Number(a.Besteller_Hof_id),
+    Produkt:a.Titel||"Marktplatz-Bestellung",
+    Menge:Number(a.Bestellung_Menge||1),
+    Einheit:a.Bestellung_Verpackungseinheit||a.Bestellung_Einheit||"Einheit",
+    Einzelpreis:Number(a.Bestellung_Einzelpreis||a.Belohnung||0),
+    Gesamtpreis:Number(a.Bestellung_Gesamtpreis||a.Belohnung||0),
+    Bemerkung:"Automatisch aus Marktplatz-Bestellung #"+a.id+" erstellt.",
+    Bezahlt:false,Storniert:false,Status:"Offen",
+    Zahlung_gemeldet:false,Zahlung_bestaetigt:false,
+    Erstellt_von:USERNAME,
+    Server_Monat:serverStatus?.Monat??serverStatus?.monat??null,
+    Server_Tag:Number(serverStatus?.Tag??serverStatus?.tag??0)||null,
+    Server_Jahr:Number(serverStatus?.Jahr??serverStatus?.jahr??0)||null,
+    Faellig_nach_Monaten:1
+  });
+  const r=created&&created.length?created[0]:null;
+  if(!r)throw new Error("Rechnung konnte nicht erstellt werden.");
+  await patch("Auftraege",a.id,{Rechnung_id:Number(r.id),Rechnung_erstellt_am:new Date().toISOString()});
+  await verlauf(a.id,"System","🧾 Rechnung "+nr+" wurde automatisch erstellt.");
+  return r.id;
+}
 function userSelect(id,aktuellId){let h=`<select id="user_${id}"><option value="">Kein Bearbeiter</option>`;users.filter(u=>u.Aktiviert!==false).forEach(u=>h+=`<option value="${u.id}" ${String(u.id)===String(aktuellId)?"selected":""}>${userName(u)}</option>`);return h+"</select>"}
 async function verlauf(id,typ,kommentar){await post("Auftrag_Kommentare",{Auftrag_id:Number(id),User_id:Number(USER_ID),Benutzername:USERNAME,Typ:typ,Kommentar:kommentar,Erstellt_am:new Date().toISOString()})}
-async function laden(){const box=document.getElementById("liste");try{users=await api("Users");auftraege=await api("Auftraege");const admin=users.find(u=>String(u.id)===String(USER_ID));if(!admin||admin.Admin!==true){box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";return}anzeigen()}catch(e){box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>"}}
+async function laden(){const box=document.getElementById("liste");try{[users,auftraege,hoefe,rechnungen,serverListe]=await Promise.all([api("Users"),api("Auftraege"),api("Hoefe"),api("Rechnungen"),api("Serverstatus")]);serverStatus=(serverListe||[]).find(s=>Number(s.id)===1)||(serverListe||[])[0]||null;const admin=users.find(u=>String(u.id)===String(USER_ID));if(!admin||admin.Admin!==true){box.innerHTML="<div class='leer'>Kein Admin-Zugriff.</div>";return}anzeigen()}catch(e){box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>"}}
 function anzeigen(){
  const box=document.getElementById("liste"),suche=document.getElementById("suche").value.toLowerCase().trim();
- let liste=auftraege.filter(a=>{const s=statusNormal(a.Status);if(filter==="offen"&&s!=="Offen")return false;if(filter==="angenommen"&&s!=="Angenommen")return false;if(filter==="bearbeitung"&&s!=="In Bearbeitung")return false;if(filter==="erledigt"&&s!=="Erledigt")return false;if(filter==="abgelehnt"&&s!=="Abgelehnt")return false;return [a.Titel,a.Beschreibung,a.Kategorie,a.Hof,a.Organisation,a.Erstellt_von,a.Bearbeiter_Name,a.Angenommen_von].join(" ").toLowerCase().includes(suche)});
+ let liste=auftraege.filter(a=>{const s=statusNormal(a.Status);if(filter==="neu"&&s!=="Neu")return false;if(filter==="angenommen"&&s!=="Angenommen")return false;if(filter==="bearbeitung"&&s!=="In Bearbeitung")return false;if(filter==="zustellung"&&s!=="In Zustellung")return false;if(filter==="zugestellt"&&s!=="Zugestellt und Rechnung gestellt")return false;if(filter==="erledigt"&&s!=="Erledigt und bezahlt")return false;if(filter==="abgelehnt"&&s!=="Abgelehnt")return false;return [a.Titel,a.Beschreibung,a.Kategorie,a.Hof,a.Organisation,a.Erstellt_von,a.Bearbeiter_Name,a.Angenommen_von].join(" ").toLowerCase().includes(suche)});
  liste.sort((a,b)=>Number(b.id)-Number(a.id));if(!liste.length){box.innerHTML="<div class='leer'>Keine Aufträge gefunden.</div>";return}
  box.innerHTML="";liste.forEach(a=>{const s=statusNormal(a.Status),div=document.createElement("div");div.className="card "+((a.Typ==="Einsatz"||a.Auftragstyp==="Einsatz")?"einsatz":"");
  div.innerHTML=`<div class="titel">${a.Typ==="Einsatz"||a.Auftragstyp==="Einsatz"?"🚨 ":"📋 "}${text(a.Titel)}</div>
  <div class="info"><span class="orangeText">ID:</span> ${a.id}<br><span class="orangeText">Status:</span> ${s}<br><span class="orangeText">Priorität:</span> ${text(a.Prioritaet||"Mittel")}<br><span class="orangeText">Kategorie:</span> ${text(a.Kategorie||"Sonstiges")}<br><span class="orangeText">Bearbeiter:</span> ${text(a.Bearbeiter_Name||a.Angenommen_von)}<br><span class="orangeText">Hof:</span> ${text(a.Hof)}<br><span class="orangeText">Organisation:</span> ${text(a.Organisation)}<br><br>${text(a.Beschreibung)}</div>
  <input id="titel_${a.id}" value="${String(a.Titel||"").replaceAll('"',"&quot;")}"><textarea id="beschreibung_${a.id}">${a.Beschreibung||""}</textarea>
- <div class="grid"><select id="status_${a.id}"><option ${s==="Offen"?"selected":""}>Offen</option><option ${s==="Angenommen"?"selected":""}>Angenommen</option><option ${s==="In Bearbeitung"?"selected":""}>In Bearbeitung</option><option ${s==="Erledigt"?"selected":""}>Erledigt</option><option ${s==="Abgelehnt"?"selected":""}>Abgelehnt</option></select>
+ <div class="grid"><select id="status_${a.id}"><option ${s==="Neu"?"selected":""}>Neu</option><option ${s==="Angenommen"?"selected":""}>Angenommen</option><option ${s==="Abgelehnt"?"selected":""}>Abgelehnt</option><option ${s==="In Bearbeitung"?"selected":""}>In Bearbeitung</option><option ${s==="In Zustellung"?"selected":""}>In Zustellung</option><option ${s==="Zugestellt und Rechnung gestellt"?"selected":""}>Zugestellt und Rechnung gestellt</option><option ${s==="Erledigt und bezahlt"?"selected":""}>Erledigt und bezahlt</option></select>
  <select id="prio_${a.id}"><option ${a.Prioritaet==="Hoch"?"selected":""}>Hoch</option><option ${!a.Prioritaet||a.Prioritaet==="Mittel"?"selected":""}>Mittel</option><option ${a.Prioritaet==="Niedrig"?"selected":""}>Niedrig</option></select></div>
  <input id="kategorie_${a.id}" value="${text(a.Kategorie||"Sonstiges")}"><input id="belohnung_${a.id}" type="number" value="${a.Belohnung||0}">${userSelect(a.id,a.Bearbeiter_User_id)}
  <button class="green" onclick="speichern(${a.id})">Speichern</button><button class="dark" onclick="location.href='auftrag.html?id=${a.id}'">Öffnen</button><button class="red" onclick="loeschen(${a.id})">Löschen</button><div id="msg_${a.id}" class="msg"></div>`;
@@ -45,7 +90,9 @@ function anzeigen(){
 async function speichern(id){
  const a=auftraege.find(x=>Number(x.id)===Number(id)),m=document.getElementById("msg_"+id),neu=document.getElementById("status_"+id).value,bearbeiterId=document.getElementById("user_"+id).value,bearbeiter=users.find(u=>String(u.id)===String(bearbeiterId)),jetzt=new Date().toISOString();
  const d={Titel:document.getElementById("titel_"+id).value.trim(),Beschreibung:document.getElementById("beschreibung_"+id).value.trim(),Status:neu,Prioritaet:document.getElementById("prio_"+id).value,Kategorie:document.getElementById("kategorie_"+id).value.trim(),Belohnung:Number(document.getElementById("belohnung_"+id).value||0),Bearbeiter_User_id:bearbeiterId?Number(bearbeiterId):null,Bearbeiter_Name:bearbeiter?userName(bearbeiter):null,Angenommen_von:bearbeiter?userName(bearbeiter):null};
- if(neu==="Angenommen")d.Angenommen_am=a.Angenommen_am||jetzt;if(neu==="In Bearbeitung"){d.Angenommen_am=a.Angenommen_am||jetzt;d.In_Bearbeitung_am=jetzt}if(neu==="Erledigt")d.Erledigt_am=jetzt;if(neu==="Abgelehnt")d.Abgelehnt_am=jetzt;
+ if(neu==="Zugestellt und Rechnung gestellt"&&istBestellung(a))await rechnungAutomatischErstellen(a);
+ if(neu==="Erledigt und bezahlt"&&istBestellung(a)&&!rechnungBezahlt(a))throw new Error("Die Rechnung ist noch nicht als bezahlt bestätigt.");
+ if(neu==="Angenommen")d.Angenommen_am=a.Angenommen_am||jetzt;if(neu==="In Bearbeitung"){d.Angenommen_am=a.Angenommen_am||jetzt;d.In_Bearbeitung_am=jetzt}if(neu==="In Zustellung")d.In_Zustellung_am=jetzt;if(neu==="Zugestellt und Rechnung gestellt")d.Zugestellt_am=jetzt;if(neu==="Erledigt und bezahlt"){d.Erledigt_am=jetzt;d.Erledigt_bezahlt_am=jetzt}if(neu==="Abgelehnt")d.Abgelehnt_am=jetzt;
  try{await patch("Auftraege",id,d);if(statusNormal(a.Status)!==neu)await verlauf(id,"Status","Admin "+USERNAME+" änderte den Status auf "+neu+".");m.innerText="Gespeichert.";await laden()}catch(e){m.innerText="Fehler:\n"+e.message}}
 async function loeschen(id){if(!confirm("Auftrag wirklich löschen?"))return;try{await fetch(SUPABASE_URL+"/rest/v1/Auftrag_Kommentare?Auftrag_id=eq."+id,{method:"DELETE",headers:headers()});await del("Auftraege",id);await laden()}catch(e){alert("Fehler:\n"+e.message)}}
 laden();
