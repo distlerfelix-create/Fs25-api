@@ -279,8 +279,7 @@ async function statusSetzen(neu){
     await verlaufEintrag("Status",statusKommentar(neu));
     await wichtigeMeldung(statusIcon(neu)+" "+neu+": "+auftrag.Titel,statusKommentar(neu));
     await laden();
-  }catch(e){alert("Fehler:
-"+e.message)}
+  }catch(e){alert("Fehler:\n"+e.message)}
 }
 async function kommentarSenden(){
   const m=document.getElementById("kommentarMsg"),feld=document.getElementById("neuerKommentar"),kommentar=feld.value.trim();m.innerText="";
