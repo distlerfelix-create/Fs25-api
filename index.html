@@ -180,7 +180,17 @@ function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPAB
 async function api(tabelle){const res=await fetch(SUPABASE_URL+"/rest/v1/"+tabelle+"?select=*",{headers:headers()});if(!res.ok){throw new Error(await res.text());}return await res.json();}
 async function apiOptional(tabelle){try{return await api(tabelle);}catch(e){return [];}}
 function istLeer(v){return v===null||v===undefined||v==="";}
-function statusErledigt(status){return status==="Erledigt"||status==="Abgeschlossen"||status==="Bezahlt"||status==="Storniert";}
+function statusErledigt(status){
+  const s=String(status||"").trim().toLowerCase();
+  return [
+    "erledigt",
+    "erledigt und bezahlt",
+    "abgeschlossen",
+    "bezahlt",
+    "storniert",
+    "abgelehnt"
+  ].includes(s);
+}
 
 function datumAnzeige(d){
   if(!d)return "-";
@@ -319,7 +329,10 @@ async function ladeHome(){
     document.getElementById("statBenachrichtigungen").innerText=ungelesen;
     if(ungelesen>0){document.getElementById("badge").classList.remove("hidden");document.getElementById("badge").innerText=ungelesen;}else{document.getElementById("badge").classList.add("hidden");}
 
-    const offeneAuftraege=auftraege.filter(a=>!statusErledigt(a.Status));
+    const offeneAuftraege=auftraege.filter(a=>
+      a.Archiviert!==true &&
+      !statusErledigt(a.Status)
+    );
     document.getElementById("statAuftraege").innerText=offeneAuftraege.length;
 
     const erntereifeFelder=felder.filter(f=>erlaubteHofIds.includes(String(f.Hof_id))&&f.Erntebereit===true).length;
@@ -328,7 +341,11 @@ async function ladeHome(){
     const offeneRechnungen=rechnungen.filter(r=>(erlaubteHofIds.includes(String(r.Von_Hof_id))||erlaubteHofIds.includes(String(r.An_Hof_id)))&&r.Bezahlt!==true&&r.Storniert!==true&&r.Status!=="Bezahlt"&&r.Status!=="Storniert").length;
     document.getElementById("statRechnungen").innerText=offeneRechnungen;
 
-    const einsaetze=auftraege.filter(a=>(a.Auftragstyp==="Einsatz"||a.Typ==="Einsatz")&&a.Status!=="Erledigt"&&a.Status!=="Abgeschlossen");
+    const einsaetze=auftraege.filter(a=>
+      (a.Auftragstyp==="Einsatz"||a.Typ==="Einsatz") &&
+      a.Archiviert!==true &&
+      !statusErledigt(a.Status)
+    );
     const einsatzBox=document.getElementById("einsatzBox");
     const aktiveEinsaetze=document.getElementById("aktiveEinsaetze");
     if(einsaetze.length>0){
