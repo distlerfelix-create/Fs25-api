@@ -39,7 +39,7 @@ const USERNAME=localStorage.getItem("username")||"Unbekannt";
 if(!USER_ID){location.href="login.html";}
 const AUFTRAG_ID=new URLSearchParams(location.search).get("id");
 
-let auftrag=null,user=null,users=[],kommentare=[],istAdmin=false,bearbeitenOffen=false,hoefe=[],rechnungen=[],serverStatus=null;
+let auftrag=null,user=null,users=[],kommentare=[],istAdmin=false,bearbeitenOffen=false,hoefe=[],rechnungen=[],serverStatus=null,hofMitglieder=[],erlaubteHofIds=[];
 function headers(){return{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"}}
 async function api(t){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t+"?select=*",{headers:headers()});if(!r.ok)throw new Error(await r.text());return await r.json()}
 async function post(t,d){const r=await fetch(SUPABASE_URL+"/rest/v1/"+t,{method:"POST",headers:{...headers(),"Prefer":"return=minimal"},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text())}
@@ -81,7 +81,32 @@ function statusIcon(s){
 function prioKlasse(p){if(p==="Hoch")return"prioHoch";if(p==="Niedrig")return"prioNiedrig";return"prioMittel"}
 function prioIcon(p){if(p==="Hoch")return"🔴";if(p==="Niedrig")return"🟢";return"🟡"}
 function istEinsatz(){return auftrag&&(auftrag.Auftragstyp==="Einsatz"||auftrag.Typ==="Einsatz")}
-function istBestellung(){return auftrag&&(auftrag.Auftragstyp==="Bestellung"||auftrag.Typ==="Marktplatz")}
+function istBestellung(){
+  return auftrag&&(
+    auftrag.Auftragstyp==="Bestellung"||
+    auftrag.Typ==="Marktplatz"||
+    auftrag.Typ==="Dienstleistung"
+  );
+}
+function istLeer(v){return v===null||v===undefined||v==="";}
+function istBesteller(){
+  return istBestellung()&&
+    erlaubteHofIds.includes(String(auftrag.Besteller_Hof_id));
+}
+function istAnbieter(){
+  return istBestellung()&&
+    erlaubteHofIds.includes(String(auftrag.Anbieter_Hof_id));
+}
+function darfAuftragSehen(){
+  if(istAdmin)return true;
+  if(!istBestellung())return true;
+  return istBesteller()||istAnbieter();
+}
+function darfStatusAendern(){
+  if(istAdmin)return true;
+  if(!istBestellung())return true;
+  return istAnbieter();
+}
 function hofName(id){const h=hoefe.find(x=>String(x.id)===String(id));return h?h.Name:"-"}
 function euro(v){return Number(v||0).toLocaleString("de-AT",{minimumFractionDigits:0,maximumFractionDigits:2})+" €"}
 function rechnungBezahlt(){
@@ -132,18 +157,148 @@ async function rechnungAutomatischErstellen(){
 }
 function userName(){return user?(user.Vorname||user["PSN-Username"]||USERNAME):USERNAME}
 async function verlaufEintrag(typ,kommentar){await post("Auftrag_Kommentare",{Auftrag_id:Number(AUFTRAG_ID),User_id:Number(USER_ID),Benutzername:userName(),Typ:typ,Kommentar:kommentar,Erstellt_am:new Date().toISOString()})}
-async function wichtigeMeldung(titel,nachricht){
-  await post("Benachrichtigungen",{Titel:titel,Nachricht:nachricht,Typ:"Auftrag",User_id:null,Hof_id:null,Organisation_id:null,Gelesen:false,Erledigt:false,Archiviert:false,Telegram_gesendet:false,Erstellt_am:new Date().toISOString()});
-  await post("Telegram_queue",{Titel:titel,Nachricht:nachricht,Typ:"Auftrag",User_id:null,Hof_id:null,Organisation_id:null,Chat_id:null,Gesendet:false,Erstellt_am:new Date().toISOString(),Status:"Offen",Fehler:null});
+function chatIdVonUser(u){
+  return u.Telegram_id||u.Telegram_chat_id||u.Chat_id||null;
 }
+function userHofIds(u){
+  const ids=[];
+  if(u&&!istLeer(u.Hof_id))ids.push(String(u.Hof_id));
+  hofMitglieder
+    .filter(hm=>String(hm.User_id)===String(u?.id)&&hm.Aktiv!==false)
+    .forEach(hm=>{
+      if(!istLeer(hm.Hof_id))ids.push(String(hm.Hof_id));
+    });
+  return [...new Set(ids)];
+}
+function telegramEmpfaengerFuerHof(hofId){
+  const map=new Map();
+  users
+    .filter(u=>
+      u.Aktiviert!==false&&
+      userHofIds(u).includes(String(hofId))&&
+      chatIdVonUser(u)
+    )
+    .forEach(u=>map.set(String(chatIdVonUser(u)),u));
+  return [...map.values()];
+}
+async function hofMeldung(hofId,titel,nachricht,typ="Auftrag"){
+  if(!hofId)return 0;
+
+  await post("Benachrichtigungen",{
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:typ,
+    Auftrag_id:Number(AUFTRAG_ID),
+    User_id:null,
+    Hof_id:Number(hofId),
+    Organisation_id:null,
+    Gelesen:false,
+    Erledigt:false,
+    Archiviert:false,
+    Telegram_gesendet:false,
+    Erstellt_am:new Date().toISOString()
+  });
+
+  let anzahl=0;
+  for(const empfaenger of telegramEmpfaengerFuerHof(hofId)){
+    await post("Telegram_queue",{
+      Titel:titel,
+      Nachricht:nachricht,
+      Typ:typ,
+      User_id:Number(empfaenger.id),
+      Hof_id:Number(hofId),
+      Organisation_id:null,
+      Chat_id:Number(chatIdVonUser(empfaenger)),
+      Gesendet:false,
+      Erstellt_am:new Date().toISOString(),
+      Status:"Offen",
+      Fehler:null
+    });
+    anzahl++;
+  }
+  return anzahl;
+}
+async function wichtigeMeldung(titel,nachricht){
+  if(istBestellung()){
+    return await hofMeldung(
+      auftrag.Besteller_Hof_id,
+      titel,
+      nachricht,
+      "Bestellung"
+    );
+  }
+
+  await post("Benachrichtigungen",{
+    Titel:titel,
+    Nachricht:nachricht,
+    Typ:"Auftrag",
+    Auftrag_id:Number(AUFTRAG_ID),
+    User_id:null,
+    Hof_id:null,
+    Organisation_id:null,
+    Gelesen:false,
+    Erledigt:false,
+    Archiviert:false,
+    Telegram_gesendet:false,
+    Erstellt_am:new Date().toISOString()
+  });
+  return 0;
+}
+async function kommentarGegenhofBenachrichtigen(kommentar){
+  if(!istBestellung())return;
+
+  let zielHofId=null;
+  if(istBesteller()&&!istAnbieter()){
+    zielHofId=auftrag.Anbieter_Hof_id;
+  }else if(istAnbieter()&&!istBesteller()){
+    zielHofId=auftrag.Besteller_Hof_id;
+  }else if(istAdmin){
+    zielHofId=auftrag.Besteller_Hof_id;
+  }
+
+  if(!zielHofId)return;
+
+  await hofMeldung(
+    zielHofId,
+    "💬 Neuer Kommentar: "+(auftrag.Titel||"Bestellung"),
+    userName()+" schrieb:\n\n"+kommentar,
+    "Bestellkommentar"
+  );
+}
+
 async function laden(){
   const box=document.getElementById("inhalt");
   try{
-    const [auftraegeDaten,userDaten,kommentarDaten,hofDaten,rechnungDaten,serverDaten]=await Promise.all([api("Auftraege"),api("Users"),api("Auftrag_Kommentare"),api("Hoefe"),api("Rechnungen"),api("Serverstatus")]);
-    auftrag=auftraegeDaten.find(a=>String(a.id)===String(AUFTRAG_ID));user=userDaten.find(u=>String(u.id)===String(USER_ID));users=userDaten;hoefe=hofDaten||[];rechnungen=rechnungDaten||[];serverStatus=(serverDaten||[]).find(s=>Number(s.id)===1)||(serverDaten||[])[0]||null;
+    const [
+      auftraegeDaten,userDaten,kommentarDaten,hofDaten,
+      rechnungDaten,serverDaten,hofMitgliederDaten
+    ]=await Promise.all([
+      api("Auftraege"),
+      api("Users"),
+      api("Auftrag_Kommentare"),
+      api("Hoefe"),
+      api("Rechnungen"),
+      api("Serverstatus"),
+      api("Hof_Mitglieder").catch(()=>[])
+    ]);
+
+    auftrag=auftraegeDaten.find(a=>String(a.id)===String(AUFTRAG_ID));
+    user=userDaten.find(u=>String(u.id)===String(USER_ID));
+    users=userDaten;
+    hoefe=hofDaten||[];
+    rechnungen=rechnungDaten||[];
+    hofMitglieder=hofMitgliederDaten||[];
+    serverStatus=(serverDaten||[]).find(s=>Number(s.id)===1)||(serverDaten||[])[0]||null;
+    erlaubteHofIds=userHofIds(user);
     kommentare=(kommentarDaten||[]).filter(k=>String(k.Auftrag_id)===String(AUFTRAG_ID)).sort((a,b)=>new Date(a.Erstellt_am||0)-new Date(b.Erstellt_am||0));
     if(!auftrag){box.innerHTML="<div class='leer'>Auftrag nicht gefunden.</div>";return}
     istAdmin=user&&user.Admin===true;
+
+    if(!darfAuftragSehen()){
+      box.innerHTML="<div class='leer'>Kein Zugriff auf diesen Auftrag.</div>";
+      return;
+    }
+
     document.getElementById("seitenTitel").innerText=istEinsatz()?"EINSATZ":"AUFTRAG";
     anzeigen();
   }catch(e){box.innerHTML="<div class='leer'>Fehler:<br><br>"+e.message+"</div>"}
@@ -170,13 +325,18 @@ function anzeigen(){
     `:""}
   </div>
   <div class="card"><h2>Aktionen</h2><div class="action-grid">`;
-  if(s==="Neu")html+=`<button class="orange" onclick="statusSetzen('Angenommen')">Annehmen</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
-  if(s==="Angenommen")html+=`<button class="blue" onclick="statusSetzen('In Bearbeitung')">In Bearbeitung</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
-  if(s==="In Bearbeitung")html+=`<button class="orange" onclick="statusSetzen('In Zustellung')">In Zustellung</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
-  if(s==="In Zustellung")html+=`<button class="green" onclick="statusSetzen('Zugestellt und Rechnung gestellt')">Zugestellt + Rechnung erstellen</button>`;
-  if(s==="Zugestellt und Rechnung gestellt")html+=`<button class="green" onclick="statusSetzen('Erledigt und bezahlt')">Erledigt und bezahlt</button>`;
-  if(s==="Erledigt und bezahlt"||s==="Abgelehnt")html+=`<button class="dark" onclick="statusSetzen('Neu')">Wieder öffnen</button>`;
-  html+=`</div><button class="dark" onclick="formularUmschalten()">${bearbeitenOffen?"Bearbeiten schließen":"Auftrag bearbeiten"}</button>${istAdmin?`<button class="red" onclick="auftragLoeschen()">Auftrag löschen</button>`:""}</div>`;
+  if(darfStatusAendern()){
+    if(s==="Neu")html+=`<button class="orange" onclick="statusSetzen('Angenommen')">Annehmen</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
+    if(s==="Angenommen")html+=`<button class="blue" onclick="statusSetzen('In Bearbeitung')">In Bearbeitung</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
+    if(s==="In Bearbeitung")html+=`<button class="orange" onclick="statusSetzen('In Zustellung')">In Zustellung</button><button class="red" onclick="statusSetzen('Abgelehnt')">Ablehnen</button>`;
+    if(s==="In Zustellung")html+=`<button class="green" onclick="statusSetzen('Zugestellt und Rechnung gestellt')">Zugestellt + Rechnung erstellen</button>`;
+    if(s==="Zugestellt und Rechnung gestellt")html+=`<button class="green" onclick="statusSetzen('Erledigt und bezahlt')">Erledigt und bezahlt</button>`;
+    if(s==="Erledigt und bezahlt"||s==="Abgelehnt")html+=`<button class="dark" onclick="statusSetzen('Neu')">Wieder öffnen</button>`;
+  }else{
+    html+=`<div class="value">Statusänderungen sind nur für den Anbieter-Hof möglich.</div>`;
+  }
+
+  html+=`</div>${darfStatusAendern()?`<button class="dark" onclick="formularUmschalten()">${bearbeitenOffen?"Bearbeiten schließen":"Auftrag bearbeiten"}</button>`:""}${istAdmin?`<button class="red" onclick="auftragLoeschen()">Auftrag löschen</button>`:""}</div>`;
   if(bearbeitenOffen)html+=formular();
   html+=timelineHtml()+kommentarHtml();
   box.innerHTML=html;
@@ -222,6 +382,7 @@ function formular(){
 async function speichern(){
   const m=document.getElementById("meldung");m.innerText="Speichere...";
   try{
+    if(!darfStatusAendern())throw new Error("Du darfst diesen Auftrag nicht bearbeiten.");
     const neu=document.getElementById("status").value,alt=statusNormal(auftrag.Status),daten={Titel:document.getElementById("titel").value.trim(),Beschreibung:document.getElementById("beschreibung").value.trim(),Kategorie:document.getElementById("kategorie").value.trim(),Belohnung:Number(document.getElementById("belohnung").value||0),Prioritaet:document.getElementById("prioritaet").value,Status:neu};
     if(neu!==alt){
       if(neu==="Zugestellt und Rechnung gestellt"&&istBestellung())await rechnungAutomatischErstellen();
@@ -269,6 +430,9 @@ function statusKommentar(neu){
 }
 async function statusSetzen(neu){
   try{
+    if(!darfStatusAendern()){
+      throw new Error("Nur der Anbieter-Hof oder ein Admin darf den Status ändern.");
+    }
     if(neu==="Zugestellt und Rechnung gestellt"&&istBestellung()){
       await rechnungAutomatischErstellen();
     }
@@ -284,7 +448,14 @@ async function statusSetzen(neu){
 async function kommentarSenden(){
   const m=document.getElementById("kommentarMsg"),feld=document.getElementById("neuerKommentar"),kommentar=feld.value.trim();m.innerText="";
   if(!kommentar){m.innerText="Bitte Kommentar eingeben.";return}
-  try{await verlaufEintrag("Kommentar",kommentar);feld.value="";await laden()}catch(e){m.innerText="Fehler:\n"+e.message}
+  try{
+    await verlaufEintrag("Kommentar",kommentar);
+    await kommentarGegenhofBenachrichtigen(kommentar);
+    feld.value="";
+    await laden();
+  }catch(e){
+    m.innerText="Fehler:\n"+e.message;
+  }
 }
 async function auftragLoeschen(){
   if(!confirm("Auftrag wirklich löschen?"))return;
