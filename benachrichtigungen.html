@@ -42,6 +42,7 @@ h1{color:white;text-align:center;font-family:Georgia,serif;font-size:40px;margin
     <h2 id="popupTitel"></h2>
     <p id="popupNachricht"></p>
     <div class="popup-typ" id="popupTyp"></div>
+    <button id="auftragOeffnenBtn" class="btn-orange" onclick="auftragOeffnen()" style="display:none">Auftrag öffnen</button>
     <button id="einsatzBeendenBtn" class="btn-red" onclick="einsatzBeenden()" style="display:none">Einsatz beendet</button>
     <button class="btn-orange" onclick="archivieren()">Archivieren</button>
     <button class="btn-dark" onclick="schliessePopup()">Schließen</button>
@@ -136,6 +137,9 @@ function zeigePopup(b){
   document.getElementById("popupNachricht").innerText=b.Nachricht||"";
   document.getElementById("popupTyp").innerText="Typ: "+(b.Typ||"-")+" | Ziel: "+zielText(b);
 
+  const auftragBtn=document.getElementById("auftragOeffnenBtn");
+  auftragBtn.style.display=b.Auftrag_id?"block":"none";
+
   const btn=document.getElementById("einsatzBeendenBtn");
   btn.style.display=(b.Typ==="Einsatz"&&b.Erledigt!==true)?"block":"none";
 
@@ -196,6 +200,11 @@ async function ladeGrunddaten(){
     });
 
   erlaubteHofIds=[...new Set(erlaubteHofIds)];
+}
+
+function auftragOeffnen(){
+  if(!aktuelleBenachrichtigung||!aktuelleBenachrichtigung.Auftrag_id)return;
+  location.href="auftrag.html?id="+aktuelleBenachrichtigung.Auftrag_id;
 }
 
 async function einsatzBeenden(){
