@@ -29,6 +29,14 @@ input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px soli
 .buy-btn{background:#008800;color:white;}
 .close-btn{background:#333;color:white;}.owner-btn{background:#004488;color:white;}.owner-box{display:none;margin-top:18px;padding-top:16px;border-top:1px solid #006600;}.owner-title{color:#ffaa33;font-size:20px;font-weight:bold;margin-bottom:8px;}
 .msg{color:#ffaa33;text-align:center;margin-top:10px;font-weight:bold;white-space:pre-line;}
+.create-btn{width:100%;margin:0 0 20px;padding:15px;border:none;border-radius:12px;background:#004488;color:white;font-size:18px;font-weight:bold;}
+.service-badge{display:inline-block;background:#663399;color:white;border-radius:20px;padding:5px 10px;font-size:13px;font-weight:bold;margin-bottom:8px;}
+.product-badge{display:inline-block;background:#008800;color:white;border-radius:20px;padding:5px 10px;font-size:13px;font-weight:bold;margin-bottom:8px;}
+.popup textarea,.popup select{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px solid #008000;background:#000;color:white;font-size:18px;}
+.popup textarea{min-height:110px;resize:vertical;}
+.form-label{display:block;color:#ffaa33;font-weight:bold;margin-top:14px;}
+.danger-btn{background:#aa0000;color:white;}
+.service-owner-box{display:none;margin-top:18px;padding-top:16px;border-top:1px solid #663399;}
 </style>
 </head>
 
@@ -37,6 +45,8 @@ input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px soli
 <button class="back" onclick="location.href='index.html'">← Zurück</button>
 <h1>MARKTPLATZ</h1>
 
+<button class="create-btn" onclick="dienstleistungPopupOeffnen()">➕ Dienstleistung anbieten</button>
+
 <div class="filter">
   <button id="btnAlle" onclick="setFilter('alle')">ALLE</button>
   <button id="btnWare" onclick="setFilter('ware')">WAREN</button>
@@ -44,6 +54,41 @@ input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px soli
 </div>
 
 <div id="liste">Lade...</div>
+</div>
+
+
+<div id="dienstleistungBg" class="popup-bg">
+  <div class="popup">
+    <h2 id="dienstleistungPopupTitel">Dienstleistung anbieten</h2>
+
+    <label class="form-label">Titel</label>
+    <input id="dienstTitel" placeholder="z. B. Pflügen, Transport, Baggerarbeiten">
+
+    <label class="form-label">Beschreibung</label>
+    <textarea id="dienstBeschreibung" placeholder="Beschreibe die angebotene Dienstleistung."></textarea>
+
+    <label class="form-label">Preis</label>
+    <input id="dienstPreis" type="number" min="0" step="0.01" value="0">
+
+    <label class="form-label">Abrechnungseinheit</label>
+    <select id="dienstEinheit">
+      <option value="Stunde">pro Stunde</option>
+      <option value="Hektar">pro Hektar</option>
+      <option value="Stück">pro Stück</option>
+      <option value="Kilometer">pro Kilometer</option>
+      <option value="Pauschal">Pauschalpreis</option>
+    </select>
+
+    <label class="form-label">Verfügbarkeit</label>
+    <select id="dienstAktiv">
+      <option value="true">Verfügbar</option>
+      <option value="false">Derzeit nicht verfügbar</option>
+    </select>
+
+    <button class="buy-btn" onclick="dienstleistungSpeichern()">Dienstleistung speichern</button>
+    <button class="close-btn" onclick="dienstleistungPopupSchliessen()">Abbrechen</button>
+    <div id="dienstMsg" class="msg"></div>
+  </div>
 </div>
 
 <div id="popupBg" class="popup-bg">
@@ -56,11 +101,17 @@ input{width:100%;padding:14px;margin-top:15px;border-radius:10px;border:1px soli
       <button class="buy-btn" onclick="bestellen()">Bestellen</button>
     </div>
     <div id="ownerBereich" class="owner-box">
-      <div class="owner-title">Eigenes Angebot verwalten</div>
+      <div class="owner-title">Eigenes Produktangebot verwalten</div>
       <div id="ownerInfo" class="popup-info"></div>
       <input id="ownerMehrVerpackungen" type="number" min="1" step="1" value="1" placeholder="Verpackungen hinzufügen" oninput="ownerVorschauAktualisieren()">
       <div id="ownerVorschau" class="kauf-summe"></div>
       <button class="owner-btn" onclick="verfuegbarkeitErhoehen()">Verfügbarkeit erhöhen</button>
+    </div>
+
+    <div id="serviceOwnerBereich" class="service-owner-box">
+      <div class="owner-title">Eigene Dienstleistung verwalten</div>
+      <button class="owner-btn" onclick="dienstleistungBearbeiten()">Dienstleistung bearbeiten</button>
+      <button class="danger-btn" onclick="dienstleistungLoeschen()">Dienstleistung löschen</button>
     </div>
     <button class="close-btn" onclick="schliessePopup()">Schließen</button>
     <div id="popupMsg" class="msg"></div>
@@ -76,6 +127,7 @@ let users = [];
 let lager = [];
 let ausgewaehltesAngebot = null;
 let filter = "alle";
+let dienstleistungBearbeitungId = null;
 
 function headers(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};}
 function aktuellerUser(){return localStorage.getItem("username") || "Disti1701";}
@@ -126,6 +178,18 @@ async function patch(tabelle,id,daten){
   if(!res.ok) throw new Error(await res.text());
 }
 
+async function loeschen(tabelle,id){
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + tabelle + "?id=eq." + id, {
+    method:"DELETE",
+    headers:{...headers(),"Prefer":"return=minimal"}
+  });
+  if(!res.ok) throw new Error(await res.text());
+}
+
+function istDienstleistung(a){
+  return String(a?.Kategorie||"").toLowerCase()==="dienstleistung";
+}
+
 async function erstelleTelegramQueueFuerHof(titel,nachricht,zielHofId){
   const empfaenger = empfaengerHof(zielHofId);
   for(const u of empfaenger){
@@ -171,17 +235,24 @@ async function ladeAngebote(){
       const div = document.createElement("div");
       div.className = "card";
       div.onclick = function(){oeffneAngebot(a);};
+      const dienst = istDienstleistung(a);
       div.innerHTML = `
+        <span class="${dienst?"service-badge":"product-badge"}">${dienst?"🔧 DIENSTLEISTUNG":"📦 PRODUKT"}</span>
         <div class="titel">${a.Titel || "Angebot"}</div>
         <div class="info">
-          Kategorie: ${text(a.Kategorie)}<br>
-          Verpackung: ${text(a.Verpackungseinheit||"Einheit")}<br>
-          Inhalt je Verpackung: ${formatZahl(a.Inhalt)} ${text(a.Einheit)}<br>
-          Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
-          Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
-          Hof-ID: ${text(a.Hof_id)}
+          ${dienst
+            ? `Beschreibung: ${text(a.Beschreibung)}<br>
+               Anbieter-Hof: ${text(a.Hof_id)}<br>
+               Verfügbarkeit: ${a.Aktiv===true?"Verfügbar":"Nicht verfügbar"}`
+            : `Kategorie: ${text(a.Kategorie)}<br>
+               Verpackung: ${text(a.Verpackungseinheit||"Einheit")}<br>
+               Inhalt je Verpackung: ${formatZahl(a.Inhalt)} ${text(a.Einheit)}<br>
+               Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
+               Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
+               Hof-ID: ${text(a.Hof_id)}`
+          }
         </div>
-        <div class="preis">${formatZahl(a.Preis)} € je ${text(a.Verpackungseinheit||"Einheit")}</div>`;
+        <div class="preis">${formatZahl(a.Preis)} € ${dienst?(a.Verpackungseinheit==="Pauschal"?"pauschal":"je "+text(a.Verpackungseinheit)):"je "+text(a.Verpackungseinheit||"Einheit")}</div>`;
       box.appendChild(div);
     });
   }catch(err){
@@ -205,21 +276,31 @@ function eigenerLagerEintragFuerAngebot(a){
 function oeffneAngebot(a){
   ausgewaehltesAngebot = a;
   document.getElementById("popupTitel").innerText = a.Titel || "Angebot";
-  document.getElementById("popupInfo").innerHTML = `
-    Kategorie: ${text(a.Kategorie)}<br>
-    Verpackungseinheit: ${text(a.Verpackungseinheit||"Einheit")}<br>
-    Inhalt je Verpackung: ${formatZahl(a.Inhalt)} ${text(a.Einheit)}<br>
-    Preis je Verpackung: ${formatZahl(a.Preis)} €<br>
-    Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
-    Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
-    Hof-ID: ${text(a.Hof_id)}`;
+  const dienst = istDienstleistung(a);
+  document.getElementById("popupInfo").innerHTML = dienst
+    ? `Beschreibung: ${text(a.Beschreibung)}<br>
+       Preis: ${formatZahl(a.Preis)} € ${a.Verpackungseinheit==="Pauschal"?"pauschal":"je "+text(a.Verpackungseinheit)}<br>
+       Anbieter-Hof: ${text(a.Hof_id)}`
+    : `Kategorie: ${text(a.Kategorie)}<br>
+       Verpackungseinheit: ${text(a.Verpackungseinheit||"Einheit")}<br>
+       Inhalt je Verpackung: ${formatZahl(a.Inhalt)} ${text(a.Einheit)}<br>
+       Preis je Verpackung: ${formatZahl(a.Preis)} €<br>
+       Verfügbar: ${formatZahl(a.Bestand)} ${text(a.Verpackungseinheit||"Einheiten")}<br>
+       Gesamtmenge verfügbar: ${formatZahl(Number(a.Bestand||0)*Number(a.Inhalt||0))} ${text(a.Einheit)}<br>
+       Hof-ID: ${text(a.Hof_id)}`;
 
   document.getElementById("popupMsg").innerText = "";
   const eigenesAngebot = istEigenesAngebot(a);
   document.getElementById("kaufBereich").style.display = eigenesAngebot ? "none" : "block";
-  document.getElementById("ownerBereich").style.display = eigenesAngebot ? "block" : "none";
+  document.getElementById("ownerBereich").style.display =
+    eigenesAngebot && !dienst ? "block" : "none";
+  document.getElementById("serviceOwnerBereich").style.display =
+    eigenesAngebot && dienst ? "block" : "none";
 
-  if(eigenesAngebot){
+  document.getElementById("menge").placeholder =
+    dienst ? "Anzahl Stunden / Hektar / Einheiten" : "Anzahl Verpackungen";
+
+  if(eigenesAngebot && !dienst){
     const l = eigenerLagerEintragFuerAngebot(a);
     const lagerMenge = l ? Number(l.Menge || 0) : 0;
     const maxVerpackungen = Number(a.Inhalt || 0) > 0 ? Math.floor(lagerMenge / Number(a.Inhalt || 1)) : 0;
@@ -229,7 +310,7 @@ function oeffneAngebot(a){
       "Maximal zusätzlich möglich: <b>"+formatZahl(maxVerpackungen)+"</b> "+text(a.Verpackungseinheit||"Einheiten");
     document.getElementById("ownerMehrVerpackungen").value = maxVerpackungen > 0 ? 1 : 0;
     ownerVorschauAktualisieren();
-  }else{
+  }else if(!eigenesAngebot){
     document.getElementById("menge").value = 1;
     kaufVorschauAktualisieren();
   }
@@ -243,10 +324,16 @@ function kaufVorschauAktualisieren(){
   const inhalt=Number(ausgewaehltesAngebot.Inhalt||0);
   const preis=Number(ausgewaehltesAngebot.Preis||0);
   const verpackung=ausgewaehltesAngebot.Verpackungseinheit||"Einheit";
-  document.getElementById("kaufVorschau").innerText=
-    anzahl+" "+verpackung+
-    " = "+formatZahl(anzahl*inhalt)+" "+text(ausgewaehltesAngebot.Einheit)+
-    "\nGesamtpreis: "+formatZahl(anzahl*preis)+" €";
+  if(istDienstleistung(ausgewaehltesAngebot)){
+    document.getElementById("kaufVorschau").innerText=
+      anzahl+" "+verpackung+
+      "\nGesamtpreis: "+formatZahl(anzahl*preis)+" €";
+  }else{
+    document.getElementById("kaufVorschau").innerText=
+      anzahl+" "+verpackung+
+      " = "+formatZahl(anzahl*inhalt)+" "+text(ausgewaehltesAngebot.Einheit)+
+      "\nGesamtpreis: "+formatZahl(anzahl*preis)+" €";
+  }
 }
 
 function ownerVorschauAktualisieren(){
@@ -332,14 +419,111 @@ async function erstelleBenachrichtigung(titel, nachricht, zielHofId){
   });
 }
 
+
+function dienstleistungPopupOeffnen(angebot=null){
+  dienstleistungBearbeitungId = angebot ? Number(angebot.id) : null;
+  document.getElementById("dienstleistungPopupTitel").innerText =
+    angebot ? "Dienstleistung bearbeiten" : "Dienstleistung anbieten";
+  document.getElementById("dienstTitel").value = angebot?.Titel || "";
+  document.getElementById("dienstBeschreibung").value = angebot?.Beschreibung || "";
+  document.getElementById("dienstPreis").value = Number(angebot?.Preis || 0);
+  document.getElementById("dienstEinheit").value =
+    angebot?.Verpackungseinheit || "Stunde";
+  document.getElementById("dienstAktiv").value =
+    angebot?.Aktiv === false ? "false" : "true";
+  document.getElementById("dienstMsg").innerText = "";
+  document.getElementById("dienstleistungBg").style.display = "flex";
+}
+
+function dienstleistungPopupSchliessen(){
+  document.getElementById("dienstleistungBg").style.display = "none";
+  dienstleistungBearbeitungId = null;
+}
+
+async function dienstleistungSpeichern(){
+  const msg = document.getElementById("dienstMsg");
+  const titel = document.getElementById("dienstTitel").value.trim();
+  const beschreibung = document.getElementById("dienstBeschreibung").value.trim();
+  const preis = Number(document.getElementById("dienstPreis").value || 0);
+  const einheit = document.getElementById("dienstEinheit").value;
+  const aktiv = document.getElementById("dienstAktiv").value === "true";
+  const hofId = aktuellerHofId();
+
+  if(!titel){
+    msg.innerText = "Bitte einen Titel eingeben.";
+    return;
+  }
+  if(!beschreibung){
+    msg.innerText = "Bitte eine Beschreibung eingeben.";
+    return;
+  }
+  if(!hofId){
+    msg.innerText = "Dein Hof konnte nicht ermittelt werden.";
+    return;
+  }
+  if(preis < 0){
+    msg.innerText = "Bitte einen gültigen Preis eingeben.";
+    return;
+  }
+
+  const daten = {
+    Titel:titel,
+    Kategorie:"Dienstleistung",
+    Beschreibung:beschreibung,
+    Inhalt:1,
+    Einheit:einheit,
+    Verpackungseinheit:einheit,
+    Preis:preis,
+    Bestand:1,
+    Hof_id:Number(hofId),
+    Aktiv:aktiv
+  };
+
+  try{
+    msg.innerText = "Speichere...";
+    if(dienstleistungBearbeitungId){
+      await patch("Angebote",dienstleistungBearbeitungId,daten);
+    }else{
+      await post("Angebote",daten);
+    }
+    dienstleistungPopupSchliessen();
+    schliessePopup();
+    await ladeAngebote();
+  }catch(err){
+    msg.innerText = "Fehler:\n" + err.message;
+  }
+}
+
+function dienstleistungBearbeiten(){
+  if(!ausgewaehltesAngebot || !istDienstleistung(ausgewaehltesAngebot))return;
+  const angebot = ausgewaehltesAngebot;
+  schliessePopup();
+  dienstleistungPopupOeffnen(angebot);
+}
+
+async function dienstleistungLoeschen(){
+  if(!ausgewaehltesAngebot || !istDienstleistung(ausgewaehltesAngebot))return;
+  if(!confirm("Dienstleistung wirklich löschen?"))return;
+
+  try{
+    await loeschen("Angebote",ausgewaehltesAngebot.id);
+    schliessePopup();
+    await ladeAngebote();
+  }catch(err){
+    document.getElementById("popupMsg").innerText = "Fehler:\n" + err.message;
+  }
+}
+
+
 async function bestellen(){
   const msg = document.getElementById("popupMsg");
   msg.innerText = "";
   if(!ausgewaehltesAngebot) return;
   const menge = Math.floor(Number(document.getElementById("menge").value));
   if(!menge || menge <= 0){msg.innerText = "Bitte eine gültige Menge eingeben."; return;}
+  const dienst = istDienstleistung(ausgewaehltesAngebot);
   const bestand = Number(ausgewaehltesAngebot.Bestand || 0);
-  if(menge > bestand){msg.innerText = "Nicht genug Bestand vorhanden."; return;}
+  if(!dienst && menge > bestand){msg.innerText = "Nicht genug Bestand vorhanden."; return;}
 
   const preis = Number(ausgewaehltesAngebot.Preis || 0);
   const gesamtpreis = menge * preis;
@@ -373,7 +557,7 @@ async function bestellen(){
       Angebot_id: ausgewaehltesAngebot.id,
       Titel: "Bestellung: " + produkt,
       Beschreibung: beschreibung,
-      Typ: "Marktplatz",
+      Typ: dienst ? "Dienstleistung" : "Marktplatz",
       Hof: aktuellerHof(),
       Organisation: "",
       Status: "Neu",
@@ -408,46 +592,49 @@ async function bestellen(){
         Erstellt_am:new Date().toISOString()
       });
     }
-    await patch("Angebote", ausgewaehltesAngebot.id, {
-      Bestand: bestand - menge,
-      Aktiv: (bestand - menge) > 0
-    });
-
-    // Lagerbestand des Verkäufer-Hofs erst jetzt beim tatsächlichen Verkauf abziehen.
-    const verkaufsMenge = menge * Number(ausgewaehltesAngebot.Inhalt || 0);
-    const verkaufsLager = lager.find(l =>
-      String(l.Hof_id) === String(zielHofId) &&
-      String(l.Produkt || "").toLowerCase() === String(kategorie || "").toLowerCase() &&
-      l.Aktiv !== false
-    );
-
-    if(!verkaufsLager){
-      throw new Error("Kein passender Lagerbestand beim Verkäufer-Hof gefunden.");
+    if(!dienst){
+          await patch("Angebote", ausgewaehltesAngebot.id, {
+            Bestand: bestand - menge,
+            Aktiv: (bestand - menge) > 0
+          });
+      
+          // Lagerbestand des Verkäufer-Hofs erst jetzt beim tatsächlichen Verkauf abziehen.
+          const verkaufsMenge = menge * Number(ausgewaehltesAngebot.Inhalt || 0);
+          const verkaufsLager = lager.find(l =>
+            String(l.Hof_id) === String(zielHofId) &&
+            String(l.Produkt || "").toLowerCase() === String(kategorie || "").toLowerCase() &&
+            l.Aktiv !== false
+          );
+      
+          if(!verkaufsLager){
+            throw new Error("Kein passender Lagerbestand beim Verkäufer-Hof gefunden.");
+          }
+      
+          const neuerLagerbestand = Number(verkaufsLager.Menge || 0) - verkaufsMenge;
+      
+          if(neuerLagerbestand < 0){
+            throw new Error(
+              "Der Lagerbestand des Verkäufer-Hofs reicht nicht aus. " +
+              "Benötigt: " + formatZahl(verkaufsMenge) + " " + einheit
+            );
+          }
+      
+          await patch("Hof_Lager", verkaufsLager.id, {
+            Menge: neuerLagerbestand
+          });
+      
+          await post("Lagerbewegungen", {
+            Hof_id: Number(zielHofId),
+            Produkt: kategorie,
+            Menge: -verkaufsMenge,
+            Aktion: "Marktplatz Verkauf",
+            Benutzer: aktuellerUser(),
+            Bemerkung:
+              menge + " " + text(ausgewaehltesAngebot.Verpackungseinheit || "Einheiten") +
+              " über Angebot ID " + ausgewaehltesAngebot.id + " verkauft"
+          });
+      
     }
-
-    const neuerLagerbestand = Number(verkaufsLager.Menge || 0) - verkaufsMenge;
-
-    if(neuerLagerbestand < 0){
-      throw new Error(
-        "Der Lagerbestand des Verkäufer-Hofs reicht nicht aus. " +
-        "Benötigt: " + formatZahl(verkaufsMenge) + " " + einheit
-      );
-    }
-
-    await patch("Hof_Lager", verkaufsLager.id, {
-      Menge: neuerLagerbestand
-    });
-
-    await post("Lagerbewegungen", {
-      Hof_id: Number(zielHofId),
-      Produkt: kategorie,
-      Menge: -verkaufsMenge,
-      Aktion: "Marktplatz Verkauf",
-      Benutzer: aktuellerUser(),
-      Bemerkung:
-        menge + " " + text(ausgewaehltesAngebot.Verpackungseinheit || "Einheiten") +
-        " über Angebot ID " + ausgewaehltesAngebot.id + " verkauft"
-    });
 
     await erstelleBenachrichtigung("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId);
     const anzahlTelegram = zielHofId ? await erstelleTelegramQueueFuerHof("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId) : 0;
