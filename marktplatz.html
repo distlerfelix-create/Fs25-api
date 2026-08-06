@@ -403,13 +403,14 @@ async function verfuegbarkeitErhoehen(){
 
 function schliessePopup(){document.getElementById("popupBg").style.display = "none";}
 
-async function erstelleBenachrichtigung(titel, nachricht, zielHofId){
-  await post("Benachrichtigungen", {
+async function erstelleBenachrichtigung(titel,nachricht,zielHofId,auftragId=null){
+  await post("Benachrichtigungen",{
     Titel:titel,
     Nachricht:nachricht,
     Typ:"Marktplatz",
+    Auftrag_id:auftragId ? Number(auftragId) : null,
     User_id:null,
-    Hof_id:zielHofId || null,
+    Hof_id:zielHofId ? Number(zielHofId) : null,
     Organisation_id:null,
     Gelesen:false,
     Erledigt:false,
@@ -636,9 +637,29 @@ async function bestellen(){
       
     }
 
-    await erstelleBenachrichtigung("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId);
-    const anzahlTelegram = zielHofId ? await erstelleTelegramQueueFuerHof("🛒 Neue Bestellung: " + produkt, telegramNachricht, zielHofId) : 0;
-    await erstelleBenachrichtigung("🛒 Bestellung gesendet: " + produkt, telegramNachricht, aktuellerHofId());
+    const auftragId = erstellterAuftrag ? Number(erstellterAuftrag.id) : null;
+
+    await erstelleBenachrichtigung(
+      "🛒 Neue Bestellung: " + produkt,
+      telegramNachricht,
+      zielHofId,
+      auftragId
+    );
+
+    const anzahlTelegram = zielHofId
+      ? await erstelleTelegramQueueFuerHof(
+          "🛒 Neue Bestellung: " + produkt,
+          telegramNachricht,
+          zielHofId
+        )
+      : 0;
+
+    await erstelleBenachrichtigung(
+      "🛒 Bestellung gesendet: " + produkt,
+      telegramNachricht,
+      aktuellerHofId(),
+      auftragId
+    );
     msg.innerText = "Bestellung wurde erstellt.\\nTelegram-Empfänger Verkäufer-Hof: " + anzahlTelegram;
     setTimeout(() => {schliessePopup(); ladeAngebote();}, 1000);
   }catch(err){
