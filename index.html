@@ -329,10 +329,20 @@ async function ladeHome(){
     document.getElementById("statBenachrichtigungen").innerText=ungelesen;
     if(ungelesen>0){document.getElementById("badge").classList.remove("hidden");document.getElementById("badge").innerText=ungelesen;}else{document.getElementById("badge").classList.add("hidden");}
 
-    const offeneAuftraege=auftraege.filter(a=>
-      a.Archiviert!==true &&
-      !statusErledigt(a.Status)
-    );
+    const offeneAuftraege=auftraege.filter(a=>{
+      if(a.Archiviert===true||statusErledigt(a.Status))return false;
+
+      const istMarktplatz=
+        a.Auftragstyp==="Bestellung"||
+        a.Typ==="Marktplatz"||
+        a.Typ==="Dienstleistung";
+
+      if(!istMarktplatz)return true;
+      if(user.Admin===true)return true;
+
+      return erlaubteHofIds.includes(String(a.Besteller_Hof_id))||
+             erlaubteHofIds.includes(String(a.Anbieter_Hof_id));
+    });
     document.getElementById("statAuftraege").innerText=offeneAuftraege.length;
 
     const erntereifeFelder=felder.filter(f=>erlaubteHofIds.includes(String(f.Hof_id))&&f.Erntebereit===true).length;
